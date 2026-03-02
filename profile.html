@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>حسابي | Parashop Tawfiq</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        .profile-grid { display: grid; grid-template-columns: 300px 1fr; gap: 30px; margin-top: 40px; }
+        .side-menu { background: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .side-menu li { list-style: none; padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; transition: 0.3s; }
+        .side-menu li:hover { color: #1a9e52; padding-right: 25px; }
+        .info-card { background: #fff; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body style="background:#f8faf9;">
+    <header class="header__main" style="background:#fff; padding:15px; border-bottom:1px solid #eee;">
+        <div class="container" style="display:flex; justify-content:space-between; align-items:center;">
+            <a href="index.html"><img src="assets/images/logo-head.png" height="50"></a>
+            <button id="logoutBtn" style="background:#ffebee; color:#e74c3c; border:none; padding:10px 20px; border-radius:8px; cursor:pointer; font-weight:bold;">تسجيل الخروج</button>
+        </div>
+    </header>
+
+    <main class="container profile-grid">
+        <aside class="side-menu">
+            <ul>
+                <li style="font-weight:bold; color:#1a9e52;"><i class="fas fa-user"></i> معلوماتي الشخصية</li>
+                <li><i class="fas fa-box"></i> طلبياتي السابقة</li>
+                <li><i class="fas fa-heart"></i> المفضلة</li>
+                <li><i class="fas fa-headset"></i> مساعدة</li>
+            </ul>
+        </aside>
+
+        <section class="info-card" id="profileContent">
+            <h2 style="margin-bottom:20px;">مرحباً، <span id="userName">...</span></h2>
+            <div id="userDetails" style="line-height: 2;">
+                <p><strong>البريد الإلكتروني:</strong> <span id="userEmail">...</span></p>
+                <p><strong>رقم الواتساب:</strong> <span id="userWa">...</span></p>
+                <p><strong>المدينة:</strong> <span id="userCity">...</span></p>
+                <p><strong>العنوان:</strong> <span id="userAddr">...</span></p>
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+        import { auth, db } from './js/firebase.js';
+        import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js';
+        import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+            } else {
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists()) {
+                    const data = userDoc.data();
+                    document.getElementById('userName').textContent = data.firstName;
+                    document.getElementById('userEmail').textContent = user.email;
+                    document.getElementById('userWa').textContent = data.whatsapp;
+                    document.getElementById('userCity').textContent = data.city;
+                    document.getElementById('userAddr').textContent = data.address;
+                }
+            }
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            signOut(auth).then(() => window.location.href = 'index.html');
+        });
+    </script>
+</body>
+</html>

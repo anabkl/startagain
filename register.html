@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>إنشاء حساب | Parashop Tawfiq</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        .auth-card { max-width: 500px; margin: 50px auto; background: #fff; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .input-group { margin-bottom: 15px; text-align: right; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #444; }
+        .input-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; }
+        .btn-reg { width: 100%; padding: 15px; background: #1a9e52; color: #fff; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body style="background: #f0f4f2;">
+    <div class="auth-card">
+        <h2 style="text-align:center; color:#0d7c3e; margin-bottom:30px;">إنشاء حساب جديد</h2>
+        <form id="regForm">
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="input-group"><label>الاسم *</label><input type="text" id="fname" required></div>
+                <div class="input-group"><label>النسب *</label><input type="text" id="lname" required></div>
+            </div>
+            <div class="input-group"><label>رقم الواتساب (إجباري) *</label><input type="tel" id="wa" placeholder="06XXXXXXXX" required></div>
+            <div class="input-group"><label>المدينة *</label><input type="text" id="city" required></div>
+            <div class="input-group"><label>العنوان الكامل *</label><input type="text" id="addr" required></div>
+            <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+            <div class="input-group"><label>البريد الإلكتروني *</label><input type="email" id="email" required></div>
+            <div class="input-group"><label>كلمة المرور *</label><input type="password" id="pass" minlength="6" required></div>
+            <button type="submit" class="btn-reg">تأكيد التسجيل</button>
+        </form>
+    </div>
+
+    <script type="module">
+        import { registerUser } from './js/auth.js';
+        document.getElementById('regForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const userData = {
+                firstName: document.getElementById('fname').value,
+                lastName: document.getElementById('lname').value,
+                whatsapp: document.getElementById('wa').value,
+                city: document.getElementById('city').value,
+                address: document.getElementById('addr').value
+            };
+            registerUser(document.getElementById('email').value, document.getElementById('pass').value, userData);
+        });
+    </script>
+</body>
+</html>

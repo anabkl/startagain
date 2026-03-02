@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parashop Tawfiq - المعدات الطبية والبارافارماسي</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header class="header">
+        <div class="header__top-bar">
+            <div class="container">
+                <span><i class="fas fa-phone-alt"></i> 0520-828417</span>
+                <span><i class="fas fa-envelope"></i> Hamidkaram554@gmail.com</span>
+                <span><i class="fas fa-clock"></i> مفتوح يومياً: 9:00 - 20:00</span>
+            </div>
+        </div>
+        <div class="header__main">
+            <div class="container header__main-inner">
+                <a href="index.html" class="header__logo">
+                    <img src="assets/images/logo-head.png" alt="Logo" style="height: 50px;">
+                    <div class="logo-text">
+                        <span class="logo-text__name" style="color:var(--green-dark);">Parashop Tawfiq</span>
+                    </div>
+                </a>
+
+                <div class="header__search">
+                    <input type="text" class="header__search-input" placeholder="ابحث عن منتج، علامة تجارية..." onclick="window.location.href='shop.html'">
+                    <button class="header__search-btn" onclick="window.location.href='shop.html'"><i class="fas fa-search"></i></button>
+                </div>
+
+                <div class="header__actions" style="display:flex;">
+                    <a href="login.html" class="header__action-btn"><i class="fas fa-user"></i><span>حسابي</span></a>
+                    <a href="cart.html" class="header__action-btn header__cart">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="header__cart-count" id="cart-count">0</span>
+                        <span>السلة</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <nav class="header__nav" id="mainNav" style="display:block; max-height:none;">
+            <div class="container">
+                <ul class="header__nav-list" style="flex-direction: row; justify-content: center; gap: 20px; display: flex;">
+                    <li><a href="index.html" class="active"><i class="fas fa-home"></i> الرئيسية</a></li>
+                    <li><a href="shop.html"><i class="fas fa-spa"></i> مستحضرات التجميل</a></li>
+                    <li><a href="shop.html"><i class="fas fa-baby"></i> الأطفال والرضع</a></li>
+                    <li><a href="shop.html"><i class="fas fa-leaf"></i> مكملات غذائية</a></li>
+                    <li><a href="shop.html"><i class="fas fa-stethoscope"></i> معدات طبية</a></li>
+                    <li><a href="#footer" class="nav-promo"><i class="fas fa-map-marker-alt"></i> اتصل بنا</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <div class="hero__slider" id="heroSlider">
+            <div class="hero__slide active" style="background: linear-gradient(135deg, rgba(13,124,62,0.9) 0%, rgba(26,158,82,0.9) 100%), url('assets/images/photopharamcie.png') center/cover;">
+                <div class="container hero__slide-content">
+                    <div class="hero__slide-text">
+                        <span class="hero__slide-badge">إشراف د. كرم عبد الحميد</span>
+                        <h1>وجهتك الموثوقة <strong>للصحة والجمال</strong></h1>
+                        <p>اكتشف مجموعتنا الواسعة من المعدات الطبية، المكملات الغذائية ومستحضرات العناية.</p>
+                        <a href="shop.html" class="btn btn--primary">تسوق الآن <i class="fas fa-arrow-left"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="hero__slide" style="background: linear-gradient(135deg, #1a6b3c 0%, #2ecc71 100%);">
+                <div class="container hero__slide-content">
+                    <div class="hero__slide-text">
+                        <span class="hero__slide-badge">جديد</span>
+                        <h1>منتجات <strong>طبيعية</strong> 100%</h1>
+                        <p>اكتشف مجموعتنا الجديدة من المكملات الغذائية الطبيعية والعضوية.</p>
+                        <a href="shop.html" class="btn btn--primary">اكتشف المزيد <i class="fas fa-arrow-left"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="hero__controls">
+            <button class="hero__control-btn" id="prevSlide"><i class="fas fa-chevron-right"></i></button>
+            <div class="hero__dots">
+                <span class="hero__dot active" data-slide="0"></span><span class="hero__dot" data-slide="1"></span>
+            </div>
+            <button class="hero__control-btn" id="nextSlide"><i class="fas fa-chevron-left"></i></button>
+        </div>
+    </section>
+
+    <section class="categories">
+        <div class="container">
+            <div class="section-header">
+                <h2><i class="fas fa-th-large"></i> تصفح حسب القسم</h2>
+            </div>
+            <div class="categories__grid">
+                <a href="shop.html" class="categories__card" style="--card-color: #fce4ec;"><i class="fas fa-spa" style="color: #c2185b;"></i><h4>مستحضرات التجميل</h4></a>
+                <a href="shop.html" class="categories__card" style="--card-color: #e3f2fd;"><i class="fas fa-baby" style="color: #1565c0;"></i><h4>الأطفال والرضع</h4></a>
+                <a href="shop.html" class="categories__card" style="--card-color: #fff3e0;"><i class="fas fa-leaf" style="color: #e65100;"></i><h4>مكملات غذائية</h4></a>
+                <a href="shop.html" class="categories__card" style="--card-color: #f3e5f5;"><i class="fas fa-pump-soap" style="color: #7b1fa2;"></i><h4>نظافة وعناية</h4></a>
+                <a href="shop.html" class="categories__card" style="--card-color: #e0f2f1;"><i class="fas fa-stethoscope" style="color: #00695c;"></i><h4>معدات طبية</h4></a>
+            </div>
+        </div>
+    </section>
+
+    <section class="promo-banner" style="margin: 40px 0;">
+        <div class="container">
+            <div class="promo-banner__inner">
+                <div class="promo-banner__text">
+                    <span class="promo-banner__label">جودة مضمونة</span>
+                    <h2>منتجات <strong>أصلية</strong> من أفضل الماركات العالمية</h2>
+                    <a href="shop.html" class="btn btn--primary">الدخول للمتجر <i class="fas fa-store"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer" id="footer">
+        <div class="container">
+            <div class="footer__grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                <div class="footer__col">
+                    <img src="assets/images/parashop tawfiq.png" alt="Parashop Tawfiq" style="background: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; max-width: 200px;">
+                    <p class="footer__about">إشراف: د. كرم عبد الحميد.<br>صيدلية توفيق - وجهتك الأولى للمنتجات الصيدلانية ومستحضرات التجميل والعناية الشخصية.</p>
+                    <div class="footer__social">
+                        <a href="https://instagram.com/pharmacietawfiq" target="_blank"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                <div class="footer__col">
+                    <h4 style="color:#1a9e52;">تواصل معنا</h4>
+                    <ul class="footer__contact" style="direction:ltr; text-align:right;">
+                        <li>251 ANCIENNE MÉDINA DU SÉCHAGE, 25010, Khouribga, Morocco <i class="fas fa-map-marker-alt"></i></li>
+                        <li><a href="tel:0520828417">0520-828417</a> <i class="fas fa-phone-alt"></i></li>
+                        <li><a href="https://wa.me/212675698351">+212 675 698 351</a> <i class="fab fa-whatsapp"></i></li>
+                        <li><a href="mailto:Hamidkaram554@gmail.com">Hamidkaram554@gmail.com</a> <i class="fas fa-envelope"></i></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer__bottom" style="text-align: center; border-top: 1px solid #424242; padding-top: 20px; margin-top: 30px;">
+                <p>© 2026 Parashop Tawfiq. جميع الحقوق محفوظة.</p>
+            </div>
+        </div>
+    </footer>
+
+    <a href="https://wa.me/212675698351" class="whatsapp-float" target="_blank" aria-label="تواصل معنا عبر واتساب" style="background-color: #25D366; position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 35px; box-shadow: 0px 4px 10px rgba(0,0,0,0.3); z-index: 1000; transition: 0.3s;">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>

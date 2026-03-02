@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>لوحة التحكم - إضافة منتج</title>
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <main>
+    <h1>إضافة منتج جديد</h1>
+    <form id="productForm">
+      <label>
+        اسم المنتج
+        <input type="text" name="name" required />
+      </label>
+
+      <label>
+        صورة المنتج
+        <input type="file" name="image" accept="image/*" required />
+      </label>
+
+      <label>
+        وصف
+        <textarea name="description" rows="4" required></textarea>
+      </label>
+
+      <label>
+        السعر العادي
+        <input type="number" name="price" step="0.01" min="0" required />
+      </label>
+
+      <label>
+        السعر الترويجي
+        <input type="number" name="promoPrice" step="0.01" min="0" />
+      </label>
+
+      <label>
+        النوع (Category)
+        <input type="text" name="category" required />
+      </label>
+
+      <label>
+        الماركة
+        <input type="text" name="brand" required />
+      </label>
+
+      <button type="submit">حفظ المنتج</button>
+      <p id="status"></p>
+    </form>
+  </main>
+
+  <script type="module" src="firebase.js"></script>
+  <script type="module">
+    import { app, auth, db, storage } from './firebase.js';
+    import {
+      addDoc,
+      collection,
+      serverTimestamp,
+    } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
+    import {
+      ref,
+      uploadBytes,
+      getDownloadURL,
+    } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js';
+    import {
+      onAuthStateChanged,
+    } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js';
+
+    const form = document.getElementById('productForm');
+    const statusEl = document.getElementById('status');
+
+    // تأكد من أن المستخدم مصادق عليه
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        statusEl.textContent = 'يجب تسجيل الدخول لإضافة المنتجات.';
+        form.querySelector('button[type="submit"]').disabled = true;
+      } else {
+        statusEl.textContent = '';
+        form.querySelector('button[type="submit"]').disabled = false;
+      }
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      statusEl.textContent = 'جارٍ الرفع...';
+
+      const formData = new FormData(form);
+      const name = formData.get('name').trim();
+      const description = formData.get('description').trim();
+      const price = Number(formData.get('price'));
+      const promoPrice = formData.get('promoPrice') ? Number(formData.get('promoPrice')) : null;
+      const category = formData.get('category').trim();
+      const brand = formData.get('brand').trim();
+      const imageFile = formData.get('image');
+
+      try {
+        const user = auth.currentUser;
+        if (!user) {
+          throw new Error('يجب تسجيل الدخول أولاً.');
+        }
+
+        // رفع الصورة إلى Storage
+        const imagePath = `products/${crypto.randomUUID()}_${imageFile.name}`;
+        const imageRef = ref(storage, imagePath);
+        await uploadBytes(imageRef, imageFile);
+        const imageUrl = await getDownloadURL(imageRef);
+
+        // حفظ بيانات المنتج في Firestore
+        await addDoc(collection(db, 'products'), {
+          name,
+          description,
+          price,
+          promoPrice: promoPrice ?? null,
+          category,
+          brand,
+          imageUrl,
+          imagePath,
+          createdAt: serverTimestamp(),
+          createdBy: user.uid,
+        });
+
+        statusEl.textContent = 'تم الحفظ بنجاح ✅';
+        form.reset();
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = `فشل الحفظ: ${err.message}`;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "name": "parashop-tawfiq",
+  "version": "1.0.0",
+  "description": "Parashop Tawfiq - Parapharmacie en ligne",
+  "dependencies": {
+    "stripe": "^14.0.0"
+  }
+}

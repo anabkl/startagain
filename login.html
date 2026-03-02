@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول | Parashop Tawfiq</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        .login-container { max-width: 400px; margin: 80px auto; background: #fff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); text-align: center; }
+        .login-container img { height: 60px; margin-bottom: 20px; }
+        .form-control { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .btn-full { width: 100%; padding: 12px; background: #0d7c3e; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
+        .btn-full:hover { background: #1a9e52; }
+    </style>
+</head>
+<body style="background: #f5f5f5;">
+
+    <div class="login-container">
+        <a href="index.html"><img src="assets/images/logo-head.png" alt="Logo"></a>
+        <h2 style="margin-bottom: 10px; color: #212121;">مرحباً بك مجدداً</h2>
+        <p style="color: #757575; margin-bottom: 30px;">قم بتسجيل الدخول لمتابعة طلباتك</p>
+
+        <form id="clientLoginForm">
+            <input type="email" id="clientEmail" class="form-control" placeholder="البريد الإلكتروني" required>
+            <input type="password" id="clientPassword" class="form-control" placeholder="كلمة المرور" required>
+            <button type="submit" class="btn-full">تسجيل الدخول</button>
+        </form>
+        <p style="margin-top: 20px; font-size: 0.9rem;">ليس لديك حساب؟ <a href="register.html" style="color: #0d7c3e; font-weight: bold;">إنشاء حساب جديد</a></p>
+    </div>
+
+    <script type="module">
+        // غنضيفو اللوجيك ديال Firebase من بعد باش نربطوها، دابا حطينا الديزاين
+        document.getElementById('clientLoginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('سيتم تفعيل نظام الحسابات قريباً!');
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // قراءة عامة اختياري
+    match /products/{productId} {
+      allow read: if true;
+      allow create, update, delete: if request.auth != null;
+    }
+
+    // يمكنك إضافة مجموعات أخرى هنا بنفس المنطق
+  }
+}

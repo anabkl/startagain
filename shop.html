@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>المتجر | Parashop Tawfiq</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        .filter-section { text-align: center; margin: 40px 0; }
+        .filter-section input { width: 100%; max-width: 500px; padding: 15px; border-radius: 8px; border: 1px solid var(--green-main); margin-bottom: 20px; font-family: inherit; }
+        #category-buttons button { background: var(--white); color: var(--green-dark); border: 2px solid var(--green-main); padding: 10px 20px; border-radius: 20px; margin: 5px; cursor: pointer; transition: 0.3s; font-weight: bold; }
+        #category-buttons button:hover { background: var(--green-main); color: var(--white); }
+    </style>
+</head>
+<body>
+    <header class="header__main" style="box-shadow: var(--shadow-sm);">
+        <div class="container header__main-inner" style="justify-content: space-between;">
+            <a href="index.html" class="header__logo">
+                <img src="assets/images/logo-head.png" alt="Parashop Tawfiq" style="height: 50px;">
+            </a>
+            <div class="header__actions" style="display:flex;">
+                <a href="cart.html" class="header__action-btn header__cart">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span class="header__cart-count" id="cart-count">0</span>
+                    <span>السلة</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <div class="filter-section">
+            <input type="text" class="header__search-input" id="search-bar" placeholder="ابحث عن منتج، علامة تجارية...">
+            <div id="category-buttons">
+                <button onclick="filterByCategory('all')">الكل</button>
+                <button onclick="filterByCategory('الوجه')">العناية بالوجه</button>
+                <button onclick="filterByCategory('الشعر')">العناية بالشعر</button>
+                <button onclick="filterByCategory('الطفل')">الأطفال والرضع</button>
+                <button onclick="filterByCategory('مكملات')">مكملات غذائية</button>
+                <button onclick="filterByCategory('معدات')">معدات طبية</button>
+            </div>
+        </div>
+
+        <div id="products-container" class="products__grid">
+            <p style="text-align:center; width:100%; color: var(--green-main);">جاري تحميل المنتجات من قاعدة البيانات...</p>
+        </div>
+    </main>
+
+    <script type="module" src="js/shop.js?v=v2"></script>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
