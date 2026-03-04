@@ -8,6 +8,12 @@ const searchBar = document.getElementById('search-bar');
 
 let allProducts = [];
 
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(str || ''));
+    return div.innerHTML;
+}
+
 async function fetchProducts() {
     if (!productsContainer) return;
     
@@ -32,6 +38,33 @@ function displayProducts(products) {
     }
 
     products.forEach(product => {
+        if (product.type === 'pack') {
+            const promoPrice = product.promoPrice;
+            const packCard = document.createElement('div');
+            packCard.className = 'pack-promo-card';
+            packCard.style.cssText = 'width:100%; background: linear-gradient(135deg, #0d7c3e, #1a9e52); border-radius:16px; box-shadow:0 6px 25px rgba(13,124,62,0.3); padding:25px 30px; margin-bottom:20px; display:flex; align-items:center; gap:25px; cursor:pointer; transition:transform 0.3s;';
+            packCard.onmouseover = () => packCard.style.transform = 'translateY(-4px)';
+            packCard.onmouseout = () => packCard.style.transform = 'translateY(0)';
+
+            const typeBadge = product.packType === 'باك ترويجي' ? '📦 باك ترويجي' : '🔥 عرض خاص';
+            packCard.innerHTML = `
+                <div style="flex-shrink:0; width:160px; height:160px; background: url('${escapeHtml(product.imageUrl || 'assets/images/photopharamcie.png')}') center/cover no-repeat; border-radius:12px; border:3px solid rgba(255,255,255,0.4);"></div>
+                <div style="flex-grow:1; color:#fff; text-align:right;">
+                    <span style="background:rgba(255,255,255,0.2); padding:4px 12px; border-radius:20px; font-size:0.85rem; font-weight:bold;">${typeBadge}</span>
+                    <h2 style="margin:10px 0 8px; font-size:1.5rem; font-weight:900;">${escapeHtml(product.name)}</h2>
+                    <p style="margin:0 0 15px; opacity:0.9; font-size:0.95rem; line-height:1.6;">${escapeHtml(product.description || '')}</p>
+                    <div style="display:flex; align-items:center; gap:20px;">
+                        ${promoPrice ? `<span style="font-size:1.8rem; font-weight:900;">${formatCurrency(promoPrice)}</span>` : ''}
+                        <button class="btn" style="background:#fff; color:#0d7c3e; border:none; padding:12px 25px; border-radius:10px; cursor:pointer; font-weight:bold; font-size:1rem; transition:background 0.3s;" onclick="addToCart('${escapeHtml(product.id)}')">
+                            <i class="fas fa-cart-plus"></i> أضف للسلة
+                        </button>
+                    </div>
+                </div>
+            `;
+            productsContainer.appendChild(packCard);
+            return;
+        }
+
         const price = product.price || 0;
         const promoPrice = product.promoPrice;
         const hasPromo = promoPrice && promoPrice < price;
