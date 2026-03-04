@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <title>إضافة المنتجات التجريبية</title>
+  <style>
+    body { font-family: 'Cairo', sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; background: #f5f5f5; }
+    .card { background: #fff; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+    h1 { color: #0d7c3e; text-align: center; }
+    button { width: 100%; padding: 15px; background: #0d7c3e; color: #fff; border: none; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer; margin-top: 15px; }
+    button:hover { background: #1a9e52; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    #log { margin-top: 20px; background: #f9f9f9; padding: 15px; border-radius: 10px; max-height: 400px; overflow-y: auto; font-size: 0.9rem; direction: ltr; text-align: left; }
+    .success { color: #0d7c3e; }
+    .error { color: #e74c3c; }
+    .info { color: #2196F3; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🛒 إضافة المنتجات والعروض</h1>
+    <p style="text-align:center; color:#757575;">6 منتجات + عرض شتاء + عرض رمضان</p>
+    <button id="seedBtn" onclick="seedAll()">🚀 إضافة الكل دابا</button>
+    <div id="log"></div>
+  </div>
+
+  <script type="module">
+    import { auth, db } from './js/firebase.js';
+    import { collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
+    import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js';
+
+    const logEl = document.getElementById('log');
+    const btn = document.getElementById('seedBtn');
+
+    function log(msg, type = 'info') {
+      logEl.innerHTML += `<p class="${type}">→ ${msg}</p>`;
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        log('⚠️ يجب تسجيل الدخول أولاً! روح لـ login.html', 'error');
+        btn.disabled = true;
+      } else {
+        log(`✅ مسجل كـ: ${user.email}`, 'success');
+      }
+    });
+
+    const products = [
+      {
+        name: "كريم مرطب CeraVe للوجه",
+        brand: "CeraVe",
+        category: "الوجه",
+        price: 189.00,
+        promoPrice: null,
+        description: "كريم مرطب غني بالسيراميد وحمض الهيالورونيك. يرطب البشرة 24 ساعة ويقوي حاجز الجلد الطبيعي. مناسب لجميع أنواع البشرة.",
+        imageUrl: "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=400&h=400&fit=crop"
+      },
+      {
+        name: "شامبو Ducray ضد تساقط الشعر",
+        brand: "Ducray",
+        category: "الشعر",
+        price: 145.00,
+        promoPrice: 119.00,
+        description: "شامبو Anaphase+ المقوي. يحفز نمو الشعر ويقلل التساقط بفضل تركيبة Tocopherol nicotinate. نتائج مرئية خلال 3 أشهر.",
+        imageUrl: "https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=400&h=400&fit=crop"
+      },
+      {
+        name: "واقي شمس Avène SPF50+",
+        brand: "Avène",
+        category: "الوجه",
+        price: 220.00,
+        promoPrice: 179.00,
+        description: "حماية عالية جداً من الأشعة فوق البنفسجية UVA/UVB. تركيبة خفيفة غير دهنية مع ماء Avène الحراري المهدئ. مناسب للبشرة الحساسة.",
+        imageUrl: "https://images.unsplash.com/photo-1556228720-195a672e68f0?w=400&h=400&fit=crop"
+      },
+      {
+        name: "حليب Gallia للرضع رقم 1",
+        brand: "Gallia",
+        category: "الطفل",
+        price: 95.00,
+        promoPrice: null,
+        description: "حليب Calisma 1 للرضع من 0 إلى 6 أشهر. غني بالحديد وDHA وARA لدعم النمو الطبيعي للطفل. 800 غرام.",
+        imageUrl: "https://images.unsplash.com/photo-1584839404210-0a84f20ccdb3?w=400&h=400&fit=crop"
+      },
+      {
+        name: "فيتامين D3 1000 UI",
+        brand: "Solgar",
+        category: "مكملات",
+        price: 130.00,
+        promoPrice: 99.00,
+        description: "فيتامين D3 طبيعي 1000 وحدة دولية. يدعم صحة العظام والمناعة وامتصاص الكالسيوم. 100 كبسولة نباتية.",
+        imageUrl: "https://images.unsplash.com/photo-1550572017-edd951aa8f72?w=400&h=400&fit=crop"
+      },
+      {
+        name: "جهاز قياس ضغط الدم الإلكتروني",
+        brand: "Omron",
+        category: "معدات",
+        price: 450.00,
+        promoPrice: null,
+        description: "جهاز Omron M3 لقياس ضغط الدم من الذراع. دقة طبية عالية مع كاشف عدم انتظام ضربات القلب. ذاكرة 60 قراءة لشخصين.",
+        imageUrl: "https://images.unsplash.com/photo-1559757175-7cb036f4b5b8?w=400&h=400&fit=crop"
+      }
+    ];
+
+    const packs = [
+      {
+        name: "🧣 باك الشتاء - العناية بالبشرة الجافة",
+        brand: "Parashop Tawfiq",
+        category: "باك",
+        price: 399.00,
+        promoPrice: 279.00,
+        description: "عرض خاص بالشتاء! يتضمن: كريم مرطب CeraVe + بلسم الشفاه La Roche-Posay + كريم اليدين Neutrogena. وفّر 30% على المجموعة الكاملة للعناية بالبشرة الجافة في فصل الشتاء.",
+        imageUrl: "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=400&h=400&fit=crop",
+        isPack: true,
+        packType: "winter",
+        packItems: ["كريم مرطب CeraVe", "بلسم الشفاه La Roche-Posay", "كريم اليدين Neutrogena"]
+      },
+      {
+        name: "🌙 باك رمضان - الطاقة والمناعة",
+        brand: "Parashop Tawfiq",
+        category: "باك",
+        price: 350.00,
+        promoPrice: 229.00,
+        description: "عرض رمضان المبارك! يتضمن: فيتامين D3 Solgar + مغنيزيوم + أوميغا 3. حافظ على طاقتك ومناعتك خلال الصيام. عرض محدود طوال شهر رمضان الكريم!",
+        imageUrl: "https://images.unsplash.com/photo-1547592180-85f173990554?w=400&h=400&fit=crop",
+        isPack: true,
+        packType: "ramadan",
+        packItems: ["فيتامين D3 Solgar", "مغنيزيوم B6", "أوميغا 3 EPA/DHA"]
+      }
+    ];
+
+    window.seedAll = async function() {
+      btn.disabled = true;
+      btn.textContent = 'جاري الإضافة...';
+      logEl.innerHTML = '';
+
+      const user = auth.currentUser;
+      if (!user) {
+        log('❌ ما مسجلش! روح لـ login.html أولاً', 'error');
+        btn.disabled = false;
+        btn.textContent = '🚀 إضافة الكل دابا';
+        return;
+      }
+
+      let successCount = 0;
+
+      // إضافة المنتجات العادية
+      log('📦 إضافة المنتجات العادية...', 'info');
+      for (const product of products) {
+        try {
+          await addDoc(collection(db, "products"), {
+            ...product,
+            isPack: false,
+            packType: null,
+            packItems: null,
+            createdAt: serverTimestamp(),
+            createdBy: user.uid
+          });
+          successCount++;
+          log(`✅ ${product.name} — ${product.promoPrice ? product.promoPrice + ' DH (بدل ' + product.price + ' DH)' : product.price + ' DH'}`, 'success');
+        } catch (err) {
+          log(`❌ فشل: ${product.name} — ${err.message}`, 'error');
+        }
+      }
+
+      // إضافة الباكات
+      log('🎁 إضافة العروض الخاصة (باكات)...', 'info');
+      for (const pack of packs) {
+        try {
+          await addDoc(collection(db, "products"), {
+            ...pack,
+            createdAt: serverTimestamp(),
+            createdBy: user.uid
+          });
+          successCount++;
+          const discount = Math.round(((pack.price - pack.promoPrice) / pack.price) * 100);
+          log(`✅ ${pack.name} — ${pack.promoPrice} DH بدل ${pack.price} DH (-${discount}%)`, 'success');
+        } catch (err) {
+          log(`❌ فشل: ${pack.name} — ${err.message}`, 'error');
+        }
+      }
+
+      log(`\n🎉 تمت الإضافة: ${successCount}/8 منتجات بنجاح!`, successCount === 8 ? 'success' : 'error');
+      log('👉 روح لـ shop.html باش تشوف المنتجات!', 'info');
+
+      btn.textContent = `✅ تمت الإضافة (${successCount}/8)`;
+    };
+  </script>
+</body>
+</html>
