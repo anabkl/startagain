@@ -5,6 +5,7 @@ import { updateCartCount } from './main.js';
 
 const productsContainer = document.getElementById('products-container');
 const searchBar = document.getElementById('search-bar');
+const categoryButtons = document.getElementById('category-buttons');
 
 let allProducts = [];
 
@@ -22,11 +23,40 @@ async function fetchProducts() {
     try {
         const querySnapshot = await getDocs(collection(db, "products"));
         allProducts = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        displayProducts(allProducts);
+        buildCategoryButtons(allProducts);
+
+        // Check for search query param
+        const params = new URLSearchParams(window.location.search);
+        const q = params.get('q');
+        if (q) {
+            if (searchBar) searchBar.value = q;
+            const filtered = allProducts.filter(p =>
+                (p.name && p.name.toLowerCase().includes(q.toLowerCase())) ||
+                (p.brand && p.brand.toLowerCase().includes(q.toLowerCase())) ||
+                (p.category && p.category.toLowerCase().includes(q.toLowerCase()))
+            );
+            displayProducts(filtered);
+        } else {
+            displayProducts(allProducts);
+        }
     } catch (error) {
         console.error("Error fetching products: ", error);
         productsContainer.innerHTML = '<p style="text-align:center; width:100%; color: red; font-weight:bold;">حدث خطأ أثناء تحميل المنتجات من قاعدة البيانات.</p>';
     }
+}
+
+function buildCategoryButtons(products) {
+    if (!categoryButtons) return;
+    // Extract unique categories from actual products
+    const categories = [...new Set(products
+        .filter(p => p.type !== 'pack' && p.category)
+        .map(p => p.category))];
+    
+    let html = '<button onclick="filterByCategory(\'all\')" class="cat-btn active" id="cat-all">الكل</button>';
+    categories.forEach(cat => {
+        html += `<button onclick="filterByCategory('${escapeHtml(cat)}')" class="cat-btn">${escapeHtml(cat)}</button>`;
+    });
+    categoryButtons.innerHTML = html;
 }
 
 function displayProducts(products) {
@@ -68,40 +98,54 @@ function displayProducts(products) {
         const price = product.price || 0;
         const promoPrice = product.promoPrice;
         const hasPromo = promoPrice && promoPrice < price;
+        const outOfStock = product.stock === 0;
 
         let priceHtml = '';
         let badgeHtml = '';
 
-        if (hasPromo) {
+        if (outOfStock) {
+            badgeHtml = `<span style="background:#ffebee; color:#c62828; padding:5px 10px; border-radius:8px; font-weight:bold; position:absolute; top:10px; right:10px; z-index:1; font-size:0.8rem;">نفذ من المخزون</span>`;
+        } else if (hasPromo) {
             const discount = Math.round(((price - promoPrice) / price) * 100);
-            badgeHtml = `<span class="badge badge--promo" style="background:#e74c3c; color:#fff; padding:5px 10px; border-radius:8px; font-weight:bold; position:absolute; top:10px; right:10px; z-index:1;">-${discount}%</span>`;
+            badgeHtml = `<span style="background:#e74c3c; color:#fff; padding:5px 10px; border-radius:8px; font-weight:bold; position:absolute; top:10px; right:10px; z-index:1;">-${discount}%</span>`;
+        }
+
+        if (hasPromo) {
             priceHtml = `
-                <span class="price--current" style="color:var(--green-main); font-weight:900; font-size:1.2rem;">${formatCurrency(promoPrice)}</span>
-                <span class="price--old" style="text-decoration:line-through; color:#9e9e9e; font-size:0.9rem; margin-right:8px;">${formatCurrency(price)}</span>
+                <span style="color:var(--green-main); font-weight:900; font-size:1.2rem;">${formatCurrency(promoPrice)}</span>
+                <span style="text-decoration:line-through; color:#9e9e9e; font-size:0.9rem; margin-right:8px;">${formatCurrency(price)}</span>
             `;
         } else {
-            priceHtml = `<span class="price--current" style="color:var(--green-main); font-weight:900; font-size:1.2rem;">${formatCurrency(price)}</span>`;
+            priceHtml = `<span style="color:var(--green-main); font-weight:900; font-size:1.2rem;">${formatCurrency(price)}</span>`;
         }
 
         const card = document.createElement('div');
         card.className = 'product-card';
-        card.style.cssText = 'position:relative; background:#fff; border-radius:16px; box-shadow:0 4px 15px rgba(0,0,0,0.05); padding:15px; transition:transform 0.3s; display:flex; flex-direction:column; justify-content:space-between; cursor:pointer;';
+        card.style.cssText = 'position:relative; background:#fff; border-radius:16px; box-shadow:0 4px 15px rgba(0,0,0,0.05); padding:15px; transition:transform 0.3s, box-shadow 0.3s; display:flex; flex-direction:column; justify-content:space-between; cursor:pointer;';
         
-        card.onmouseover = () => card.style.transform = 'translateY(-5px)';
-        card.onmouseout = () => card.style.transform = 'translateY(0)';
+        card.onmouseover = () => { card.style.transform = 'translateY(-5px)'; card.style.boxShadow = '0 10px 30px rgba(0,0,0,0.1)'; };
+        card.onmouseout = () => { card.style.transform = 'translateY(0)'; card.style.boxShadow = '0 4px 15px rgba(0,0,0,0.05)'; };
+
+        // Navigate to product detail on card click (except buttons)
+        card.onclick = (e) => {
+            if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
+                window.location.href = `product.html?id=${product.id}`;
+            }
+        };
 
         card.innerHTML = `
             ${badgeHtml}
-            <div class="product-card__image" style="background: url('${product.imageUrl || 'assets/images/photopharamcie.png'}') center/contain no-repeat; height: 180px; border-radius:12px; margin-bottom:15px;"></div>
+            <div style="background: url('${product.imageUrl || 'assets/images/photopharamcie.png'}') center/contain no-repeat; height: 180px; border-radius:12px; margin-bottom:15px;"></div>
             
-            <div class="product-card__info" style="text-align:right; flex-grow:1; display:flex; flex-direction:column;">
-                <span class="product-card__category" style="color:#757575; font-size:0.85rem;">${product.category || 'غير محدد'}</span>
-                <h3 class="product-card__title" style="margin:8px 0 15px; font-size:1.1rem; color:#212121; line-height:1.4;">${product.name}</h3>
+            <div style="text-align:right; flex-grow:1; display:flex; flex-direction:column;">
+                <span style="color:#757575; font-size:0.85rem;">${escapeHtml(product.category || 'غير محدد')}</span>
+                <h3 style="margin:8px 0 15px; font-size:1rem; color:#212121; line-height:1.4;">${escapeHtml(product.name)}</h3>
                 
                 <div style="margin-top:auto;">
-                    <div class="product-card__price" style="margin-bottom:15px;">${priceHtml}</div>
-                    <button class="btn btn--cart" style="width:100%; background:var(--green-main); color:#fff; border:none; padding:12px; border-radius:10px; cursor:pointer; font-weight:bold; font-size:1rem; transition:background 0.3s;" onclick="addToCart('${product.id}')">
-                        <i class="fas fa-cart-plus"></i> أضف للسلة
+                    <div style="margin-bottom:12px;">${priceHtml}</div>
+                    <button style="width:100%; background:${outOfStock ? '#bdbdbd' : 'var(--green-main)'}; color:#fff; border:none; padding:12px; border-radius:10px; cursor:${outOfStock ? 'not-allowed' : 'pointer'}; font-weight:bold; font-size:0.95rem; transition:background 0.3s;" 
+                        ${outOfStock ? 'disabled' : `onclick="addToCart('${product.id}')"`}>
+                        <i class="fas fa-cart-plus"></i> ${outOfStock ? 'نفذ من المخزون' : 'أضف للسلة'}
                     </button>
                 </div>
             </div>
@@ -113,6 +157,11 @@ function displayProducts(products) {
 if (searchBar) {
     searchBar.addEventListener('input', (e) => {
         const searchTerm = e.target.value.toLowerCase().trim();
+        // Deactivate all category buttons
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        const catAll = document.getElementById('cat-all');
+        if (catAll) catAll.classList.add('active');
+
         const filteredProducts = allProducts.filter(product => 
             (product.name && product.name.toLowerCase().includes(searchTerm)) || 
             (product.brand && product.brand.toLowerCase().includes(searchTerm)) || 
@@ -124,9 +173,17 @@ if (searchBar) {
 
 window.filterByCategory = function(category) {
     if (searchBar) searchBar.value = '';
+    // Update active button
+    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
     if (category === 'all') {
+        const catAll = document.getElementById('cat-all');
+        if (catAll) catAll.classList.add('active');
         displayProducts(allProducts);
     } else {
+        // Find and activate matching button
+        document.querySelectorAll('.cat-btn').forEach(b => {
+            if (b.textContent === category) b.classList.add('active');
+        });
         const filteredProducts = allProducts.filter(product => product.category === category);
         displayProducts(filteredProducts);
     }
@@ -135,6 +192,10 @@ window.filterByCategory = function(category) {
 window.addToCart = function(productId) {
     const product = allProducts.find(p => p.id === productId);
     if(product) {
+        if (product.stock === 0) {
+            showToast('هذا المنتج نفذ من المخزون', 'error');
+            return;
+        }
         let cart = JSON.parse(localStorage.getItem('parashop_cart')) || [];
         const existingItem = cart.find(item => item.id === productId);
         if(existingItem) {

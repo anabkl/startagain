@@ -81,4 +81,28 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // الاستماع لأي تغيير في السلة من صفحات أخرى
     window.addEventListener('storage', updateCartCount);
+
+    // 5. وظيفة البحث - توجيه للمتجر مع معامل البحث
+    const searchInput = document.querySelector('.header__search-input');
+    const searchBtn = document.querySelector('.header__search-btn');
+
+    function doSearch() {
+        const term = searchInput ? searchInput.value.trim() : '';
+        if (term) {
+            window.location.href = 'shop.html?q=' + encodeURIComponent(term);
+        } else {
+            window.location.href = 'shop.html';
+        }
+    }
+
+    if (searchBtn) {
+        searchBtn.onclick = doSearch;
+    }
+    if (searchInput) {
+        // Remove old inline onclick if any
+        searchInput.onclick = null;
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') doSearch();
+        });
+    }
 });
