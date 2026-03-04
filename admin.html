@@ -3,60 +3,127 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>لوحة التحكم - إضافة منتج</title>
+  <title>لوحة التحكم | Parashop Tawfiq</title>
   <link rel="stylesheet" href="admin.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 <body>
-  <main>
-    <h1>إضافة منتج جديد</h1>
-    <form id="productForm">
-      <label>
-        اسم المنتج
-        <input type="text" name="name" required />
-      </label>
 
-      <label>
-        صورة المنتج
-        <input type="file" name="image" accept="image/*" required />
-      </label>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar__logo">
+      <a href="index.html"><img src="assets/images/logo-head.png" alt="Parashop Tawfiq"></a>
+      <p class="sidebar__title">لوحة التحكم</p>
+    </div>
+    <nav class="sidebar__nav">
+      <a href="#" class="active" data-tab="products"><i class="fas fa-plus-circle"></i> إضافة منتج</a>
+      <a href="#" data-tab="packs"><i class="fas fa-box-open"></i> إضافة باك/بانر</a>
+      <a href="orders.html"><i class="fas fa-list-alt"></i> الطلبات</a>
+    </nav>
+    <div class="sidebar__logout">
+      <button id="logoutBtn"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</button>
+    </div>
+  </aside>
 
-      <label>
-        وصف
-        <textarea name="description" rows="4" required></textarea>
-      </label>
+  <!-- Main -->
+  <main class="main-content" id="pageContent" style="display:none;">
+    <h1><i class="fas fa-tachometer-alt"></i> لوحة التحكم</h1>
 
-      <label>
-        السعر العادي
-        <input type="number" name="price" step="0.01" min="0" required />
-      </label>
+    <!-- Tabs -->
+    <div class="admin-tabs">
+      <button class="tab-btn active" data-tab="products">إضافة منتج عادي</button>
+      <button class="tab-btn" data-tab="packs">إضافة باك / بانر</button>
+    </div>
 
-      <label>
-        السعر الترويجي
-        <input type="number" name="promoPrice" step="0.01" min="0" />
-      </label>
+    <!-- Tab: Add Product -->
+    <div class="tab-panel active" id="tab-products">
+      <div class="admin-card">
+        <h2>إضافة منتج عادي</h2>
+        <form id="productForm">
+          <div class="form-group">
+            <label>اسم المنتج</label>
+            <input type="text" name="name" placeholder="مثال: كريم مرطب للبشرة" required />
+          </div>
+          <div class="form-group">
+            <label>صورة المنتج</label>
+            <input type="file" name="image" accept="image/*" required />
+          </div>
+          <div class="form-group">
+            <label>الوصف</label>
+            <textarea name="description" placeholder="وصف مختصر للمنتج..." required></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>السعر العادي (DH)</label>
+              <input type="number" name="price" step="0.01" min="0" placeholder="0.00" required />
+            </div>
+            <div class="form-group">
+              <label>السعر الترويجي (DH) — اختياري</label>
+              <input type="number" name="promoPrice" step="0.01" min="0" placeholder="0.00" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>التصنيف (Category)</label>
+              <input type="text" name="category" placeholder="مثال: عناية بالبشرة" required />
+            </div>
+            <div class="form-group">
+              <label>الماركة</label>
+              <input type="text" name="brand" placeholder="مثال: Bioderma" required />
+            </div>
+          </div>
+          <button type="submit" class="btn-submit"><i class="fas fa-save"></i> حفظ المنتج</button>
+          <p id="productStatus" class="status-msg"></p>
+        </form>
+      </div>
+    </div>
 
-      <label>
-        النوع (Category)
-        <input type="text" name="category" required />
-      </label>
-
-      <label>
-        الماركة
-        <input type="text" name="brand" required />
-      </label>
-
-      <button type="submit">حفظ المنتج</button>
-      <p id="status"></p>
-    </form>
+    <!-- Tab: Add Pack/Banner -->
+    <div class="tab-panel" id="tab-packs">
+      <div class="admin-card">
+        <h2>إضافة باك / بانر ترويجي</h2>
+        <form id="packForm">
+          <div class="form-group">
+            <label>عنوان الباك / البانر</label>
+            <input type="text" name="name" placeholder="مثال: عرض الصيف — باك عناية كاملة" required />
+          </div>
+          <div class="form-group">
+            <label>صورة الباك</label>
+            <input type="file" name="image" accept="image/*" required />
+          </div>
+          <div class="form-group">
+            <label>الوصف</label>
+            <textarea name="description" placeholder="وصف العرض أو محتويات الباك..."></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>السعر الترويجي (DH)</label>
+              <input type="number" name="promoPrice" step="0.01" min="0" placeholder="0.00" required />
+            </div>
+            <div class="form-group">
+              <label>نوع البانر</label>
+              <select name="packType">
+                <option value="عرض خاص">🔥 عرض خاص</option>
+                <option value="باك ترويجي">📦 باك ترويجي</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn-submit"><i class="fas fa-save"></i> حفظ الباك / البانر</button>
+          <p id="packStatus" class="status-msg"></p>
+        </form>
+      </div>
+    </div>
   </main>
 
-  <script type="module" src="firebase.js"></script>
   <script type="module">
-    import { app, auth, db, storage } from './firebase.js';
+    import { auth, db, storage } from './js/firebase.js';
     import {
       addDoc,
       collection,
       serverTimestamp,
+      doc,
+      getDoc,
     } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
     import {
       ref,
@@ -65,66 +132,126 @@
     } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js';
     import {
       onAuthStateChanged,
+      signOut,
     } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js';
 
-    const form = document.getElementById('productForm');
-    const statusEl = document.getElementById('status');
-
-    // تأكد من أن المستخدم مصادق عليه
-    onAuthStateChanged(auth, (user) => {
+    // ---- Admin guard ----
+    onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        statusEl.textContent = 'يجب تسجيل الدخول لإضافة المنتجات.';
-        form.querySelector('button[type="submit"]').disabled = true;
-      } else {
-        statusEl.textContent = '';
-        form.querySelector('button[type="submit"]').disabled = false;
+        window.location.href = 'login.html';
+        return;
       }
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (!userDoc.exists() || userDoc.data().role !== 'admin') {
+        window.location.href = 'index.html';
+        return;
+      }
+      document.getElementById('pageContent').style.display = 'block';
     });
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      statusEl.textContent = 'جارٍ الرفع...';
+    // ---- Logout ----
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      signOut(auth).then(() => { window.location.href = 'index.html'; });
+    });
 
-      const formData = new FormData(form);
-      const name = formData.get('name').trim();
-      const description = formData.get('description').trim();
-      const price = Number(formData.get('price'));
-      const promoPrice = formData.get('promoPrice') ? Number(formData.get('promoPrice')) : null;
-      const category = formData.get('category').trim();
-      const brand = formData.get('brand').trim();
-      const imageFile = formData.get('image');
+    // ---- Tab switching ----
+    document.querySelectorAll('[data-tab]').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        const tab = el.dataset.tab;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.sidebar__nav a[data-tab]').forEach(a => a.classList.remove('active'));
+        document.querySelectorAll(`[data-tab="${tab}"]`).forEach(t => t.classList.add('active'));
+        const panel = document.getElementById(`tab-${tab}`);
+        if (panel) panel.classList.add('active');
+      });
+    });
+
+    // ---- Helper: upload image and return URL ----
+    async function uploadImage(file, folder) {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const imagePath = `${folder}/${crypto.randomUUID()}_${safeName}`;
+      const imageRef = ref(storage, imagePath);
+      await uploadBytes(imageRef, file);
+      return { imageUrl: await getDownloadURL(imageRef), imagePath };
+    }
+
+    // ---- Helper: show status ----
+    function showStatus(el, message, type) {
+      el.textContent = message;
+      el.className = `status-msg ${type}`;
+    }
+
+    // ---- Product form ----
+    document.getElementById('productForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const statusEl = document.getElementById('productStatus');
+      const btn = form.querySelector('.btn-submit');
+      btn.disabled = true;
+      showStatus(statusEl, 'جارٍ الرفع...', '');
 
       try {
-        const user = auth.currentUser;
-        if (!user) {
-          throw new Error('يجب تسجيل الدخول أولاً.');
-        }
+        const data = new FormData(form);
+        const { imageUrl, imagePath } = await uploadImage(data.get('image'), 'products');
 
-        // رفع الصورة إلى Storage
-        const imagePath = `products/${crypto.randomUUID()}_${imageFile.name}`;
-        const imageRef = ref(storage, imagePath);
-        await uploadBytes(imageRef, imageFile);
-        const imageUrl = await getDownloadURL(imageRef);
-
-        // حفظ بيانات المنتج في Firestore
         await addDoc(collection(db, 'products'), {
-          name,
-          description,
-          price,
-          promoPrice: promoPrice ?? null,
-          category,
-          brand,
+          type: 'product',
+          name: data.get('name').trim(),
+          description: data.get('description').trim(),
+          price: Number(data.get('price')),
+          promoPrice: data.get('promoPrice') ? Number(data.get('promoPrice')) : null,
+          category: data.get('category').trim(),
+          brand: data.get('brand').trim(),
           imageUrl,
           imagePath,
           createdAt: serverTimestamp(),
-          createdBy: user.uid,
+          createdBy: auth.currentUser.uid,
         });
 
-        statusEl.textContent = 'تم الحفظ بنجاح ✅';
+        showStatus(statusEl, '✅ تم حفظ المنتج بنجاح!', 'success');
         form.reset();
       } catch (err) {
         console.error(err);
-        statusEl.textContent = `فشل الحفظ: ${err.message}`;
+        showStatus(statusEl, `❌ فشل الحفظ: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    // ---- Pack/Banner form ----
+    document.getElementById('packForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const statusEl = document.getElementById('packStatus');
+      const btn = form.querySelector('.btn-submit');
+      btn.disabled = true;
+      showStatus(statusEl, 'جارٍ الرفع...', '');
+
+      try {
+        const data = new FormData(form);
+        const { imageUrl, imagePath } = await uploadImage(data.get('image'), 'packs');
+
+        await addDoc(collection(db, 'products'), {
+          type: 'pack',
+          name: data.get('name').trim(),
+          description: data.get('description').trim(),
+          promoPrice: Number(data.get('promoPrice')),
+          packType: data.get('packType'),
+          imageUrl,
+          imagePath,
+          createdAt: serverTimestamp(),
+          createdBy: auth.currentUser.uid,
+        });
+
+        showStatus(statusEl, '✅ تم حفظ الباك / البانر بنجاح!', 'success');
+        form.reset();
+      } catch (err) {
+        console.error(err);
+        showStatus(statusEl, `❌ فشل الحفظ: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
       }
     });
   </script>

@@ -1,12 +1,22 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // قراءة عامة اختياري
+
     match /products/{productId} {
       allow read: if true;
       allow create, update, delete: if request.auth != null;
     }
 
-    // يمكنك إضافة مجموعات أخرى هنا بنفس المنطق
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /orders/{orderId} {
+      allow create: if true;
+      allow read: if request.auth != null;
+      allow update: if request.auth != null;
+    }
   }
 }

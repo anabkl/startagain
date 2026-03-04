@@ -1,5 +1,6 @@
 // js/checkout.js
-import { db, collection, addDoc } from './firebase.js';
+import { db } from './firebase.js';
+import { collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
 import { updateCartCount } from './main.js';
 import { showToast } from './utils.js';
 
