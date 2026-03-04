@@ -3,38 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تم الدفع بنجاح | Parashop Tawfiq</title>
+    <title>تم الطلب بنجاح! | Parashop Tawfiq</title>
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <script type="module" src="js/main.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body { background: #f4f7f6; font-family: 'Cairo', sans-serif; }
+        .success-card {
+            max-width: 550px; margin: 80px auto; background: #fff; padding: 50px;
+            border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.06);
+            text-align: center;
+        }
+        .success-icon {
+            width: 100px; height: 100px; border-radius: 50%;
+            background: linear-gradient(135deg, #0d7c3e, #1a9e52);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 25px; animation: popIn 0.5s ease;
+        }
+        .success-icon i { font-size: 45px; color: #fff; }
+        @keyframes popIn {
+            0% { transform: scale(0); }
+            70% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        h1 { color: #0d7c3e; margin-bottom: 10px; }
+        p { color: #757575; line-height: 1.8; }
+        .btn-group { display: flex; gap: 15px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
+        .btn-success {
+            padding: 14px 30px; border-radius: 12px; font-weight: 700;
+            text-decoration: none; transition: 0.3s; font-family: inherit; font-size: 1rem;
+            border: none; cursor: pointer;
+        }
+        .btn-primary { background: #0d7c3e; color: #fff; }
+        .btn-primary:hover { background: #1a9e52; }
+        .btn-outline { background: transparent; color: #0d7c3e; border: 2px solid #0d7c3e; }
+        .btn-outline:hover { background: #0d7c3e; color: #fff; }
+        .btn-wa { background: #25D366; color: #fff; }
+        .btn-wa:hover { background: #20b858; }
+    </style>
 </head>
 <body>
-    <main class="container" style="text-align: center; padding: 4rem 1rem;">
-        <div class="success-page">
-            <i class="fas fa-check-circle success-page__icon"></i>
-            <h1 class="success-page__title">تم الدفع بنجاح! 🎉</h1>
-            <p class="success-page__text">شكراً لك! تم استلام دفعتك بنجاح وسيتم تجهيز طلبك في أقرب وقت.</p>
-            <p class="success-page__order-id">رقم الطلب: <strong id="order-id-display">-</strong></p>
-            <div class="success-page__actions">
-                <a href="index.html" class="btn btn-primary"><i class="fas fa-home"></i> العودة للرئيسية</a>
-                <a href="shop.html" class="btn btn-secondary"><i class="fas fa-store"></i> متابعة التسوق</a>
-            </div>
+    <div class="success-card">
+        <div class="success-icon">
+            <i class="fas fa-check"></i>
         </div>
-    </main>
-
-    <script type="module">
-        import { updateCartCount } from './js/main.js';
-
-        // تفريغ السلة بعد الدفع الناجح
-        localStorage.removeItem('parashop_cart');
-        updateCartCount();
-
-        // عرض رقم الطلب
-        const params  = new URLSearchParams(window.location.search);
-        const orderId = params.get('order_id');
-        if (orderId) {
-            document.getElementById('order-id-display').textContent = orderId;
-        }
-    </script>
+        <h1>تم تسجيل طلبك بنجاح! 🎉</h1>
+        <p>شكراً لك على ثقتك في <strong>Parashop Tawfiq</strong>.<br>
+        سيتم التواصل معك عبر الواتساب لتأكيد الطلب والتوصيل.</p>
+        <p style="background:#f0faf4; padding:15px; border-radius:12px; color:#0d7c3e; font-weight:600;">
+            <i class="fas fa-truck"></i> التوصيل مجاني لجميع المدن
+        </p>
+        <div class="btn-group">
+            <a href="shop.html" class="btn-success btn-primary">
+                <i class="fas fa-store"></i> متابعة التسوق
+            </a>
+            <a href="https://wa.me/212675698351" target="_blank" class="btn-success btn-wa">
+                <i class="fab fa-whatsapp"></i> تواصل معنا
+            </a>
+            <a href="index.html" class="btn-success btn-outline">
+                <i class="fas fa-home"></i> الرئيسية
+            </a>
+        </div>
+    </div>
 </body>
 </html>

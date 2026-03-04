@@ -3,79 +3,167 @@ import { collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/fir
 import { showToast, formatCurrency } from './utils.js';
 import { updateCartCount } from './main.js';
 
+const CART_KEY = 'parashop_cart';
 const checkoutForm = document.getElementById('checkout-form');
 const orderTotalEl = document.getElementById('order-total-amount');
+const summaryList = document.getElementById('summary-items-list');
 
-// إعدادات EmailJS الخاصة بك
-const EMAILJS_SERVICE_ID = "service_ptbss3h";
-const EMAILJS_TEMPLATE_ID = "YOUR_TEMPLATE_ID"; // صايب Template في EmailJS وخد ID ديالو
-const EMAILJS_PUBLIC_KEY = "YOUR_PUBLIC_KEY"; // خدها من Account Settings في EmailJS
+// ============================================
+// 1. حساب السعر الفعلي (يدعم promoPrice)
+// ============================================
+function getEffectivePrice(item) {
+    return item.promoPrice && item.promoPrice < item.price ? item.promoPrice : item.price;
+}
 
-async function processOrder(e) {
-    e.preventDefault();
-    const btn = e.target.querySelector('button[type="submit"]');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري معالجة الطلب...';
+// ============================================
+// 2. عرض ملخص الطلب في صفحة Checkout
+// ============================================
+function renderOrderSummary() {
+    const cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
 
-    const cart = JSON.parse(localStorage.getItem('parashop_cart')) || [];
     if (cart.length === 0) {
-        showToast("سلتك فارغة!", "error");
-        btn.disabled = false;
+        showToast('سلتك فارغة! سيتم تحويلك للمتجر.', 'error');
+        setTimeout(() => { window.location.href = 'shop.html'; }, 1500);
         return;
     }
 
-    const total = cart.reduce((sum, item) => sum + (item.promoPrice || item.price) * item.quantity, 0);
-    const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+    let total = 0;
+    let html = '';
+
+    cart.forEach(item => {
+        const price = getEffectivePrice(item);
+        const subtotal = price * (item.quantity || 1);
+        total += subtotal;
+
+        html += `
+            <div style="display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #f0f0f0;">
+                <img src="${item.imageUrl}" alt="${item.name}" style="width:55px; height:55px; object-fit:cover; border-radius:10px; border:1px solid #eee;">
+                <div style="flex:1;">
+                    <p style="margin:0; font-weight:700; font-size:0.9rem; color:#333;">${item.name}</p>
+                    <p style="margin:4px 0 0; color:#9e9e9e; font-size:0.8rem;">${formatCurrency(price)} × ${item.quantity || 1}</p>
+                </div>
+                <span style="font-weight:800; color:#0d7c3e; white-space:nowrap;">${formatCurrency(subtotal)}</span>
+            </div>
+        `;
+    });
+
+    if (summaryList) summaryList.innerHTML = html;
+    if (orderTotalEl) orderTotalEl.textContent = formatCurrency(total);
+}
+
+// ============================================
+// 3. معالجة الطلب (COD فقط - بدون Stripe)
+// ============================================
+async function processOrder(e) {
+    e.preventDefault();
+
+    const btn = e.target.querySelector('button[type="submit"]');
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري معالجة الطلب...';
+
+    const cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
+    if (cart.length === 0) {
+        showToast("سلتك فارغة!", "error");
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        return;
+    }
+
+    // التحقق من الحقول
+    const firstName = document.getElementById('firstName').value.trim();
+    const lastName = document.getElementById('lastName').value.trim();
+    const whatsapp = document.getElementById('whatsapp').value.trim();
+    const city = document.getElementById('city').value.trim();
+    const address = document.getElementById('address').value.trim();
+
+    if (!firstName || !lastName || !whatsapp || !city || !address) {
+        showToast("المرجو ملء جميع الحقول الإجبارية", "error");
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        return;
+    }
+
+    const phoneRegex = /^(06|07|05)\d{8}$/;
+    if (!phoneRegex.test(whatsapp)) {
+        showToast("رقم واتساب غير صالح (مثال: 0675698351)", "error");
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        return;
+    }
+
+    const email = (document.getElementById('email')?.value || '').trim();
+    const total = cart.reduce((sum, item) => sum + getEffectivePrice(item) * (item.quantity || 1), 0);
 
     const orderData = {
-        firstName: document.getElementById('firstName').value,
-        lastName: document.getElementById('lastName').value,
-        email: document.getElementById('email').value,
-        whatsapp: document.getElementById('whatsapp').value,
-        city: document.getElementById('city').value,
-        address: document.getElementById('address').value,
+        firstName,
+        lastName,
+        email,
+        whatsapp,
+        city,
+        address,
         items: cart,
-        total: total,
-        paymentMethod: paymentMethod,
+        total,
+        paymentMethod: 'COD',
         status: 'pending',
         createdAt: serverTimestamp()
     };
 
     try {
-        // 1. تسجيل الطلب في Firestore
         const docRef = await addDoc(collection(db, "orders"), orderData);
         const orderId = docRef.id;
 
-        // 2. إرسال إشعار بالإيميل عبر EmailJS
-        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-            customer_name: orderData.firstName + " " + orderData.lastName,
-            order_id: orderId,
-            total_amount: formatCurrency(total),
-            customer_whatsapp: orderData.whatsapp,
-            customer_email: orderData.email
-        }, EMAILJS_PUBLIC_KEY);
-
-        // 3. مسح السلة
-        localStorage.removeItem('parashop_cart');
+        // مسح السلة
+        localStorage.removeItem(CART_KEY);
         updateCartCount();
 
-        // 4. فتح الواتساب تلقائياً لتأكيد الطلب (نمرتك: +212675698351)
-        const waMessage = `مرحباً Parashop Tawfiq، قمت بطلب رقم #${orderId.slice(0,6)} بمبلغ ${formatCurrency(total)}. المرجو تأكيد الطلب.`;
+        // بناء رسالة واتساب
+        const itemsList = cart.map((item, i) => {
+            const p = getEffectivePrice(item);
+            return `${i+1}. ${item.name} × ${item.quantity || 1} = ${formatCurrency(p * (item.quantity || 1))}`;
+        }).join('\n');
+
+        const waMessage = `🛒 *طلب جديد - Parashop Tawfiq*
+
+👤 *العميل:* ${firstName} ${lastName}
+📞 *واتساب:* ${whatsapp}
+📧 *الإيميل:* ${email || 'غير محدد'}
+🏙️ *المدينة:* ${city}
+📍 *العنوان:* ${address}
+
+📦 *المنتجات:*
+${itemsList}
+
+💰 *المجموع:* ${formatCurrency(total)}
+💳 *طريقة الدفع:* الدفع عند الاستلام
+🆔 *رقم الطلب:* #${orderId.slice(0,8)}
+🕐 *التاريخ:* ${new Date().toLocaleString('ar-MA')}`;
+
         const waUrl = `https://wa.me/212675698351?text=${encodeURIComponent(waMessage)}`;
-        
-        showToast("تم تسجيل طلبك بنجاح! جاري تحويلك للواتساب...", "success");
-        
+
+        // تحويل لصفحة النجاح أو واتساب
+        showToast("✅ تم تسجيل طلبك بنجاح!", "success");
+
         setTimeout(() => {
-            window.location.href = waUrl;
-        }, 2000);
+            window.open(waUrl, '_blank');
+            window.location.href = 'success.html';
+        }, 1500);
 
     } catch (error) {
-        console.error(error);
-        showToast("حدث خطأ في الشبكة، حاول ثانية", "error");
+        console.error("Order error:", error);
+        showToast("حدث خطأ أثناء تسجيل الطلب. حاول مرة أخرى.", "error");
         btn.disabled = false;
+        btn.innerHTML = originalText;
     }
 }
 
+// ============================================
+// 4. التهيئة
+// ============================================
 if (checkoutForm) {
     checkoutForm.addEventListener('submit', processOrder);
 }
+
+// عرض ملخص الطلب عند فتح الصفحة
+renderOrderSummary();
+console.log("Checkout.js v2 Loaded ✅");
