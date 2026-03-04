@@ -142,7 +142,7 @@
         async function loadOrders(user) {
             const container = document.getElementById('orders-container');
             try {
-                // Query orders - fetch all and filter client-side (Firestore rules allow read for auth users)
+                // Query orders - fetch all and filter by email (Firestore rules allow read for auth users)
                 const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
                 const snapshot = await getDocs(q);
 

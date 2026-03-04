@@ -103,9 +103,9 @@
 
                 <div class="qty-box">
                     <span style="color:#424242; font-weight:600;">الكمية:</span>
-                    <button class="qty-btn" onclick="changeQty(-1)">−</button>
+                    <button class="qty-btn" onclick="changeQty(-1)" aria-label="تقليل الكمية">−</button>
                     <span class="qty-val" id="qty-val">1</span>
-                    <button class="qty-btn" onclick="changeQty(1)">+</button>
+                    <button class="qty-btn" onclick="changeQty(1)" aria-label="زيادة الكمية">+</button>
                 </div>
 
                 <button class="btn-add-cart" id="btn-add-cart" onclick="addProductToCart()">
@@ -172,9 +172,9 @@
         };
 
         window.copyLink = function() {
-            navigator.clipboard.writeText(window.location.href).then(() => {
-                showToast('تم نسخ الرابط!', 'success');
-            });
+            navigator.clipboard.writeText(window.location.href)
+                .then(() => showToast('تم نسخ الرابط!', 'success'))
+                .catch(() => showToast('تعذّر نسخ الرابط. انسخه يدوياً.', 'error'));
         };
 
         async function loadProduct() {

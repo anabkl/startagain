@@ -28,7 +28,7 @@
             <div class="input-group"><label>البريد الإلكتروني *</label><input type="email" id="email" required></div>
             <div class="input-group"><label>كلمة المرور *</label><input type="password" id="pass" minlength="6" required></div>
             <button type="submit" class="btn-reg">تأكيد التسجيل</button>
-        <p id="reg-error" style="display:none; margin-top:15px; background:#ffebee; color:#c62828; padding:12px; border-radius:8px; font-size:0.95rem;"></p>
+        <p id="reg-error" style="display:none; margin-top:15px; background:#ffebee; color:#c62828; padding:12px; border-radius:8px; font-size:0.95rem;"><i class="fas fa-exclamation-circle" style="margin-left:6px;"></i><span id="reg-error-text"></span></p>
         </form>
         <p style="text-align:center; margin-top:20px; font-size:0.9rem;">لديك حساب بالفعل؟ <a href="login.html" style="color:#0d7c3e; font-weight:bold;">تسجيل الدخول</a></p>
     </div>
@@ -37,13 +37,14 @@
         import { registerUser } from './js/auth.js';
 
         const regForm = document.getElementById('regForm');
-        const errorBox = document.getElementById('reg-error');
 
         function showError(msg, code) {
+            const errorBox = document.getElementById('reg-error');
+            const errorText = document.getElementById('reg-error-text');
             if (code === 'auth/email-already-in-use') {
-                errorBox.innerHTML = `هذا البريد الإلكتروني مستخدم بالفعل. <a href="login.html" style="color:#0d7c3e; font-weight:bold;">جرب تسجيل الدخول</a>`;
+                errorText.innerHTML = `هذا البريد الإلكتروني مستخدم بالفعل. <a href="login.html" style="color:#c62828; font-weight:bold; text-decoration:underline;">جرب تسجيل الدخول</a>`;
             } else {
-                errorBox.textContent = msg;
+                errorText.textContent = msg;
             }
             errorBox.style.display = 'block';
         }

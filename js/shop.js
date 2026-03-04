@@ -15,6 +15,12 @@ function escapeHtml(str) {
     return div.innerHTML;
 }
 
+function safeCssUrl(url) {
+    if (!url) return 'assets/images/photopharamcie.png';
+    if (!/^(https?:|data:)/.test(url)) return 'assets/images/photopharamcie.png';
+    return url.replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29');
+}
+
 async function fetchProducts() {
     if (!productsContainer) return;
     
@@ -54,7 +60,8 @@ function buildCategoryButtons(products) {
     
     let html = '<button onclick="filterByCategory(\'all\')" class="cat-btn active" id="cat-all">الكل</button>';
     categories.forEach(cat => {
-        html += `<button onclick="filterByCategory('${escapeHtml(cat)}')" class="cat-btn">${escapeHtml(cat)}</button>`;
+        const safeCat = cat.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        html += `<button onclick="filterByCategory('${safeCat}')" class="cat-btn">${escapeHtml(cat)}</button>`;
     });
     categoryButtons.innerHTML = html;
 }
@@ -78,7 +85,7 @@ function displayProducts(products) {
 
             const typeBadge = product.packType === 'باك ترويجي' ? '📦 باك ترويجي' : '🔥 عرض خاص';
             packCard.innerHTML = `
-                <div style="flex-shrink:0; width:160px; height:160px; background: url('${escapeHtml(product.imageUrl || 'assets/images/photopharamcie.png')}') center/cover no-repeat; border-radius:12px; border:3px solid rgba(255,255,255,0.4);"></div>
+                <div style="flex-shrink:0; width:160px; height:160px; background: url('${safeCssUrl(product.imageUrl)}') center/cover no-repeat; border-radius:12px; border:3px solid rgba(255,255,255,0.4);"></div>
                 <div style="flex-grow:1; color:#fff; text-align:right;">
                     <span style="background:rgba(255,255,255,0.2); padding:4px 12px; border-radius:20px; font-size:0.85rem; font-weight:bold;">${typeBadge}</span>
                     <h2 style="margin:10px 0 8px; font-size:1.5rem; font-weight:900;">${escapeHtml(product.name)}</h2>
@@ -128,14 +135,14 @@ function displayProducts(products) {
 
         // Navigate to product detail on card click (except buttons)
         card.onclick = (e) => {
-            if (e.target.tagName !== 'BUTTON' && !e.target.closest('button')) {
+            if (e.target.tagName.toUpperCase() !== 'BUTTON' && !e.target.closest('button')) {
                 window.location.href = `product.html?id=${product.id}`;
             }
         };
 
         card.innerHTML = `
             ${badgeHtml}
-            <div style="background: url('${product.imageUrl || 'assets/images/photopharamcie.png'}') center/contain no-repeat; height: 180px; border-radius:12px; margin-bottom:15px;"></div>
+            <div style="background: url('${safeCssUrl(product.imageUrl)}') center/contain no-repeat; height: 180px; border-radius:12px; margin-bottom:15px;"></div>
             
             <div style="text-align:right; flex-grow:1; display:flex; flex-direction:column;">
                 <span style="color:#757575; font-size:0.85rem;">${escapeHtml(product.category || 'غير محدد')}</span>

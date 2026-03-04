@@ -42,7 +42,7 @@ export async function registerUser(email, password, userData, onError) {
 function getRegisterErrorMessage(code) {
     switch (code) {
         case 'auth/email-already-in-use':
-            return 'email-already-in-use';
+            return 'هذا البريد الإلكتروني مستخدم بالفعل. جرب تسجيل الدخول.';
         case 'auth/weak-password':
             return 'كلمة المرور ضعيفة جداً. استخدم 6 أحرف على الأقل.';
         case 'auth/invalid-email':
