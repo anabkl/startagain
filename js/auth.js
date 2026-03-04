@@ -9,7 +9,7 @@ import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.8.1/f
 import { showToast } from './utils.js';
 
 // --- 1. خلق حساب جديد (Register) ---
-export async function registerUser(email, password, userData) {
+export async function registerUser(email, password, userData, onError) {
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
@@ -22,7 +22,7 @@ export async function registerUser(email, password, userData) {
             whatsapp: userData.whatsapp,
             city: userData.city,
             address: userData.address,
-            role: 'client', // افتراضياً أي واحد كيتسجل هو كليان
+            role: 'client',
             createdAt: new Date().toISOString()
         });
 
@@ -30,7 +30,27 @@ export async function registerUser(email, password, userData) {
         window.location.href = 'index.html';
     } catch (error) {
         console.error(error);
-        showToast("خطأ في التسجيل: " + error.message, "error");
+        const msg = getRegisterErrorMessage(error.code);
+        if (typeof onError === 'function') {
+            onError(msg, error.code);
+        } else {
+            showToast(msg, "error");
+        }
+    }
+}
+
+function getRegisterErrorMessage(code) {
+    switch (code) {
+        case 'auth/email-already-in-use':
+            return 'هذا البريد الإلكتروني مستخدم بالفعل. جرب تسجيل الدخول.';
+        case 'auth/weak-password':
+            return 'كلمة المرور ضعيفة جداً. استخدم 6 أحرف على الأقل.';
+        case 'auth/invalid-email':
+            return 'صيغة البريد الإلكتروني غير صالحة.';
+        case 'auth/operation-not-allowed':
+            return 'تسجيل الحسابات غير مفعّل حالياً. تواصل معنا.';
+        default:
+            return 'حدث خطأ أثناء التسجيل. حاول مرة أخرى.';
     }
 }
 

@@ -10,8 +10,8 @@
     <style>
         .filter-section { text-align: center; margin: 40px 0; }
         .filter-section input { width: 100%; max-width: 500px; padding: 15px; border-radius: 8px; border: 1px solid var(--green-main); margin-bottom: 20px; font-family: inherit; }
-        #category-buttons button { background: var(--white); color: var(--green-dark); border: 2px solid var(--green-main); padding: 10px 20px; border-radius: 20px; margin: 5px; cursor: pointer; transition: 0.3s; font-weight: bold; }
-        #category-buttons button:hover { background: var(--green-main); color: var(--white); }
+        .cat-btn { background: var(--white); color: var(--green-dark); border: 2px solid var(--green-main); padding: 10px 20px; border-radius: 20px; margin: 5px; cursor: pointer; transition: 0.3s; font-weight: bold; font-family: inherit; }
+        .cat-btn:hover, .cat-btn.active { background: var(--green-main); color: var(--white); }
     </style>
 </head>
 <body>
@@ -33,13 +33,8 @@
     <main class="container">
         <div class="filter-section">
             <input type="text" class="header__search-input" id="search-bar" placeholder="ابحث عن منتج، علامة تجارية...">
-            <div id="category-buttons">
-                <button onclick="filterByCategory('all')">الكل</button>
-                <button onclick="filterByCategory('الوجه')">العناية بالوجه</button>
-                <button onclick="filterByCategory('الشعر')">العناية بالشعر</button>
-                <button onclick="filterByCategory('الطفل')">الأطفال والرضع</button>
-                <button onclick="filterByCategory('مكملات')">مكملات غذائية</button>
-                <button onclick="filterByCategory('معدات')">معدات طبية</button>
+            <div id="category-buttons" style="margin-top:15px;">
+                <button onclick="filterByCategory('all')" class="cat-btn active" id="cat-all">الكل</button>
             </div>
         </div>
 
@@ -50,5 +45,10 @@
 
     <script type="module" src="js/shop.js?v=v2"></script>
     <script type="module" src="js/main.js"></script>
+
+    <!-- WhatsApp Float -->
+    <a href="https://wa.me/212675698351" target="_blank" aria-label="واتساب" style="background:#25D366; position:fixed; bottom:20px; right:20px; width:60px; height:60px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:35px; box-shadow:0 4px 10px rgba(0,0,0,0.3); z-index:1000; transition:0.3s; text-decoration:none;">
+        <i class="fab fa-whatsapp"></i>
+    </a>
 </body>
 </html>
