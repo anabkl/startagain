@@ -56,3 +56,15 @@ async function fetchOrders() {
         ordersList.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red;">خطأ في الصلاحيات. تأكد أنك Admin.</td></tr>';
     }
 }
+
+// دالة لتغيير حالة الطلب يدوياً من طرف العامل
+window.updateOrderStatus = async function(orderId, newStatus) {
+    try {
+        const orderRef = doc(db, "orders", orderId);
+        await updateDoc(orderRef, { status: newStatus });
+        showToast("تم تحديث حالة الطلب ✅", "success");
+        fetchOrders(); // إعادة تحميل الجدول
+    } catch (err) {
+        showToast("خطأ في التحديث", "error");
+    }
+};
