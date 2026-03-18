@@ -96,10 +96,11 @@ function renderCart() {
     });
 
     // --- تحديث DOM ---
-    cartItemsContainer.innerHTML = tableHTML;
-    cartCardsContainer.innerHTML = cardsHTML;
-    cartTotalElement.innerText   = total.toFixed(2) + ' DH';
-    cartCountElement.innerText   = totalQty;
+    // --- تحديث DOM ---
+    if (cartItemsContainer) cartItemsContainer.innerHTML = tableHTML;
+    if (cartCardsContainer) cartCardsContainer.innerHTML = cardsHTML; // زدنا هاد الشرط باش ما يتبلونطاش
+    if (cartTotalElement) cartTotalElement.innerText = total.toFixed(2) + ' DH';
+    if (cartCountElement) cartCountElement.innerText = totalQty;
 }
 
 // ============================================

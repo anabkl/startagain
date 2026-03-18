@@ -57,7 +57,8 @@ function renderOrderSummary() {
 async function processOrder(e) {
     e.preventDefault();
 
-    const btn = e.target.querySelector('button[type="submit"]');
+    // قلبنا على البوطونة بالـ class ديالها حيت كاينه برا الفورم
+    const btn = document.querySelector('.btn-confirm'); 
     const originalText = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري معالجة الطلب...';
@@ -73,7 +74,7 @@ async function processOrder(e) {
     // التحقق من الحقول
     const firstName = document.getElementById('firstName').value.trim();
     const lastName = document.getElementById('lastName').value.trim();
-    const whatsapp = document.getElementById('whatsapp').value.trim();
+    const whatsapp = document.getElementById('whatsapp').value.trim().replace(/\s+/g, '');
     const city = document.getElementById('city').value.trim();
     const address = document.getElementById('address').value.trim();
 
