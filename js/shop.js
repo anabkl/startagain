@@ -6,6 +6,7 @@ import { updateCartCount } from './main.js';
 const productsContainer = document.getElementById('products-container');
 const searchBar = document.getElementById('search-bar');
 const categoryButtons = document.getElementById('category-buttons');
+let countdownInterval;
 
 let allProducts = [];
 
@@ -92,6 +93,7 @@ function buildCategoryButtons(products) {
 function displayProducts(products) {
     productsContainer.innerHTML = '';
     
+    if (countdownInterval) clearInterval(countdownInterval);
     if (products.length === 0) {
         productsContainer.innerHTML = '<p style="text-align:center; width:100%; font-size:1.2rem; color:#757575;">لا توجد منتجات مطابقة لبحثك.</p>';
         return;
@@ -100,6 +102,17 @@ function displayProducts(products) {
     products.forEach(product => {
         if (product.type === 'pack') {
             const promoPrice = product.promoPrice;
+            
+            // التحقق من وجود وقت انتهاء العرض
+            let countdownHtml = '';
+            if (product.endTime && product.endTime > Date.now()) {
+                countdownHtml = `
+                <div style="background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 8px; margin-bottom: 12px; display: inline-block;">
+                    <span style="font-weight: bold; font-size: 0.9rem;">⏳ ينتهي العرض في:</span>
+                    <span class="flash-countdown" data-endtime="${product.endTime}" style="font-family: monospace; font-size: 1rem; font-weight: bold; color: #fff; background: #e74c3c; padding: 2px 8px; border-radius: 4px; direction: ltr; display: inline-block;">جاري الحساب...</span>
+                </div>`;
+            }
+
             const packCard = document.createElement('div');
             packCard.className = 'pack-promo-card';
             packCard.style.cssText = 'width:100%; background: linear-gradient(135deg, #0d7c3e, #1a9e52); border-radius:16px; box-shadow:0 6px 25px rgba(13,124,62,0.3); padding:25px 30px; margin-bottom:20px; display:flex; align-items:center; gap:25px; cursor:pointer; transition:transform 0.3s;';
@@ -112,8 +125,9 @@ function displayProducts(products) {
                 <div style="flex-grow:1; color:#fff; text-align:right;">
                     <span style="background:rgba(255,255,255,0.2); padding:4px 12px; border-radius:20px; font-size:0.85rem; font-weight:bold;">${typeBadge}</span>
                     <h2 style="margin:10px 0 8px; font-size:1.5rem; font-weight:900;">${escapeHtml(product.name)}</h2>
-                    <p style="margin:0 0 15px; opacity:0.9; font-size:0.95rem; line-height:1.6;">${escapeHtml(product.description || '')}</p>
-                    <div style="display:flex; align-items:center; gap:20px;">
+                    <p style="margin:0 0 10px; opacity:0.9; font-size:0.95rem; line-height:1.6;">${escapeHtml(product.description || '')}</p>
+                    
+                    ${countdownHtml} <div style="display:flex; align-items:center; gap:20px;">
                         ${promoPrice ? `<span style="font-size:1.8rem; font-weight:900;">${formatCurrency(promoPrice)}</span>` : ''}
                         <button class="btn" style="background:#fff; color:#0d7c3e; border:none; padding:12px 25px; border-radius:10px; cursor:pointer; font-weight:bold; font-size:1rem; transition:background 0.3s;" onclick="addToCart('${escapeHtml(product.id)}')">
                             <i class="fas fa-cart-plus"></i> أضف للسلة
@@ -182,6 +196,28 @@ function displayProducts(products) {
         `;
         productsContainer.appendChild(card);
     });
+// تشغيل العداد التنازلي فصفحة المتجر
+    countdownInterval = setInterval(() => {
+        document.querySelectorAll('.flash-countdown').forEach(el => {
+            const end = parseInt(el.getAttribute('data-endtime'));
+            const diff = end - Date.now();
+            
+            if (diff <= 0) {
+                el.innerHTML = "انتهى العرض 🚫";
+                el.style.background = "#757575";
+                return;
+            }
+            
+            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            const s = Math.floor((diff % (1000 * 60)) / 1000);
+            
+            let timeStr = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            if (d > 0) timeStr = `${d}يوم و ` + timeStr;
+            el.innerHTML = timeStr;
+        });
+    }, 1000);
 }
 
 if (searchBar) {
