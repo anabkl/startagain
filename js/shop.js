@@ -9,6 +9,29 @@ const categoryButtons = document.getElementById('category-buttons');
 
 let allProducts = [];
 
+// --- خوارزميات البحث الذكي (Smart Search) ---
+function normalizeSearchText(text) {
+    if (!text) return '';
+    return text.toLowerCase().trim()
+        .replace(/[أإآ]/g, 'ا')
+        .replace(/ة/g, 'ه')
+        .replace(/ى/g, 'ي')
+        .replace(/[\u064B-\u065F]/g, ''); // مسح التشكيل
+}
+
+function smartMatch(target, query) {
+    if (!target) return false;
+    const normTarget = normalizeSearchText(target);
+    const normQuery = normalizeSearchText(query);
+    
+    // تقسيم البحث لكلمات باش يقدر يقلب عليهم واخا يكونو متباعدين
+    const queryWords = normQuery.split(' ').filter(word => word.length > 0);
+    
+    // خاص كل الكلمات اللي كتب الكليان تكون كاينة فـ اسم المنتج أو الماركة
+    return queryWords.every(word => normTarget.includes(word));
+}
+// ----------------------------------------------
+
 function escapeHtml(str) {
     const div = document.createElement('div');
     div.appendChild(document.createTextNode(str || ''));
@@ -35,14 +58,14 @@ async function fetchProducts() {
         const params = new URLSearchParams(window.location.search);
         const q = params.get('q');
         if (q) {
-            if (searchBar) searchBar.value = q;
-            const filtered = allProducts.filter(p =>
-                (p.name && p.name.toLowerCase().includes(q.toLowerCase())) ||
-                (p.brand && p.brand.toLowerCase().includes(q.toLowerCase())) ||
-                (p.category && p.category.toLowerCase().includes(q.toLowerCase()))
-            );
-            displayProducts(filtered);
-        } else {
+                if (searchBar) searchBar.value = q;
+                const filtered = allProducts.filter(product =>
+                    smartMatch(product.name, q) ||
+                    smartMatch(product.brand, q) ||
+                    smartMatch(product.category, q)
+                );
+                displayProducts(filtered);
+            } else {
             displayProducts(allProducts);
         }
     } catch (error) {
@@ -163,16 +186,18 @@ function displayProducts(products) {
 
 if (searchBar) {
     searchBar.addEventListener('input', (e) => {
-        const searchTerm = e.target.value.toLowerCase().trim();
-        // Deactivate all category buttons
+        const searchTerm = e.target.value;
+        
+        // إرجاع زر "الكل" للحالة النشطة
         document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
         const catAll = document.getElementById('cat-all');
         if (catAll) catAll.classList.add('active');
 
+        // تطبيق خوارزمية البحث الذكي
         const filteredProducts = allProducts.filter(product => 
-            (product.name && product.name.toLowerCase().includes(searchTerm)) || 
-            (product.brand && product.brand.toLowerCase().includes(searchTerm)) || 
-            (product.category && product.category.toLowerCase().includes(searchTerm))
+            smartMatch(product.name, searchTerm) || 
+            smartMatch(product.brand, searchTerm) || 
+            smartMatch(product.category, searchTerm)
         );
         displayProducts(filteredProducts);
     });

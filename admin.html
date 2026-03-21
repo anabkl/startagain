@@ -109,6 +109,12 @@
               </select>
             </div>
           </div>
+          <div class="form-group" id="endTimeGroup">
+            <label>تاريخ ووقت انتهاء العرض (Flash Sale ⏱️)</label>
+            <input type="datetime-local" name="endTime" id="endTimeInput" />
+            <small style="color: #757575;">خوي هاد الخانة يلا ما بغيتيش العرض يسالي.</small>
+          </div>
+
           <button type="submit" class="btn-submit"><i class="fas fa-save"></i> حفظ الباك / البانر</button>
           <p id="packStatus" class="status-msg"></p>
         </form>
@@ -220,7 +226,7 @@
       }
     });
 
-    // ---- Pack/Banner form ----
+   // ---- Pack/Banner form ----
     document.getElementById('packForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = e.target;
@@ -233,19 +239,24 @@
         const data = new FormData(form);
         const { imageUrl, imagePath } = await uploadImage(data.get('image'), 'packs');
 
+        // جلب وقت النهاية وتحويله لـ Timestamp 
+        const endTimeValue = data.get('endTime');
+        const endTimeStamp = endTimeValue ? new Date(endTimeValue).getTime() : null;
+
         await addDoc(collection(db, 'products'), {
           type: 'pack',
           name: data.get('name').trim(),
           description: data.get('description').trim(),
           promoPrice: Number(data.get('promoPrice')),
           packType: data.get('packType'),
+          endTime: endTimeStamp, // هادي لي كتسجل الوقت فـ Firebase
           imageUrl,
           imagePath,
           createdAt: serverTimestamp(),
           createdBy: auth.currentUser.uid,
         });
 
-        showStatus(statusEl, '✅ تم حفظ الباك / البانر بنجاح!', 'success');
+        showStatus(statusEl, '✅ تم حفظ الباك / العرض بنجاح!', 'success');
         form.reset();
       } catch (err) {
         console.error(err);
