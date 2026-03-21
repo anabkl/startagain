@@ -227,42 +227,61 @@
     });
 
    // ---- Pack/Banner form ----
-    document.getElementById('packForm').addEventListener('submit', async (e) => {
+   document.getElementById('packForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const form = e.target;
       const statusEl = document.getElementById('packStatus');
       const btn = form.querySelector('.btn-submit');
+      
       btn.disabled = true;
-      showStatus(statusEl, 'جارٍ الرفع...', '');
+      showStatus(statusEl, 'جارٍ الرفع... (المرجو الانتظار)', '');
 
       try {
+        console.log("1. بدأ جمع البيانات...");
         const data = new FormData(form);
-        const { imageUrl, imagePath } = await uploadImage(data.get('image'), 'packs');
+        
+        console.log("2. جاري رفع الصورة...");
+        const imageFile = data.get('image');
+        if (!imageFile || imageFile.size === 0) {
+            throw new Error("المرجو اختيار صورة صالحة!");
+        }
+        const { imageUrl, imagePath } = await uploadImage(imageFile, 'packs');
+        console.log("3. تم رفع الصورة بنجاح:", imageUrl);
 
-        // جلب وقت النهاية وتحويله لـ Timestamp 
+        // حماية متقدمة لتاريخ الانتهاء باش ما يكراشيش
+        let endTimeStamp = null;
         const endTimeValue = data.get('endTime');
-        const endTimeStamp = endTimeValue ? new Date(endTimeValue).getTime() : null;
+        if (endTimeValue) {
+            const parsedDate = new Date(endTimeValue);
+            if (!isNaN(parsedDate.getTime())) {
+                endTimeStamp = parsedDate.getTime();
+            }
+        }
+        console.log("4. وقت الانتهاء:", endTimeStamp);
 
+        console.log("5. جاري الحفظ في Firestore...");
         await addDoc(collection(db, 'products'), {
           type: 'pack',
           name: data.get('name').trim(),
           description: data.get('description').trim(),
           promoPrice: Number(data.get('promoPrice')),
           packType: data.get('packType'),
-          endTime: endTimeStamp, // هادي لي كتسجل الوقت فـ Firebase
-          imageUrl,
-          imagePath,
+          endTime: endTimeStamp,
+          imageUrl: imageUrl,
+          imagePath: imagePath,
           createdAt: serverTimestamp(),
           createdBy: auth.currentUser.uid,
         });
 
+        console.log("6. تمت العملية بنجاح!");
         showStatus(statusEl, '✅ تم حفظ الباك / العرض بنجاح!', 'success');
         form.reset();
       } catch (err) {
-        console.error(err);
+        console.error("خطأ أثناء الحفظ:", err);
         showStatus(statusEl, `❌ فشل الحفظ: ${err.message}`, 'error');
       } finally {
         btn.disabled = false;
+        console.log("7. تم إعادة تفعيل الزر.");
       }
     });
   </script>
