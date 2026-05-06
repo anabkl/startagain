@@ -53,7 +53,7 @@ export async function saveOrder(orderData) {
 export function buildWhatsAppOrderMessage(order, orderId, formatCurrency) {
     const itemsList = order.items.map((item, index) => {
         const quantity = item.quantity || 1;
-        const price = item.effectivePrice || item.promoPrice || item.price || 0;
+        const price = item.effectivePrice || item.priceMAD || item.promoPrice || item.price || 0;
         return `${index + 1}. ${item.name} x ${quantity} = ${formatCurrency(price * quantity)}`;
     }).join('\n');
 

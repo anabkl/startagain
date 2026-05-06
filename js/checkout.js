@@ -1,6 +1,7 @@
 import { getCart, saveCart } from './main.js';
 import { showToast, formatCurrency } from './utils.js';
 import { saveOrder, buildWhatsAppOrderMessage } from './order-service.js';
+import { getProductImage } from './catalog.js';
 
 const checkoutForm = document.getElementById('checkout-form');
 const orderTotalEl = document.getElementById('order-total-amount');
@@ -14,7 +15,7 @@ function escapeHtml(value) {
 }
 
 function getEffectivePrice(item) {
-    return Number(item.effectivePrice || item.promoPrice || item.discountPrice || item.price || 0);
+    return Number(item.effectivePrice || item.priceMAD || item.promoPrice || item.discountPrice || item.price || 0);
 }
 
 function getCartTotal(cart) {
@@ -37,7 +38,7 @@ function renderOrderSummary() {
             const price = getEffectivePrice(item);
             return `
                 <div class="summary-product">
-                    <img src="${escapeHtml(item.imageUrl || 'assets/images/photopharamcie.png')}" alt="${escapeHtml(item.name)}">
+                    <img src="${escapeHtml(getProductImage(item))}" alt="${escapeHtml(item.name)}" loading="lazy">
                     <div>
                         <strong>${escapeHtml(item.name)}</strong>
                         <span>${formatCurrency(price)} x ${item.quantity || 1}</span>

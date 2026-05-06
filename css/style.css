@@ -765,6 +765,18 @@ img {
     font-size: 0.86rem;
 }
 
+.product-card__description {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: 42px;
+    margin: 0 0 12px;
+    color: #64748b;
+    font-size: 0.84rem;
+    line-height: 1.45;
+}
+
 .product-card__rating {
     display: inline-flex;
     align-items: center;
@@ -1004,6 +1016,24 @@ img {
     font-size: 1.02rem;
 }
 
+.product-detail__stock {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 8px;
+    padding: 7px 10px;
+    border-radius: var(--pill);
+    background: var(--surface-soft);
+    color: var(--green-900);
+    font-size: 0.86rem;
+    font-weight: 900;
+}
+
+.product-detail__stock.out {
+    background: #fff1f1;
+    color: var(--danger);
+}
+
 .product-detail__price {
     display: flex;
     align-items: center;
@@ -1048,6 +1078,16 @@ img {
     background: var(--surface-soft);
     color: var(--green-900);
     font-size: 0.85rem;
+    font-weight: 900;
+}
+
+.product-detail__source {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+    color: var(--green-700);
+    font-size: 0.88rem;
     font-weight: 900;
 }
 

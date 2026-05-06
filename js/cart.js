@@ -1,6 +1,6 @@
 import { getCart, saveCart, updateCartCount } from './main.js';
 import { showToast, formatCurrency } from './utils.js';
-import { getCatalogProduct, getEffectivePrice as getCatalogEffectivePrice } from './catalog.js';
+import { getCatalogProduct, getEffectivePrice as getCatalogEffectivePrice, getProductImage, isProductUnavailable } from './catalog.js';
 
 const cartItemsContainer = document.getElementById('cart-items');
 const cartCardsContainer = document.getElementById('cart-cards');
@@ -17,7 +17,7 @@ function escapeHtml(value) {
 }
 
 function getEffectivePrice(item) {
-    return Number(item.effectivePrice || item.promoPrice || item.discountPrice || item.price || 0);
+    return Number(item.effectivePrice || item.priceMAD || item.promoPrice || item.discountPrice || item.price || 0);
 }
 
 function getTotal(cart) {
@@ -56,7 +56,7 @@ function renderDesktopRows(cart) {
         return `
             <tr class="cart-table__row">
                 <td class="cart-table__product">
-                    <img src="${escapeHtml(item.imageUrl || 'assets/images/photopharamcie.png')}" alt="${escapeHtml(item.name)}" class="cart-table__img">
+                    <img src="${escapeHtml(getProductImage(item))}" alt="${escapeHtml(item.name)}" class="cart-table__img" loading="lazy">
                     <div>
                         <span class="cart-table__name">${escapeHtml(item.name)}</span>
                         <small>${escapeHtml(item.brand || item.category || 'parapharmacie.me')}</small>
@@ -88,7 +88,7 @@ function renderMobileCards(cart) {
 
         return `
             <article class="cart-card">
-                <img src="${escapeHtml(item.imageUrl || 'assets/images/photopharamcie.png')}" alt="${escapeHtml(item.name)}" class="cart-card__img">
+                <img src="${escapeHtml(getProductImage(item))}" alt="${escapeHtml(item.name)}" class="cart-card__img" loading="lazy">
                 <div class="cart-card__details">
                     <h3 class="cart-card__name">${escapeHtml(item.name)}</h3>
                     <p class="cart-card__price">${formatCurrency(price)}</p>
@@ -151,7 +151,7 @@ async function hydrateCartFromQuery() {
     const qty = Math.max(1, Math.min(Number.parseInt(params.get('qty') || '1', 10) || 1, 20));
     const { product } = await getCatalogProduct(productId);
 
-    if (product && product.stock !== 0) {
+    if (product && !isProductUnavailable(product)) {
         const cart = getCart();
         const existing = cart.find((item) => item.id === product.id);
 
