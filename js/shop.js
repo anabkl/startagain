@@ -4,6 +4,8 @@ import {
     getEffectivePrice,
     getOldPrice,
     getProductImage,
+    getProductImageReviewLabel,
+    getProductInitials,
     isProductUnavailable,
     matchesCategory,
     matchesProduct
@@ -94,12 +96,14 @@ function renderProductCard(product) {
         ? '<span class="product-card__stock out">Rupture</span>'
         : `<span class="product-card__stock">${escapeHtml(product.stockStatus || 'En stock')}</span>`;
     const badge = product.promoBadge || (discount ? `-${discount}%` : product.badge || product.category || 'Parapharmacie');
+    const imageReviewLabel = getProductImageReviewLabel(product);
 
     return `
         <article class="product-card" data-reveal>
-            <a href="product.html?id=${encodeURIComponent(product.id)}" class="product-card__media" aria-label="Voir ${escapeHtml(product.name)}">
+            <a href="product.html?id=${encodeURIComponent(product.id)}" class="product-card__media product-image-frame" data-image-review="${product.imageNeedsReview ? 'true' : 'false'}" aria-label="Voir ${escapeHtml(product.name)}">
                 <span class="product-card__badge">${escapeHtml(badge)}</span>
-                <img src="${getProductImage(product)}" alt="${escapeHtml(product.name)}" loading="lazy">
+                <img src="${escapeHtml(getProductImage(product))}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" width="720" height="720">
+                ${product.imageNeedsReview ? `<span class="product-image-frame__initials" title="${escapeHtml(imageReviewLabel)}" aria-hidden="true">${escapeHtml(getProductInitials(product))}</span>` : ''}
             </a>
             <div class="product-card__body">
                 <div class="product-card__meta">

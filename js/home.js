@@ -5,6 +5,8 @@ import {
     getEffectivePrice,
     getOldPrice,
     getProductImage,
+    getProductImageReviewLabel,
+    getProductInitials,
     isProductUnavailable,
     testimonials,
     trustBadges
@@ -67,9 +69,10 @@ function renderProducts(products) {
 
     grid.innerHTML = featured.map((product) => `
         <article class="product-card" data-reveal>
-            <a href="product.html?id=${encodeURIComponent(product.id)}" class="product-card__media">
+            <a href="product.html?id=${encodeURIComponent(product.id)}" class="product-card__media product-image-frame" data-image-review="${product.imageNeedsReview ? 'true' : 'false'}">
                 <span class="product-card__badge">${escapeHtml(product.badge || 'Best seller')}</span>
-                <img src="${getProductImage(product)}" alt="${escapeHtml(product.name)}" loading="lazy">
+                <img src="${escapeHtml(getProductImage(product))}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" width="720" height="720">
+                ${product.imageNeedsReview ? `<span class="product-image-frame__initials" title="${escapeHtml(getProductImageReviewLabel(product))}" aria-hidden="true">${escapeHtml(getProductInitials(product))}</span>` : ''}
             </a>
             <div class="product-card__body">
                 <div class="product-card__meta">

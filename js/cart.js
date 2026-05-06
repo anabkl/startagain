@@ -56,7 +56,7 @@ function renderDesktopRows(cart) {
         return `
             <tr class="cart-table__row">
                 <td class="cart-table__product">
-                    <img src="${escapeHtml(getProductImage(item))}" alt="${escapeHtml(item.name)}" class="cart-table__img" loading="lazy">
+                    <img src="${escapeHtml(getProductImage(item))}" alt="${escapeHtml(item.name)}" class="cart-table__img" loading="lazy" decoding="async" width="144" height="144">
                     <div>
                         <span class="cart-table__name">${escapeHtml(item.name)}</span>
                         <small>${escapeHtml(item.brand || item.category || 'parapharmacie.me')}</small>
@@ -88,7 +88,7 @@ function renderMobileCards(cart) {
 
         return `
             <article class="cart-card">
-                <img src="${escapeHtml(getProductImage(item))}" alt="${escapeHtml(item.name)}" class="cart-card__img" loading="lazy">
+                <img src="${escapeHtml(getProductImage(item))}" alt="${escapeHtml(item.name)}" class="cart-card__img" loading="lazy" decoding="async" width="144" height="144">
                 <div class="cart-card__details">
                     <h3 class="cart-card__name">${escapeHtml(item.name)}</h3>
                     <p class="cart-card__price">${formatCurrency(price)}</p>

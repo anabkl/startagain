@@ -112,6 +112,21 @@ export const categories = [
     }
 ];
 
+export const productImageFallbacks = {
+    visage: 'assets/products/category-fallback-visage.webp',
+    corps: 'assets/products/category-fallback-corps.webp',
+    cheveux: 'assets/products/category-fallback-cheveux.webp',
+    'bebe-maman': 'assets/products/category-fallback-bebe-maman.webp',
+    solaire: 'assets/products/category-fallback-solaire.webp',
+    hygiene: 'assets/products/category-fallback-hygiene.webp',
+    sante: 'assets/products/category-fallback-sante.webp',
+    'complements-alimentaires': 'assets/products/category-fallback-complements-alimentaires.webp',
+    homme: 'assets/products/category-fallback-homme.webp',
+    bio: 'assets/products/category-fallback-bio.webp',
+    'para-medical': 'assets/products/category-fallback-para-medical.webp',
+    promotions: 'assets/products/category-fallback-promotions.webp'
+};
+
 const categorySlugByName = Object.fromEntries(categories.map((category) => [category.name, category.slug]));
 
 const descriptionByCategory = {
@@ -1029,6 +1044,9 @@ function createProduct(product, index) {
     const ratingSeed = (index % 4) / 10;
     const reviews = 18 + ((index * 7) % 84);
     const hasPromo = Boolean(product.oldPriceMAD && product.oldPriceMAD > product.priceMAD);
+    const fallbackImage = productImageFallbacks[categorySlug] || PRODUCT_PLACEHOLDER;
+    const image = product.image || fallbackImage;
+    const usesGeneratedFallback = !product.image;
 
     return {
         ...product,
@@ -1038,9 +1056,12 @@ function createProduct(product, index) {
         promoBadge: product.promoBadge || (hasPromo ? 'Promo' : null),
         stockStatus: product.stockStatus || 'En stock',
         stock: product.stockStatus === 'Rupture de stock' ? 0 : 24,
-        image: product.image || PRODUCT_PLACEHOLDER,
-        imageUrl: product.image || PRODUCT_PLACEHOLDER,
+        image,
+        imageUrl: image,
         imageNeedsReview: product.imageNeedsReview ?? true,
+        imageSource: product.imageSource || (usesGeneratedFallback ? 'Generated owned category fallback asset by parapharmacie.me' : 'Approved product image source pending documentation'),
+        imageRightsStatus: product.imageRightsStatus || (usesGeneratedFallback ? 'owned-fallback-needs-approved-product-packshot' : 'needs-rights-review'),
+        imageReplacementNote: product.imageReplacementNote || 'Replace with an owned, distributor-supplied, or brand-approved ecommerce packshot before production launch.',
         shortDescription: product.shortDescription || descriptionByCategory[product.category],
         description: product.shortDescription || descriptionByCategory[product.category],
         tags: [
