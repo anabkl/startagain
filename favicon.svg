@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="parapharmacie.me">
+  <rect width="64" height="64" rx="14" fill="#075844"/>
+  <circle cx="45" cy="18" r="13" fill="#23a981" opacity=".75"/>
+  <path fill="#fff" d="M30 12h8v14h14v8H38v18h-8V34H12v-8h18V12Z"/>
+  <path fill="#e9f5fb" d="M18 48c9 4 20 4 30-3-2 7-9 11-18 11-5 0-9-2-12-8Z" opacity=".9"/>
+</svg>

@@ -10,8 +10,10 @@ const copyTargets = [
   'js',
   'netlify',
   'admin.css',
+  'favicon.svg',
   'netlify.toml',
   'robots.txt',
+  'site.webmanifest',
   'sitemap.xml',
   'firestore.rules',
   'storage.rules'
