@@ -6,6 +6,7 @@
     "dev": "vite --host 127.0.0.1",
     "build": "node scripts/build.mjs",
     "lint": "node scripts/validate.mjs",
+    "validate:catalog": "NODE_NO_WARNINGS=1 node scripts/validate-catalog.mjs",
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {
