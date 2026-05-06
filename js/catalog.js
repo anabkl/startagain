@@ -1,5 +1,5 @@
 import { isFirebaseEnabled } from './runtime-config.js';
-import { catalogProducts, categories, localCityKeywords } from './catalog-data.js';
+import { catalogProducts, categories, localCityKeywords, productImageFallbacks } from './catalog-data.js';
 
 const FALLBACK_IMAGE = 'assets/products/product-placeholder.svg';
 const CATEGORY_ALIASES = {
@@ -59,7 +59,23 @@ export const faqs = [
 ];
 
 export function getProductImage(product) {
-    return product?.image || product?.imageUrl || FALLBACK_IMAGE;
+    return product?.image || product?.imageUrl || productImageFallbacks[product?.categorySlug] || FALLBACK_IMAGE;
+}
+
+export function getProductInitials(product) {
+    const source = product?.brand || product?.name || 'PM';
+    return normalizeSearchText(source)
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((word) => word.charAt(0).toUpperCase())
+        .join('') || 'PM';
+}
+
+export function getProductImageReviewLabel(product) {
+    return product?.imageNeedsReview
+        ? 'Visuel indicatif a remplacer avant production'
+        : 'Visuel produit approuve';
 }
 
 export function getBasePrice(product) {
@@ -137,6 +153,9 @@ function normalizeExternalProduct(product) {
         image: product.image || product.imageUrl || FALLBACK_IMAGE,
         imageUrl: product.image || product.imageUrl || FALLBACK_IMAGE,
         imageNeedsReview: product.imageNeedsReview ?? true,
+        imageSource: product.imageSource || 'Firebase product image source pending documentation',
+        imageRightsStatus: product.imageRightsStatus || 'needs-rights-review',
+        imageReplacementNote: product.imageReplacementNote || 'Confirm ecommerce usage rights before production launch.',
         stockStatus: product.stockStatus || (product.stock === 0 ? 'Rupture de stock' : 'En stock')
     };
 }

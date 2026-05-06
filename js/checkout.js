@@ -38,7 +38,7 @@ function renderOrderSummary() {
             const price = getEffectivePrice(item);
             return `
                 <div class="summary-product">
-                    <img src="${escapeHtml(getProductImage(item))}" alt="${escapeHtml(item.name)}" loading="lazy">
+                    <img src="${escapeHtml(getProductImage(item))}" alt="${escapeHtml(item.name)}" loading="lazy" decoding="async" width="128" height="128">
                     <div>
                         <strong>${escapeHtml(item.name)}</strong>
                         <span>${formatCurrency(price)} x ${item.quantity || 1}</span>

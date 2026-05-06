@@ -6,9 +6,10 @@ const root = process.cwd();
 const productRoute = path.join(root, 'product.html');
 const catalogModuleUrl = pathToFileURL(path.join(root, 'js/catalog-data.js')).href;
 
-const { catalogProducts, categories } = await import(catalogModuleUrl);
+const { catalogProducts, categories, productImageFallbacks } = await import(catalogModuleUrl);
 
 const validCategories = new Set(categories.map((category) => category.name));
+const validFallbackImages = new Set(Object.values(productImageFallbacks));
 const ids = new Set();
 const errors = [];
 const warnings = [];
@@ -36,6 +37,9 @@ for (const product of catalogProducts) {
     if (!isValidPrice(Number(product.priceMAD))) fail(product, 'invalid priceMAD');
     if (!product.sourceUrl) fail(product, 'missing sourceUrl');
     if (!product.image) fail(product, 'missing image or fallback');
+    if (!product.imageSource) fail(product, 'missing imageSource');
+    if (!product.imageRightsStatus) fail(product, 'missing imageRightsStatus');
+    if (!product.imageReplacementNote) fail(product, 'missing imageReplacementNote');
     if (!product.stockStatus) fail(product, 'missing stockStatus');
     if (!product.shortDescription) fail(product, 'missing shortDescription');
     if (!Array.isArray(product.tags)) fail(product, 'tags must be an array');
@@ -64,10 +68,22 @@ for (const product of catalogProducts) {
         } catch {
             fail(product, `local image not found: ${product.image}`);
         }
+
+        if (!product.image.endsWith('.webp') && !product.image.endsWith('.svg')) {
+            fail(product, 'local image must be an optimized .webp file or the legacy SVG placeholder');
+        }
     }
 
     if (/^https?:\/\//.test(product.image || '') && product.imageNeedsReview !== true) {
         fail(product, 'remote image must be marked imageNeedsReview');
+    }
+
+    if (validFallbackImages.has(product.image) && product.imageNeedsReview !== true) {
+        fail(product, 'generated fallback image must stay imageNeedsReview until replaced by an approved packshot');
+    }
+
+    if (product.imageNeedsReview === false && !/approved|owned|licensed|authorized/i.test(product.imageRightsStatus)) {
+        fail(product, 'approved image requires a documented rights status');
     }
 
     if (product.oldPriceMAD && Number(product.oldPriceMAD) <= Number(product.priceMAD)) {
