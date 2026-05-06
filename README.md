@@ -48,6 +48,8 @@ http://127.0.0.1:5173/
 
 ```bash
 npm run dev
+npm run generate:images
+npm run generate:sitemap
 npm run lint
 npm run validate:catalog
 npm run build
@@ -55,6 +57,8 @@ npm run preview
 ```
 
 - `dev`: starts the local Vite server.
+- `generate:images`: regenerates the owned `.webp` category fallback visuals.
+- `generate:sitemap`: regenerates `sitemap.xml` and `robots.txt` for `parapharmacie.me`.
 - `lint`: validates core files, local asset references, and guards against the old broken CSS reset.
 - `validate:catalog`: validates production catalog data and sample product detail URLs.
 - `build`: validates and copies the static site to `dist/`.
@@ -99,8 +103,8 @@ Production deployments use Firebase by default unless `backend=mock` is passed.
 ## Image Rights
 
 - Product image folder: `assets/products/`
-- Active fallback: `assets/products/product-placeholder.svg`
-- Current catalog images are placeholders with `imageNeedsReview: true`.
+- Active fallback: generated category `.webp` assets such as `assets/products/category-fallback-visage.webp`.
+- Current catalog images are owned fallback visuals with `imageNeedsReview: true`.
 - Competitor images were not copied into the repository.
 - See `IMAGE_RIGHTS.md` for the production replacement workflow.
 
@@ -113,6 +117,7 @@ Production deployments use Firebase by default unless `backend=mock` is passed.
 - Configure domain DNS for `parapharmacie.me`.
 - Add analytics, conversion tracking, and a production WhatsApp/business number.
 - Keep medical copy conservative: no unsupported treatment claims, and route sensitive questions to a professional.
+- See `DEPLOYMENT.md` for Netlify/Vercel/static hosting steps and the launch checklist.
 
 ## Screenshots
 
@@ -130,4 +135,4 @@ Add final screenshots after deployment:
 - Add admin order status updates and export.
 - Add delivery fee rules by Moroccan city.
 - Add product image CDN optimization with approved `.webp` files.
-- Add structured data for products and local business SEO.
+- Connect Search Console after sitemap submission.
