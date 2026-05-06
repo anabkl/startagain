@@ -108,3 +108,14 @@ Add final screenshots after deployment:
 - Add delivery fee rules by Moroccan city.
 - Add product image CDN optimization.
 - Add structured data for products and local business SEO.
+
+## Screenshots
+
+> Add production screenshots here after the next Netlify deployment.
+
+- Homepage
+- Product listing
+- Product details
+- Cart and checkout
+- Mobile responsive view
+
