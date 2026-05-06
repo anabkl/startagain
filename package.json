@@ -1,8 +1,17 @@
 {
-  "name": "parashop-tawfiq",
+  "name": "parapharmacie-me",
   "version": "1.0.0",
-  "description": "Parashop Tawfiq - Parapharmacie en ligne",
+  "description": "parapharmacie.me - parapharmacie e-commerce moderne au Maroc",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "node scripts/build.mjs",
+    "lint": "node scripts/validate.mjs",
+    "preview": "vite preview --host 127.0.0.1"
+  },
   "dependencies": {
     "stripe": "^14.0.0"
+  },
+  "devDependencies": {
+    "vite": "^8.0.10"
   }
 }

@@ -1,138 +1,111 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="fr" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إتمام الطلب | Parashop Tawfiq</title>
+    <title>Checkout paiement a la livraison | parapharmacie.me</title>
+    <meta name="description" content="Checkout parapharmacie.me avec paiement a la livraison, informations de livraison au Maroc, resume de commande et confirmation WhatsApp.">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body { background-color: #f4f7f6; font-family: 'Cairo', sans-serif; }
-        .checkout-container { display: grid; grid-template-columns: 1fr 400px; gap: 30px; margin: 40px auto; align-items: flex-start; }
-        
-        /* --- Left Side: Form --- */
-        .checkout-card { background: #fff; padding: 35px; border-radius: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); border: 1px solid #edf2f0; }
-        .checkout-card h2 { font-size: 1.5rem; color: #212121; margin-bottom: 30px; display: flex; align-items: center; gap: 12px; }
-        .checkout-card h2 i { color: #1a9e52; }
-
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .full-width { grid-column: 1 / span 2; }
-        
-        .input-group { margin-bottom: 20px; text-align: right; }
-        .input-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #616161; font-size: 0.9rem; }
-        .input-group input, .input-group textarea { width: 100%; padding: 14px; border: 1.5px solid #ebebeb; border-radius: 12px; background: #fafafa; transition: 0.3s; font-family: inherit; }
-        .input-group input:focus, .input-group textarea:focus { border-color: #1a9e52; background: #fff; outline: none; box-shadow: 0 0 0 4px rgba(26, 158, 82, 0.1); }
-
-        /* --- Payment Options --- */
-        .payment-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
-        .payment-method { border: 2px solid #f0f0f0; border-radius: 15px; padding: 20px; cursor: pointer; transition: 0.3s; text-align: center; position: relative; }
-        .payment-method input { position: absolute; opacity: 0; }
-        .payment-method i { font-size: 1.5rem; margin-bottom: 10px; display: block; color: #9e9e9e; }
-        .payment-method span { font-weight: 700; color: #616161; font-size: 0.9rem; }
-        .payment-method.active { border-color: #1a9e52; background: #f0f9f4; }
-        .payment-method.active i, .payment-method.active span { color: #1a9e52; }
-
-        /* --- Right Side: Summary --- */
-        .order-summary { background: #fff; padding: 30px; border-radius: 24px; box-shadow: 0 15px 50px rgba(13, 124, 62, 0.06); border: 1px solid #e8f0eb; position: sticky; top: 100px; }
-        .order-summary h3 { font-size: 1.2rem; margin-bottom: 20px; color: #212121; }
-        .summary-item { display: flex; justify-content: space-between; margin-bottom: 15px; color: #757575; font-size: 0.95rem; }
-        .summary-total { border-top: 2px dashed #f0f0f0; padding-top: 20px; margin-top: 20px; display: flex; justify-content: space-between; font-weight: 800; font-size: 1.4rem; color: #0d7c3e; }
-
-        .btn-confirm { width: 100%; background: #1a9e52; color: #fff; border: none; padding: 18px; border-radius: 15px; font-weight: 800; font-size: 1.1rem; cursor: pointer; margin-top: 25px; transition: 0.3s; box-shadow: 0 10px 20px rgba(26, 158, 82, 0.2); }
-        .btn-confirm:hover { background: #0d7c3e; transform: translateY(-3px); }
-
-        @media (max-width: 992px) { .checkout-container { grid-template-columns: 1fr; } .order-summary { position: static; } .form-grid { grid-template-columns: 1fr; } .full-width { grid-column: auto; } }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
-
-    <header class="header__main" style="background: #fff; padding: 15px 0; border-bottom: 1px solid #eee;">
-        <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
-            <a href="index.html"><img src="assets/images/logo-head.png" alt="Logo" style="height: 50px;"></a>
-            <a href="cart.html" style="color: #616161; font-weight: bold; text-decoration: none;"><i class="fas fa-arrow-right"></i> العودة للسلة</a>
+    <header class="site-header">
+        <div class="header__main">
+            <div class="container header__main-inner">
+                <a href="index.html" class="header__logo">
+                    <img src="assets/images/logo-head.png" alt="parapharmacie.me">
+                    <span><strong>parapharmacie.me</strong><small>Checkout COD</small></span>
+                </a>
+                <div class="header__actions">
+                    <a href="cart.html" class="header__action-btn"><i class="fa-solid fa-arrow-left"></i><span>Panier</span></a>
+                </div>
+            </div>
         </div>
     </header>
 
-    <main class="container">
-        <div class="checkout-container">
-            
-            <div class="checkout-card">
-                <h2><i class="fas fa-map-marker-alt"></i> معلومات التوصيل</h2>
-                <form id="checkout-form">
-                    <div class="form-grid">
-                        <div class="input-group">
-                            <label>الاسم الشخصي *</label>
-                            <input type="text" id="firstName" placeholder="أدخل اسمك" required>
-                        </div>
-                        <div class="input-group">
-                            <label>الاسم العائلي *</label>
-                            <input type="text" id="lastName" placeholder="أدخل نسبك" required>
-                        </div>
-                        <div class="input-group full-width">
-                            <label>البريد الإلكتروني (اختياري)</label>
-                            <input type="email" id="email" placeholder="email@example.com">
-                        </div>
-                        <div class="input-group full-width">
-                            <label>رقم الواتساب (للتواصل بخصوص الطلب) *</label>
-                            <input type="tel" id="whatsapp" placeholder="06 XX XX XX XX" required>
-                        </div>
-                        <div class="input-group">
-                            <label>المدينة *</label>
-                            <input type="text" id="city" placeholder="مثلاً: خريبكة" required>
-                        </div>
-                        <div class="input-group">
-                            <label>العنوان الكامل *</label>
-                            <input type="text" id="address" placeholder="الحي، رقم المنزل..." required>
-                        </div>
-                    </div>
-
-                    <h2 style="margin-top: 40px;"><i class="fas fa-credit-card"></i> طريقة الدفع</h2>
-                    <div class="payment-methods">
-                        <div class="payment-method active" onclick="selectPayment('COD', this)">
-                            <input type="radio" name="paymentMethod" value="COD" checked>
-                            <i class="fas fa-hand-holding-usd"></i>
-                            <span>الدفع عند الاستلام</span>
-                        </div>
-                        <div class="payment-method" onclick="selectPayment('STRIPE', this)">
-                            <input type="radio" name="paymentMethod" value="STRIPE">
-                            <i class="fas fa-shield-check"></i>
-                            <span>بطاقة بنكية (آمن)</span>
-                        </div>
-                    </div>
-                </form>
+    <main class="section">
+        <div class="container">
+            <div class="page-title">
+                <p class="eyebrow">Paiement a la livraison</p>
+                <h1>Finaliser la commande</h1>
+                <p>Vos informations servent uniquement a confirmer la livraison et le suivi WhatsApp.</p>
             </div>
 
-            <aside class="order-summary">
-                <h3>ملخص الطلب</h3>
-                <div id="summary-items-list" style="max-height: 300px; overflow-y: auto; margin-bottom: 20px;">
-                    </div>
-                <div class="summary-item">
-                    <span>التوصيل:</span>
-                    <span style="color: #1a9e52; font-weight: bold;">مجاني</span>
-                </div>
-                <div class="summary-total">
-                    <span>الإجمالي:</span>
-                    <span id="order-total-amount">0.00 DH</span>
-                </div>
-                <button type="submit" form="checkout-form" class="btn-confirm">تأكيد الطلب الآن</button>
-                <p style="text-align: center; font-size: 0.8rem; color: #9e9e9e; margin-top: 15px;">
-                    <i class="fas fa-lock"></i> تشفير آمن لبياناتك الشخصية
-                </p>
-            </aside>
+            <div class="checkout-container">
+                <section class="checkout-card">
+                    <h2><i class="fa-solid fa-location-dot"></i> Informations de livraison</h2>
+                    <form id="checkout-form">
+                        <div class="form-grid">
+                            <label class="input-group">
+                                <span>Prenom *</span>
+                                <input type="text" id="firstName" autocomplete="given-name" required>
+                            </label>
+                            <label class="input-group">
+                                <span>Nom *</span>
+                                <input type="text" id="lastName" autocomplete="family-name" required>
+                            </label>
+                            <label class="input-group full-width">
+                                <span>Email optionnel</span>
+                                <input type="email" id="email" autocomplete="email" placeholder="email@example.com">
+                            </label>
+                            <label class="input-group full-width">
+                                <span>Numero WhatsApp *</span>
+                                <input type="tel" id="whatsapp" autocomplete="tel" placeholder="0675698351" required>
+                            </label>
+                            <label class="input-group">
+                                <span>Ville *</span>
+                                <input type="text" id="city" autocomplete="address-level2" placeholder="Khouribga" required>
+                            </label>
+                            <label class="input-group">
+                                <span>Adresse complete *</span>
+                                <input type="text" id="address" autocomplete="street-address" placeholder="Quartier, rue, numero..." required>
+                            </label>
+                        </div>
 
+                        <div class="payment-box">
+                            <h2><i class="fa-solid fa-hand-holding-dollar"></i> Methode de paiement</h2>
+                            <label class="payment-method active">
+                                <input type="radio" name="paymentMethod" value="COD" checked>
+                                <i class="fa-solid fa-money-bill-wave"></i>
+                                <span>Paiement a la livraison</span>
+                                <small>Option recommandee pour le Maroc.</small>
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn--primary btn-confirm checkout-card__submit">
+                            <i class="fa-brands fa-whatsapp"></i>
+                            Confirmer et ouvrir WhatsApp
+                        </button>
+                    </form>
+                </section>
+
+                <aside class="order-summary">
+                    <h2>Resume commande</h2>
+                    <div id="summary-items-list" class="summary-products"></div>
+                    <div class="summary-item">
+                        <span>Sous-total</span>
+                        <strong id="order-subtotal-amount">0.00 DH</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Livraison</span>
+                        <strong>A confirmer</strong>
+                    </div>
+                    <div class="summary-total">
+                        <span>Total</span>
+                        <strong id="order-total-amount">0.00 DH</strong>
+                    </div>
+                    <button type="submit" form="checkout-form" class="btn btn--primary btn-confirm">
+                        <i class="fa-brands fa-whatsapp"></i>
+                        Confirmer et ouvrir WhatsApp
+                    </button>
+                    <p class="summary-note"><i class="fa-solid fa-lock"></i> Donnees minimales, confirmation humaine avant expedition.</p>
+                </aside>
+            </div>
         </div>
     </main>
 
-    <script>
-        function selectPayment(val, el) {
-            document.querySelectorAll('.payment-method').forEach(m => m.classList.remove('active'));
-            el.classList.add('active');
-            el.querySelector('input').checked = true;
-        }
-    </script>
+    <script type="module" src="js/main.js"></script>
     <script type="module" src="js/checkout.js"></script>
-    <!-- WhatsApp Float -->
-    <a href="https://wa.me/212675698351" target="_blank" aria-label="واتساب" style="background:#25D366; position:fixed; bottom:20px; right:20px; width:60px; height:60px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:35px; box-shadow:0 4px 10px rgba(0,0,0,0.3); z-index:1000; transition:0.3s; text-decoration:none;"><i class="fab fa-whatsapp"></i></a>
 </body>
 </html>

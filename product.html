@@ -1,270 +1,63 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="fr" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تفاصيل المنتج | Parashop Tawfiq</title>
+    <title>Produit | parapharmacie.me Maroc</title>
+    <meta name="description" content="Fiche produit parapharmacie.me: details, prix, quantite, panier, commande WhatsApp, livraison au Maroc et paiement a la livraison.">
+    <meta property="og:title" content="Fiche produit parapharmacie.me">
+    <meta property="og:description" content="Detail produit parapharmacie Maroc avec CTA panier et WhatsApp.">
+    <meta property="og:image" content="assets/images/photopharamcie.png">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        body { background: #f4f7f6; font-family: 'Cairo', sans-serif; }
-        .product-detail { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin: 40px auto; align-items: flex-start; }
-        .product-image-box { background: #fff; border-radius: 20px; padding: 30px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); text-align: center; position: sticky; top: 100px; }
-        .product-image-box img { max-width: 100%; max-height: 400px; object-fit: contain; border-radius: 12px; }
-        .product-info { background: #fff; border-radius: 20px; padding: 35px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
-        .product-category-badge { display: inline-block; background: #e8f5e9; color: #1a9e52; padding: 5px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; margin-bottom: 15px; }
-        .product-title { font-size: 1.8rem; font-weight: 800; color: #212121; margin-bottom: 10px; line-height: 1.3; }
-        .product-brand { color: #757575; font-size: 1rem; margin-bottom: 20px; }
-        .price-box { margin: 20px 0; }
-        .price-current { font-size: 2rem; font-weight: 900; color: #0d7c3e; }
-        .price-old { font-size: 1.2rem; text-decoration: line-through; color: #bdbdbd; margin-right: 12px; }
-        .discount-badge { background: #e74c3c; color: #fff; padding: 5px 12px; border-radius: 8px; font-size: 0.9rem; font-weight: 700; margin-right: 10px; }
-        .stock-badge { padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 700; display: inline-block; margin-bottom: 20px; }
-        .stock-in { background: #e8f5e9; color: #2e7d32; }
-        .stock-out { background: #ffebee; color: #c62828; }
-        .product-desc { line-height: 1.9; color: #616161; margin-bottom: 25px; }
-        .qty-box { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
-        .qty-btn { width: 40px; height: 40px; border-radius: 8px; border: 1.5px solid #e0e0e0; background: #fff; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-        .qty-btn:hover { border-color: #1a9e52; color: #1a9e52; }
-        .qty-val { font-size: 1.2rem; font-weight: 700; min-width: 30px; text-align: center; }
-        .btn-add-cart { width: 100%; padding: 16px; background: #1a9e52; color: #fff; border: none; border-radius: 14px; font-size: 1.1rem; font-weight: 800; cursor: pointer; transition: 0.3s; box-shadow: 0 8px 20px rgba(26,158,82,0.25); }
-        .btn-add-cart:hover { background: #0d7c3e; transform: translateY(-2px); }
-        .btn-add-cart:disabled { background: #bdbdbd; box-shadow: none; transform: none; cursor: not-allowed; }
-        .share-section { margin-top: 25px; padding-top: 20px; border-top: 1px solid #f0f0f0; }
-        .share-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; border-radius: 10px; border: none; cursor: pointer; font-size: 0.9rem; font-weight: 600; margin-left: 10px; transition: 0.2s; }
-        .share-wa { background: #25D366; color: #fff; }
-        .share-copy { background: #f0f0f0; color: #424242; }
-        .share-btn:hover { opacity: 0.85; }
-        .related-section { margin-top: 50px; }
-        .related-section h2 { font-size: 1.4rem; margin-bottom: 25px; color: #212121; }
-        .related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
-        .related-card { background: #fff; border-radius: 14px; padding: 15px; box-shadow: 0 3px 12px rgba(0,0,0,0.05); cursor: pointer; transition: 0.3s; text-decoration: none; display: block; }
-        .related-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
-        .related-card img { width: 100%; height: 140px; object-fit: contain; border-radius: 8px; margin-bottom: 10px; }
-        .related-card h4 { font-size: 0.9rem; color: #212121; margin: 0 0 8px; line-height: 1.4; }
-        .related-card .related-price { color: #0d7c3e; font-weight: 800; }
-        @media(max-width:768px) { .product-detail { grid-template-columns: 1fr; } .product-image-box { position: static; } }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
-
-    <header class="header__main" style="background:#fff; padding:15px 0; border-bottom:1px solid #eee; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
-        <div class="container header__main-inner" style="justify-content:space-between;">
-            <a href="index.html" class="header__logo">
-                <img src="assets/images/logo-head.png" alt="Logo" style="height:50px;">
-            </a>
-            <div class="header__actions" style="display:flex;">
-                <a href="login.html" class="header__action-btn"><i class="fas fa-user"></i><span>حسابي</span></a>
-                <a href="cart.html" class="header__action-btn header__cart">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span class="header__cart-count" id="cart-count">0</span>
-                    <span>السلة</span>
+    <header class="site-header">
+        <div class="header__main">
+            <div class="container header__main-inner">
+                <a href="index.html" class="header__logo">
+                    <img src="assets/images/logo-head.png" alt="parapharmacie.me">
+                    <span><strong>parapharmacie.me</strong><small>Produit</small></span>
                 </a>
+                <div class="header__actions">
+                    <a href="shop.html" class="header__action-btn"><i class="fa-solid fa-store"></i><span>Boutique</span></a>
+                    <a href="cart.html" class="header__action-btn header__cart">
+                        <i class="fa-solid fa-bag-shopping"></i>
+                        <span class="header__cart-count" id="cart-count">0</span>
+                        <span>Panier</span>
+                    </a>
+                </div>
             </div>
         </div>
     </header>
 
-    <!-- Breadcrumb -->
-    <div class="container" style="padding:15px 0; font-size:0.9rem; color:#757575;">
-        <a href="index.html" style="color:#0d7c3e; text-decoration:none;">الرئيسية</a>
-        <span style="margin:0 8px;">/</span>
-        <a href="shop.html" style="color:#0d7c3e; text-decoration:none;">المتجر</a>
-        <span style="margin:0 8px;">/</span>
-        <span id="breadcrumb-name">المنتج</span>
-    </div>
-
-    <main class="container">
-        <div id="product-loading" style="text-align:center; padding:60px; color:#1a9e52; font-size:1.2rem;">
-            <i class="fas fa-spinner fa-spin"></i> جاري التحميل...
-        </div>
-
-        <div class="product-detail" id="product-detail" style="display:none;">
-            <!-- Image -->
-            <div class="product-image-box">
-                <img id="product-img" src="" alt="">
+    <main class="section product-page">
+        <div class="container">
+            <div id="product-loading" class="loading-state">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                <span>Chargement du produit...</span>
             </div>
 
-            <!-- Info -->
-            <div class="product-info">
-                <span class="product-category-badge" id="product-category"></span>
-                <h1 class="product-title" id="product-name"></h1>
-                <p class="product-brand" id="product-brand"></p>
+            <article class="product-detail" id="product-detail" style="display:none;"></article>
 
-                <div id="stock-badge"></div>
-
-                <div class="price-box">
-                    <span class="price-current" id="product-price"></span>
-                    <span class="price-old" id="product-old-price" style="display:none;"></span>
-                    <span class="discount-badge" id="product-discount" style="display:none;"></span>
+            <section class="related-section" id="related-section" style="display:none;">
+                <div class="section-header">
+                    <div>
+                        <p class="eyebrow">A completer avec</p>
+                        <h2>Produits similaires</h2>
+                    </div>
                 </div>
-
-                <p class="product-desc" id="product-desc"></p>
-
-                <div class="qty-box">
-                    <span style="color:#424242; font-weight:600;">الكمية:</span>
-                    <button class="qty-btn" onclick="changeQty(-1)" aria-label="تقليل الكمية">−</button>
-                    <span class="qty-val" id="qty-val">1</span>
-                    <button class="qty-btn" onclick="changeQty(1)" aria-label="زيادة الكمية">+</button>
-                </div>
-
-                <button class="btn-add-cart" id="btn-add-cart" onclick="addProductToCart()">
-                    <i class="fas fa-cart-plus"></i> أضف للسلة
-                </button>
-
-                <div class="share-section">
-                    <span style="color:#757575; font-size:0.9rem; margin-left:10px;">مشاركة:</span>
-                    <button class="share-btn share-wa" onclick="shareOnWhatsApp()">
-                        <i class="fab fa-whatsapp"></i> واتساب
-                    </button>
-                    <button class="share-btn share-copy" onclick="copyLink()">
-                        <i class="fas fa-copy"></i> نسخ الرابط
-                    </button>
-                </div>
-            </div>
+                <div class="related-grid" id="related-grid"></div>
+            </section>
         </div>
-
-        <!-- Related Products -->
-        <section class="related-section" id="related-section" style="display:none;">
-            <h2><i class="fas fa-th-large" style="color:#1a9e52;"></i> منتجات مشابهة</h2>
-            <div class="related-grid" id="related-grid"></div>
-        </section>
     </main>
 
-    <!-- WhatsApp Float -->
-    <a href="https://wa.me/212675698351" class="whatsapp-float" target="_blank" aria-label="واتساب" style="background:#25D366; position:fixed; bottom:20px; right:20px; width:60px; height:60px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:35px; box-shadow:0 4px 10px rgba(0,0,0,0.3); z-index:1000; transition:0.3s;">
-        <i class="fab fa-whatsapp"></i>
+    <a href="https://wa.me/212675698351" class="whatsapp-float" target="_blank" rel="noreferrer" aria-label="Commander sur WhatsApp">
+        <i class="fa-brands fa-whatsapp"></i>
     </a>
 
-    <script type="module">
-        import { db } from './js/firebase.js';
-        import { doc, getDoc, collection, getDocs, query, where } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
-        import { showToast, formatCurrency } from './js/utils.js';
-        import { updateCartCount } from './js/main.js';
-
-        const CART_KEY = 'parashop_cart';
-        let currentProduct = null;
-        let qty = 1;
-
-        window.changeQty = function(delta) {
-            qty = Math.max(1, qty + delta);
-            document.getElementById('qty-val').textContent = qty;
-        };
-
-        window.addProductToCart = function() {
-            if (!currentProduct) return;
-            if (currentProduct.stock === 0) return;
-            let cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
-            const existing = cart.find(i => i.id === currentProduct.id);
-            if (existing) {
-                existing.quantity = (existing.quantity || 1) + qty;
-            } else {
-                cart.push({ ...currentProduct, quantity: qty });
-            }
-            localStorage.setItem(CART_KEY, JSON.stringify(cart));
-            showToast(`تمت إضافة "${currentProduct.name}" للسلة!`, 'success');
-            updateCartCount();
-        };
-
-        window.shareOnWhatsApp = function() {
-            const text = `🛍️ اكتشف هذا المنتج من Parashop Tawfiq:\n${currentProduct?.name}\n${window.location.href}`;
-            window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
-        };
-
-        window.copyLink = function() {
-            navigator.clipboard.writeText(window.location.href)
-                .then(() => showToast('تم نسخ الرابط!', 'success'))
-                .catch(() => showToast('تعذّر نسخ الرابط. انسخه يدوياً.', 'error'));
-        };
-
-        async function loadProduct() {
-            const params = new URLSearchParams(window.location.search);
-            const productId = params.get('id');
-            if (!productId) {
-                window.location.href = 'shop.html';
-                return;
-            }
-
-            try {
-                const docSnap = await getDoc(doc(db, 'products', productId));
-                if (!docSnap.exists()) {
-                    window.location.href = 'shop.html';
-                    return;
-                }
-                currentProduct = { id: docSnap.id, ...docSnap.data() };
-                renderProduct(currentProduct);
-                await loadRelated(currentProduct.category, productId);
-            } catch (err) {
-                console.error(err);
-                document.getElementById('product-loading').innerHTML = '<p style="color:red;">فشل تحميل المنتج.</p>';
-            }
-        }
-
-        function renderProduct(p) {
-            document.title = p.name + ' | Parashop Tawfiq';
-            document.getElementById('breadcrumb-name').textContent = p.name;
-            document.getElementById('product-img').src = p.imageUrl || 'assets/images/photopharamcie.png';
-            document.getElementById('product-img').alt = p.name;
-            document.getElementById('product-category').textContent = p.category || '';
-            document.getElementById('product-name').textContent = p.name;
-            document.getElementById('product-brand').textContent = p.brand ? '🏷️ ' + p.brand : '';
-            document.getElementById('product-desc').textContent = p.description || '';
-
-            const hasPromo = p.promoPrice && p.promoPrice < p.price;
-            if (hasPromo) {
-                const disc = Math.round(((p.price - p.promoPrice) / p.price) * 100);
-                document.getElementById('product-price').textContent = formatCurrency(p.promoPrice);
-                document.getElementById('product-old-price').textContent = formatCurrency(p.price);
-                document.getElementById('product-old-price').style.display = 'inline';
-                document.getElementById('product-discount').textContent = '-' + disc + '%';
-                document.getElementById('product-discount').style.display = 'inline';
-            } else {
-                document.getElementById('product-price').textContent = formatCurrency(p.price || 0);
-            }
-
-            const stockEl = document.getElementById('stock-badge');
-            if (p.stock === 0) {
-                stockEl.innerHTML = '<span class="stock-badge stock-out"><i class="fas fa-times-circle"></i> نفذ من المخزون</span>';
-                document.getElementById('btn-add-cart').disabled = true;
-            } else {
-                stockEl.innerHTML = '<span class="stock-badge stock-in"><i class="fas fa-check-circle"></i> متوفر في المخزون</span>';
-            }
-
-            document.getElementById('product-loading').style.display = 'none';
-            document.getElementById('product-detail').style.display = 'grid';
-        }
-
-        async function loadRelated(category, currentId) {
-            if (!category) return;
-            try {
-                const q = query(collection(db, 'products'), where('category', '==', category));
-                const snap = await getDocs(q);
-                const related = snap.docs
-                    .map(d => ({ id: d.id, ...d.data() }))
-                    .filter(p => p.id !== currentId && p.type !== 'pack')
-                    .slice(0, 4);
-
-                if (related.length === 0) return;
-
-                const grid = document.getElementById('related-grid');
-                grid.innerHTML = related.map(p => {
-                    const price = p.promoPrice && p.promoPrice < p.price ? p.promoPrice : p.price;
-                    return `
-                        <a href="product.html?id=${p.id}" class="related-card">
-                            <img src="${p.imageUrl || 'assets/images/photopharamcie.png'}" alt="${p.name}">
-                            <h4>${p.name}</h4>
-                            <span class="related-price">${formatCurrency(price)}</span>
-                        </a>`;
-                }).join('');
-
-                document.getElementById('related-section').style.display = 'block';
-            } catch (err) {
-                console.error('Related error:', err);
-            }
-        }
-
-        loadProduct();
-    </script>
     <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/product.js"></script>
 </body>
 </html>

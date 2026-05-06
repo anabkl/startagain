@@ -1,7 +1,7 @@
 import { db, auth } from './firebase.js';
-import { collection, getDocs, query, orderBy } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
+import { collection, getDocs, query, orderBy, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js';
-import { formatCurrency } from './utils.js';
+import { formatCurrency, showToast } from './utils.js';
 
 const ordersList = document.getElementById('orders-list');
 
@@ -30,7 +30,8 @@ async function fetchOrders() {
 
         querySnapshot.forEach((doc) => {
             const order = doc.data();
-            const date = order.createdAt ? new Date(order.createdAt).toLocaleDateString('ar-MA') : '---';
+            const createdAt = order.createdAt?.toDate ? order.createdAt.toDate() : order.createdAt;
+            const date = createdAt ? new Date(createdAt).toLocaleDateString('ar-MA') : '---';
             
             const row = document.createElement('tr');
             row.innerHTML = `

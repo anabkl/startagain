@@ -1,54 +1,97 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="fr" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>المتجر | Parashop Tawfiq</title>
+    <title>Boutique | parapharmacie.me Maroc</title>
+    <meta name="description" content="Boutique parapharmacie Maroc: soins visage, produits cosmetiques, complements alimentaires, bebe et maman, livraison au Maroc et paiement a la livraison.">
+    <meta property="og:title" content="Boutique parapharmacie.me">
+    <meta property="og:description" content="Recherchez et filtrez les produits de parapharmacie au Maroc avec panier, COD et WhatsApp.">
+    <meta property="og:image" content="assets/images/photopharamcie.png">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>
-        .filter-section { text-align: center; margin: 40px 0; }
-        .filter-section input { width: 100%; max-width: 500px; padding: 15px; border-radius: 8px; border: 1px solid var(--green-main); margin-bottom: 20px; font-family: inherit; }
-        .cat-btn { background: var(--white); color: var(--green-dark); border: 2px solid var(--green-main); padding: 10px 20px; border-radius: 20px; margin: 5px; cursor: pointer; transition: 0.3s; font-weight: bold; font-family: inherit; }
-        .cat-btn:hover, .cat-btn.active { background: var(--green-main); color: var(--white); }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
-    <header class="header__main" style="box-shadow: var(--shadow-sm);">
-        <div class="container header__main-inner" style="justify-content: space-between;">
-            <a href="index.html" class="header__logo">
-                <img src="assets/images/logo-head.png" alt="Parashop Tawfiq" style="height: 50px;">
-            </a>
-            <div class="header__actions" style="display:flex;">
-                <a href="cart.html" class="header__action-btn header__cart">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span class="header__cart-count" id="cart-count">0</span>
-                    <span>السلة</span>
+    <header class="site-header">
+        <div class="header__main">
+            <div class="container header__main-inner">
+                <a href="index.html" class="header__logo">
+                    <img src="assets/images/logo-head.png" alt="parapharmacie.me">
+                    <span><strong>parapharmacie.me</strong><small>Boutique Maroc</small></span>
                 </a>
+                <div class="header__search" role="search">
+                    <input type="search" class="header__search-input" id="search-bar" placeholder="Rechercher un produit, une marque, une categorie..." aria-label="Recherche boutique">
+                    <button class="header__search-btn" type="button" aria-label="Rechercher">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </div>
+                <div class="header__actions">
+                    <a href="cart.html" class="header__action-btn header__cart">
+                        <i class="fa-solid fa-bag-shopping"></i>
+                        <span class="header__cart-count" id="cart-count">0</span>
+                        <span>Panier</span>
+                    </a>
+                    <button class="header__mobile-toggle" id="menuToggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false">
+                        <span></span><span></span><span></span>
+                    </button>
+                </div>
             </div>
         </div>
+        <nav class="header__nav" id="mainNav" aria-label="Navigation principale">
+            <div class="container">
+                <ul class="header__nav-list">
+                    <li><a href="index.html">Accueil</a></li>
+                    <li><a href="shop.html" class="active">Boutique</a></li>
+                    <li><a href="cart.html">Panier</a></li>
+                    <li><a href="checkout.html">Checkout COD</a></li>
+                </ul>
+            </div>
+        </nav>
     </header>
 
-    <main class="container">
-        <div class="filter-section">
-            <input type="text" class="header__search-input" id="search-bar" placeholder="ابحث عن منتج، علامة تجارية...">
-            <div id="category-buttons" style="margin-top:15px;">
-                <button onclick="filterByCategory('all')" class="cat-btn active" id="cat-all">الكل</button>
+    <main>
+        <section class="page-hero">
+            <div class="container page-hero__grid">
+                <div>
+                    <p class="eyebrow">Parapharmacie Maroc</p>
+                    <h1>Boutique produits cosmetiques, soins visage et bien-etre</h1>
+                    <p>Filtrez par categorie, recherchez une marque, ajoutez au panier, puis finalisez avec paiement a la livraison ou WhatsApp.</p>
+                </div>
+                <div class="page-hero__badge">
+                    <i class="fa-solid fa-truck-fast"></i>
+                    Livraison au Maroc • COD
+                </div>
             </div>
-        </div>
+        </section>
 
-        <div id="products-container" class="products__grid">
-            <p style="text-align:center; width:100%; color: var(--green-main);">جاري تحميل المنتجات من قاعدة البيانات...</p>
-        </div>
+        <section class="shop-layout section">
+            <div class="container">
+                <div class="shop-toolbar">
+                    <div>
+                        <h2>Catalogue parapharmacie</h2>
+                        <p id="results-meta">Chargement des produits...</p>
+                    </div>
+                    <span id="catalog-source-note" class="source-note"></span>
+                </div>
+
+                <div class="category-pills" id="category-buttons"></div>
+
+                <div id="products-container" class="products__grid">
+                    <div class="loading-state">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        <span>Chargement de la parapharmacie...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <script type="module" src="js/shop.js?v=v2"></script>
-    <script type="module" src="js/main.js"></script>
-
-    <!-- WhatsApp Float -->
-    <a href="https://wa.me/212675698351" target="_blank" aria-label="واتساب" style="background:#25D366; position:fixed; bottom:20px; right:20px; width:60px; height:60px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:35px; box-shadow:0 4px 10px rgba(0,0,0,0.3); z-index:1000; transition:0.3s; text-decoration:none;">
-        <i class="fab fa-whatsapp"></i>
+    <a href="https://wa.me/212675698351" class="whatsapp-float" target="_blank" rel="noreferrer" aria-label="Commander sur WhatsApp">
+        <i class="fa-brands fa-whatsapp"></i>
     </a>
+
+    <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/shop.js"></script>
 </body>
 </html>
