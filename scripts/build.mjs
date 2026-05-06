@@ -11,6 +11,8 @@ const copyTargets = [
   'netlify',
   'admin.css',
   'netlify.toml',
+  'robots.txt',
+  'sitemap.xml',
   'firestore.rules',
   'storage.rules'
 ];
