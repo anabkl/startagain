@@ -1,71 +1,36 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="fr" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تم الطلب بنجاح! | Parashop Tawfiq</title>
+    <title>Commande confirmee | parapharmacie.me</title>
+    <meta name="description" content="Commande parapharmacie.me enregistree avec confirmation WhatsApp et paiement a la livraison.">
     <link rel="stylesheet" href="css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <style>
-        body { background: #f4f7f6; font-family: 'Cairo', sans-serif; }
-        .success-card {
-            max-width: 550px; margin: 80px auto; background: #fff; padding: 50px;
-            border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.06);
-            text-align: center;
-        }
-        .success-icon {
-            width: 100px; height: 100px; border-radius: 50%;
-            background: linear-gradient(135deg, #0d7c3e, #1a9e52);
-            display: flex; align-items: center; justify-content: center;
-            margin: 0 auto 25px; animation: popIn 0.5s ease;
-        }
-        .success-icon i { font-size: 45px; color: #fff; }
-        @keyframes popIn {
-            0% { transform: scale(0); }
-            70% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-        h1 { color: #0d7c3e; margin-bottom: 10px; }
-        p { color: #757575; line-height: 1.8; }
-        .btn-group { display: flex; gap: 15px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
-        .btn-success {
-            padding: 14px 30px; border-radius: 12px; font-weight: 700;
-            text-decoration: none; transition: 0.3s; font-family: inherit; font-size: 1rem;
-            border: none; cursor: pointer;
-        }
-        .btn-primary { background: #0d7c3e; color: #fff; }
-        .btn-primary:hover { background: #1a9e52; }
-        .btn-outline { background: transparent; color: #0d7c3e; border: 2px solid #0d7c3e; }
-        .btn-outline:hover { background: #0d7c3e; color: #fff; }
-        .btn-wa { background: #25D366; color: #fff; }
-        .btn-wa:hover { background: #20b858; }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="success-card">
-        <div class="success-icon">
-            <i class="fas fa-check"></i>
-        </div>
-        <h1>تم تسجيل طلبك بنجاح! 🎉</h1>
-        <p>شكراً لك على ثقتك في <strong>Parashop Tawfiq</strong>.<br>
-        سيتم التواصل معك عبر الواتساب لتأكيد الطلب والتوصيل.</p>
-        <p style="background:#f0faf4; padding:15px; border-radius:12px; color:#0d7c3e; font-weight:600;">
-            <i class="fas fa-truck"></i> التوصيل مجاني لجميع المدن
-        </p>
-        <div class="btn-group">
-            <a href="shop.html" class="btn-success btn-primary">
-                <i class="fas fa-store"></i> متابعة التسوق
-            </a>
-            <a href="https://wa.me/212675698351" target="_blank" class="btn-success btn-wa">
-                <i class="fab fa-whatsapp"></i> تواصل معنا
-            </a>
-            <a href="index.html" class="btn-success btn-outline">
-                <i class="fas fa-home"></i> الرئيسية
-            </a>
-        </div>
-    </div>
-    <!-- WhatsApp Float -->
-    <a href="https://wa.me/212675698351" target="_blank" aria-label="واتساب" style="background:#25D366; position:fixed; bottom:20px; right:20px; width:60px; height:60px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:35px; box-shadow:0 4px 10px rgba(0,0,0,0.3); z-index:1000; transition:0.3s; text-decoration:none;"><i class="fab fa-whatsapp"></i></a>
+    <main class="success-page">
+        <section class="success-card">
+            <div class="success-icon"><i class="fa-solid fa-check"></i></div>
+            <p class="eyebrow">Commande enregistree</p>
+            <h1>Merci pour votre confiance.</h1>
+            <p>Votre commande parapharmacie.me est prete pour confirmation WhatsApp. Notre equipe valide les produits, la ville et les frais de livraison avant expedition.</p>
+            <div class="success-card__trust">
+                <span><i class="fa-solid fa-hand-holding-dollar"></i> Paiement a la livraison</span>
+                <span><i class="fa-solid fa-truck-fast"></i> Livraison au Maroc</span>
+                <span><i class="fa-solid fa-headset"></i> Support WhatsApp</span>
+            </div>
+            <div class="success-actions">
+                <a href="shop.html" class="btn btn--primary">Continuer mes achats</a>
+                <a href="https://wa.me/212675698351" target="_blank" rel="noreferrer" class="btn btn--whatsapp" id="success-whatsapp-link">
+                    <i class="fa-brands fa-whatsapp"></i>
+                    Finaliser sur WhatsApp
+                </a>
+                <a href="index.html" class="btn btn--secondary">Accueil</a>
+            </div>
+        </section>
+    </main>
+    <script type="module" src="js/success.js"></script>
 </body>
 </html>

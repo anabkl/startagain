@@ -1,305 +1,219 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="fr" dir="ltr">
 <head>
-<meta name="description" content="Parashop Tawfiq - أفضل صيدلية ومعدات طبية في خريبكة. مكملات غذائية، مستحضرات تجميل، وأجهزة طبية بأسعار تنافسية.">
-<meta name="keywords" content="Parapharmacie Khouribga, صيدلية خريبكة, معدات طبية, مكملات غذائية, Tawfiq">
-<meta property="og:title" content="Parashop Tawfiq | خريبكة">
-<meta property="og:description" content="تسوق أفضل منتجات العناية والصحة أونلاين.">
-<meta property="og:image" content="assets/images/logo-head.png">
-
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Parashop Tawfiq - المعدات الطبية والبارافارماسي</title>
+    <title>parapharmacie.me | Parapharmacie Maroc & Khouribga</title>
+    <meta name="description" content="parapharmacie.me est une parapharmacie Maroc moderne: soins visage, produits cosmetiques, complements alimentaires, bebe et maman, livraison au Maroc et paiement a la livraison.">
+    <meta name="keywords" content="Parapharmacie Maroc, Parapharmacie Khouribga, produits cosmetiques, soins visage, complements alimentaires, bebe et maman, livraison au Maroc, paiement a la livraison">
+    <meta property="og:title" content="parapharmacie.me | Parapharmacie Maroc">
+    <meta property="og:description" content="Boutique parapharmacie moderne pour soins visage, cosmetiques, bebe et maman, livraison au Maroc et paiement a la livraison.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="assets/images/photopharamcie.png">
+    <meta name="theme-color" content="#0f7f64">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
-
-    <header class="header">
+    <header class="site-header">
         <div class="header__top-bar">
             <div class="container">
-                <span><i class="fas fa-phone-alt"></i> 0520-828417</span>
-                <span><i class="fas fa-envelope"></i> Hamidkaram554@gmail.com</span>
-                <span><i class="fas fa-clock"></i> مفتوح يومياً: 9:00 - 20:00</span>
+                <span><i class="fa-solid fa-location-dot"></i> Khouribga, Maroc</span>
+                <span><i class="fa-solid fa-truck-fast"></i> Livraison au Maroc</span>
+                <span><i class="fa-solid fa-hand-holding-dollar"></i> Paiement a la livraison</span>
             </div>
         </div>
+
         <div class="header__main">
             <div class="container header__main-inner">
-                <a href="index.html" class="header__logo">
-                    <img src="assets/images/logo-head.png" alt="Logo" style="height: 50px;">
-                    <div class="logo-text">
-                        <span class="logo-text__name" style="color:var(--green-dark);">Parashop Tawfiq</span>
-                    </div>
+                <a href="index.html" class="header__logo" aria-label="parapharmacie.me accueil">
+                    <img src="assets/images/logo-head.png" alt="parapharmacie.me">
+                    <span>
+                        <strong>parapharmacie.me</strong>
+                        <small>Parapharmacie Maroc</small>
+                    </span>
                 </a>
 
-                <div class="header__search">
-                    <input type="text" class="header__search-input" placeholder="ابحث عن منتج، علامة تجارية..." onclick="window.location.href='shop.html'">
-                    <button class="header__search-btn" onclick="window.location.href='shop.html'"><i class="fas fa-search"></i></button>
+                <div class="header__search" role="search">
+                    <input type="search" class="header__search-input" placeholder="Rechercher: soins visage, bebe, vitamine..." aria-label="Rechercher un produit">
+                    <button class="header__search-btn" type="button" aria-label="Lancer la recherche">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
                 </div>
 
-                <div class="header__actions" style="display:flex;">
-                    <a href="login.html" class="header__action-btn"><i class="fas fa-user"></i><span>حسابي</span></a>
-                    <a href="cart.html" class="header__action-btn header__cart">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span class="header__cart-count" id="cart-count">0</span>
-                        <span>السلة</span>
+                <nav class="header__actions" aria-label="Actions rapides">
+                    <a href="login.html" class="header__action-btn">
+                        <i class="fa-regular fa-user"></i>
+                        <span>Compte</span>
                     </a>
-                </div>
+                    <a href="cart.html" class="header__action-btn header__cart">
+                        <i class="fa-solid fa-bag-shopping"></i>
+                        <span class="header__cart-count" id="cart-count">0</span>
+                        <span>Panier</span>
+                    </a>
+                    <button class="header__mobile-toggle" id="menuToggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </button>
+                </nav>
             </div>
         </div>
 
-        <nav class="header__nav" id="mainNav" style="display:block; max-height:none;">
+        <nav class="header__nav" id="mainNav" aria-label="Navigation principale">
             <div class="container">
-                <ul class="header__nav-list" style="flex-direction: row; justify-content: center; gap: 20px; display: flex;">
-                    <li><a href="index.html" class="active"><i class="fas fa-home"></i> الرئيسية</a></li>
-                    <li><a href="shop.html"><i class="fas fa-spa"></i> مستحضرات التجميل</a></li>
-                    <li><a href="shop.html"><i class="fas fa-baby"></i> الأطفال والرضع</a></li>
-                    <li><a href="shop.html"><i class="fas fa-leaf"></i> مكملات غذائية</a></li>
-                    <li><a href="shop.html"><i class="fas fa-stethoscope"></i> معدات طبية</a></li>
-                    <li><a href="#footer" class="nav-promo"><i class="fas fa-map-marker-alt"></i> اتصل بنا</a></li>
+                <ul class="header__nav-list">
+                    <li><a href="index.html" class="active">Accueil</a></li>
+                    <li><a href="shop.html?category=soins-visage">Soins visage</a></li>
+                    <li><a href="shop.html?category=produits-cosmetiques">Cosmetiques</a></li>
+                    <li><a href="shop.html?category=complements-alimentaires">Complements</a></li>
+                    <li><a href="shop.html?category=bebe-maman">Bebe et maman</a></li>
+                    <li><a href="#faq">FAQ</a></li>
                 </ul>
             </div>
         </nav>
     </header>
 
-    <section class="hero">
-        <div class="hero__slider" id="heroSlider">
-            <div class="hero__slide active" style="background: linear-gradient(135deg, rgba(13,124,62,0.9) 0%, rgba(26,158,82,0.9) 100%), url('assets/images/photopharamcie.png') center/cover;">
-                <div class="container hero__slide-content">
-                    <div class="hero__slide-text">
-                        <span class="hero__slide-badge">إشراف د. كرم عبد الحميد</span>
-                        <h1>وجهتك الموثوقة <strong>للصحة والجمال</strong></h1>
-                        <p>اكتشف مجموعتنا الواسعة من المعدات الطبية، المكملات الغذائية ومستحضرات العناية.</p>
-                        <a href="shop.html" class="btn btn--primary">تسوق الآن <i class="fas fa-arrow-left"></i></a>
+    <main>
+        <section class="hero hero--premium">
+            <div class="container hero__grid">
+                <div class="hero__content" data-reveal>
+                    <p class="eyebrow">Parapharmacie Khouribga • Livraison au Maroc</p>
+                    <h1>La parapharmacie marocaine qui donne confiance des le premier clic.</h1>
+                    <p>Soins visage, produits cosmetiques, complements alimentaires, bebe et maman, avec confirmation WhatsApp et paiement a la livraison.</p>
+                    <div class="hero__actions">
+                        <a href="shop.html" class="btn btn--primary">
+                            <i class="fa-solid fa-store"></i>
+                            Acheter maintenant
+                        </a>
+                        <a href="https://wa.me/212675698351" target="_blank" rel="noreferrer" class="btn btn--secondary">
+                            <i class="fa-brands fa-whatsapp"></i>
+                            Conseil WhatsApp
+                        </a>
+                    </div>
+                    <dl class="hero__stats" aria-label="Signaux de confiance">
+                        <div><dt>COD</dt><dd>Paiement a la livraison</dd></div>
+                        <div><dt>48h</dt><dd>Preparation rapide</dd></div>
+                        <div><dt>100%</dt><dd>Selection authentique</dd></div>
+                    </dl>
+                </div>
+                <div class="hero__visual" data-reveal>
+                    <img src="assets/images/photopharamcie.png" alt="Parapharmacie moderne a Khouribga">
+                    <div class="hero__floating-card">
+                        <i class="fa-solid fa-shield-heart"></i>
+                        <span>Produits verifies, descriptions responsables</span>
                     </div>
                 </div>
             </div>
-            <div class="hero__slide" style="background: linear-gradient(135deg, #1a6b3c 0%, #2ecc71 100%);">
-                <div class="container hero__slide-content">
-                    <div class="hero__slide-text">
-                        <span class="hero__slide-badge">جديد</span>
-                        <h1>منتجات <strong>طبيعية</strong> 100%</h1>
-                        <p>اكتشف مجموعتنا الجديدة من المكملات الغذائية الطبيعية والعضوية.</p>
-                        <a href="shop.html" class="btn btn--primary">اكتشف المزيد <i class="fas fa-arrow-left"></i></a>
+        </section>
+
+        <section class="trust-strip" aria-label="Avantages parapharmacie.me">
+            <div class="container trust-strip__grid" id="trust-grid"></div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <div class="section-header">
+                    <div>
+                        <p class="eyebrow">Categories</p>
+                        <h2>Tout pour une routine wellness simple</h2>
+                    </div>
+                    <a class="section-header__link" href="shop.html">Voir toute la boutique <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+                <div class="categories__grid" id="home-categories"></div>
+            </div>
+        </section>
+
+        <section class="section section--soft">
+            <div class="container promo-showcase">
+                <div class="promo-showcase__content" data-reveal>
+                    <p class="eyebrow">Offre du moment</p>
+                    <h2>Best sellers parapharmacie Maroc pour vos routines du quotidien.</h2>
+                    <p>Produits selectionnes, prix lisibles, confirmation rapide et paiement a la livraison pour acheter plus sereinement.</p>
+                    <a href="shop.html" class="btn btn--primary">Explorer les best sellers</a>
+                </div>
+                <div class="promo-showcase__panel" data-reveal>
+                    <span>Pack routine visage</span>
+                    <strong>-15%</strong>
+                    <p>Solaires, nettoyants et hydratants selectionnes pour une routine cosmetique responsable.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <div class="section-header">
+                    <div>
+                        <p class="eyebrow">Promotions & best sellers</p>
+                        <h2>Les produits qui structurent le panier moyen</h2>
+                    </div>
+                    <a class="section-header__link" href="shop.html">Tous les produits <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+                <div class="products__grid" id="featured-products">
+                    <div class="loading-state"><i class="fa-solid fa-spinner fa-spin"></i><span>Chargement...</span></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section section--soft">
+            <div class="container">
+                <div class="section-header section-header--center">
+                    <div>
+                        <p class="eyebrow">Avis clients</p>
+                        <h2>Une marque qui rassure avant de vendre</h2>
                     </div>
                 </div>
+                <div class="testimonials__grid" id="testimonials-grid"></div>
             </div>
-        </div>
-        <div class="hero__controls">
-            <button class="hero__control-btn" id="prevSlide"><i class="fas fa-chevron-right"></i></button>
-            <div class="hero__dots">
-                <span class="hero__dot active" data-slide="0"></span><span class="hero__dot" data-slide="1"></span>
-            </div>
-            <button class="hero__control-btn" id="nextSlide"><i class="fas fa-chevron-left"></i></button>
-        </div>
-    </section>
+        </section>
 
-    <section class="categories">
-        <div class="container">
-            <div class="section-header">
-                <h2><i class="fas fa-th-large"></i> تصفح حسب القسم</h2>
-            </div>
-            <div class="categories__grid">
-                <a href="shop.html" class="categories__card" style="--card-color: #fce4ec;"><i class="fas fa-spa" style="color: #c2185b;"></i><h4>مستحضرات التجميل</h4></a>
-                <a href="shop.html" class="categories__card" style="--card-color: #e3f2fd;"><i class="fas fa-baby" style="color: #1565c0;"></i><h4>الأطفال والرضع</h4></a>
-                <a href="shop.html" class="categories__card" style="--card-color: #fff3e0;"><i class="fas fa-leaf" style="color: #e65100;"></i><h4>مكملات غذائية</h4></a>
-                <a href="shop.html" class="categories__card" style="--card-color: #f3e5f5;"><i class="fas fa-pump-soap" style="color: #7b1fa2;"></i><h4>نظافة وعناية</h4></a>
-                <a href="shop.html" class="categories__card" style="--card-color: #e0f2f1;"><i class="fas fa-stethoscope" style="color: #00695c;"></i><h4>معدات طبية</h4></a>
-            </div>
-        </div>
-    </section>
-
-    <section class="promo-banner" style="margin: 40px 0;">
-        <div class="container">
-            <div class="promo-banner__inner">
-                <div class="promo-banner__text">
-                    <span class="promo-banner__label">جودة مضمونة</span>
-                    <h2>منتجات <strong>أصلية</strong> من أفضل الماركات العالمية</h2>
-                    <a href="shop.html" class="btn btn--primary">الدخول للمتجر <i class="fas fa-store"></i></a>
+        <section class="section" id="faq">
+            <div class="container faq__layout">
+                <div class="faq__intro" data-reveal>
+                    <p class="eyebrow">FAQ</p>
+                    <h2>Questions frequentes</h2>
+                    <p>Des reponses courtes pour les clients qui cherchent une parapharmacie Maroc fiable, avec livraison et paiement a la livraison.</p>
                 </div>
+                <div class="faq__list" id="faq-list"></div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer__grid">
+            <div>
+                <a href="index.html" class="footer__brand">
+                    <img src="assets/images/logo-head.png" alt="parapharmacie.me">
+                    <span>parapharmacie.me</span>
+                </a>
+                <p>Parapharmacie en ligne moderne basee a Khouribga, pensee pour les achats cosmetiques, bien-etre, bebe et maman au Maroc.</p>
+            </div>
+            <div>
+                <h3>Boutique</h3>
+                <a href="shop.html?category=soins-visage">Soins visage</a>
+                <a href="shop.html?category=produits-cosmetiques">Produits cosmetiques</a>
+                <a href="shop.html?category=complements-alimentaires">Complements alimentaires</a>
+                <a href="shop.html?category=bebe-maman">Bebe et maman</a>
+            </div>
+            <div>
+                <h3>Contact</h3>
+                <a href="tel:0520828417">0520-828417</a>
+                <a href="https://wa.me/212675698351" target="_blank" rel="noreferrer">WhatsApp: +212 675 698 351</a>
+                <a href="mailto:Hamidkaram554@gmail.com">Hamidkaram554@gmail.com</a>
+                <span>251 Ancienne Medina du Sechage, Khouribga</span>
             </div>
         </div>
-    </section>
-
-    <!-- Dynamic Pack Banners from Firestore -->
-    <section id="packs-section" style="margin: 40px 0; display:none;">
-        <div class="container">
-            <div class="section-header">
-                <h2><i class="fas fa-fire" style="color:#e74c3c;"></i> عروض وباكات ترويجية</h2>
-            </div>
-            <div id="packs-container"></div>
-        </div>
-    </section>
-
-    <!-- Featured Products by Category -->
-    <section id="featured-section" style="margin: 40px 0; display:none;">
-        <div class="container">
-            <div class="section-header">
-                <h2><i class="fas fa-star" style="color:#f39c12;"></i> أبرز المنتجات</h2>
-            </div>
-            <div id="featured-container" class="products__grid"></div>
-            <div style="text-align:center; margin-top:30px;">
-                <a href="shop.html" class="btn btn--primary">عرض جميع المنتجات <i class="fas fa-arrow-left"></i></a>
-            </div>
-        </div>
-    </section>
-
-    <footer class="footer" id="footer">
-        <div class="container">
-            <div class="footer__grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
-                <div class="footer__col">
-                    <img src="assets/images/parashop tawfiq.png" alt="Parashop Tawfiq" style="background: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; max-width: 200px;">
-                    <p class="footer__about">إشراف: د. كرم عبد الحميد.<br>صيدلية توفيق - وجهتك الأولى للمنتجات الصيدلانية ومستحضرات التجميل والعناية الشخصية.</p>
-                    <div class="footer__social">
-                        <a href="https://instagram.com/pharmacietawfiq" target="_blank"><i class="fab fa-instagram"></i></a>
-                    </div>
-                </div>
-                <div class="footer__col">
-                    <h4 style="color:#1a9e52;">تواصل معنا</h4>
-                    <ul class="footer__contact" style="direction:ltr; text-align:right;">
-                        <li>251 ANCIENNE MÉDINA DU SÉCHAGE, 25010, Khouribga, Morocco <i class="fas fa-map-marker-alt"></i></li>
-                        <li><a href="tel:0520828417">0520-828417</a> <i class="fas fa-phone-alt"></i></li>
-                        <li><a href="https://wa.me/212675698351">+212 675 698 351</a> <i class="fab fa-whatsapp"></i></li>
-                        <li><a href="mailto:Hamidkaram554@gmail.com">Hamidkaram554@gmail.com</a> <i class="fas fa-envelope"></i></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="footer__bottom" style="text-align: center; border-top: 1px solid #424242; padding-top: 20px; margin-top: 30px;">
-                <p>© 2026 Parashop Tawfiq. جميع الحقوق محفوظة.</p>
-            </div>
+        <div class="footer__bottom">
+            <div class="container">© 2026 parapharmacie.me. Parapharmacie Maroc avec livraison et paiement a la livraison.</div>
         </div>
     </footer>
 
-    <a href="https://wa.me/212675698351" class="whatsapp-float" target="_blank" aria-label="تواصل معنا عبر واتساب" style="background-color: #25D366; position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 35px; box-shadow: 0px 4px 10px rgba(0,0,0,0.3); z-index: 1000; transition: 0.3s;">
-        <i class="fab fa-whatsapp"></i>
+    <a href="https://wa.me/212675698351" class="whatsapp-float" target="_blank" rel="noreferrer" aria-label="Commander sur WhatsApp">
+        <i class="fa-brands fa-whatsapp"></i>
     </a>
 
     <script type="module" src="js/main.js"></script>
-    <script type="module">
-        import { db } from './js/firebase.js';
-        import { collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
-        import { formatCurrency } from './js/utils.js';
-
-        function escapeHtml(str) {
-            const div = document.createElement('div');
-            div.appendChild(document.createTextNode(str || ''));
-            return div.innerHTML;
-        }
-
-        // Sanitize URLs for use inside CSS url() - encode problematic characters
-        function safeCssUrl(url) {
-            if (!url) return 'assets/images/photopharamcie.png';
-            // Only allow http/https/data URLs; encode quotes and parens
-            if (!/^(https?:|data:)/.test(url)) return 'assets/images/photopharamcie.png';
-            return url.replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29');
-        }
-
-        async function loadHomepageProducts() {
-            try {
-                const snap = await getDocs(collection(db, 'products'));
-                const products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-                // Packs/Banners
-                const packs = products.filter(p => p.type === 'pack');
-                if (packs.length > 0) {
-                    const packsSection = document.getElementById('packs-section');
-                    const packsContainer = document.getElementById('packs-container');
-                    packsSection.style.display = 'block';
-                    
-                    packsContainer.innerHTML = packs.map(p => {
-                        // 1. التحقق من وجود وقت انتهاء العرض
-                        let countdownHtml = '';
-                        if (p.endTime && p.endTime > Date.now()) {
-                            countdownHtml = `
-                            <div style="background: rgba(255,255,255,0.2); padding: 8px 15px; border-radius: 10px; margin-bottom: 15px; display: inline-block;">
-                                <span style="font-weight: bold; margin-left: 10px;">⏳ ينتهي العرض في:</span>
-                                <span class="flash-countdown" data-endtime="${p.endTime}" style="font-family: monospace; font-size: 1.1rem; font-weight: bold; color: #fff; background: #e74c3c; padding: 4px 10px; border-radius: 6px; letter-spacing: 1px; direction: ltr; display: inline-block;">جاري الحساب...</span>
-                            </div>`;
-                        }
-
-                        // 2. رسم البطاقة
-                        return `
-                        <div style="background:linear-gradient(135deg,#0d7c3e,#1a9e52); border-radius:16px; padding:25px 30px; margin-bottom:20px; display:flex; align-items:center; gap:25px; box-shadow:0 6px 25px rgba(13,124,62,0.3);">
-                            <div style="flex-shrink:0; width:140px; height:140px; background:url('${safeCssUrl(p.imageUrl)}') center/cover; border-radius:12px; border:3px solid rgba(255,255,255,0.4);"></div>
-                            <div style="flex:1; color:#fff; text-align:right;">
-                                <span style="background:rgba(255,255,255,0.2); padding:4px 12px; border-radius:20px; font-size:0.85rem; font-weight:bold;">${p.packType === 'باك ترويجي' ? '📦 باك ترويجي' : '🔥 عرض خاص'}</span>
-                                <h3 style="margin:10px 0 8px; font-size:1.4rem; font-weight:900;">${escapeHtml(p.name)}</h3>
-                                <p style="margin:0 0 15px; opacity:0.9;">${escapeHtml(p.description || '')}</p>
-                                
-                                ${countdownHtml} <div style="display:flex; align-items:center; gap:20px;">
-                                    ${p.promoPrice ? `<span style="font-size:1.6rem; font-weight:900;">${formatCurrency(p.promoPrice)}</span>` : ''}
-                                    <a href="shop.html" style="background:#fff; color:#0d7c3e; padding:10px 22px; border-radius:10px; font-weight:bold; text-decoration:none; font-size:0.95rem;">اكتشف المزيد <i class="fas fa-arrow-left"></i></a>
-                                </div>
-                            </div>
-                        </div>`;
-                    }).join('');
-
-                    // 3. تشغيل العداد التنازلي كل ثانية
-                    setInterval(() => {
-                        document.querySelectorAll('.flash-countdown').forEach(el => {
-                            const end = parseInt(el.getAttribute('data-endtime'));
-                            const now = Date.now();
-                            const diff = end - now;
-
-                            if (diff <= 0) {
-                                el.innerHTML = "انتهى العرض 🚫";
-                                el.style.background = "#757575";
-                                return;
-                            }
-
-                            const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-                            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                            const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-                            const s = Math.floor((diff % (1000 * 60)) / 1000);
-
-                            // فورمات الوقت
-                            let timeStr = `${s.toString().padStart(2, '0')}s : ${m.toString().padStart(2, '0')}m : ${h.toString().padStart(2, '0')}h`;
-                            if (d > 0) timeStr = `${d}d : ` + timeStr;
-                            
-                            el.innerHTML = timeStr;
-                        });
-                    }, 1000);
-                }
-
-                // Featured products (regular products, max 8)
-                const regular = products.filter(p => p.type !== 'pack').slice(0, 8);
-                if (regular.length > 0) {
-                    const featSection = document.getElementById('featured-section');
-                    const featContainer = document.getElementById('featured-container');
-                    featSection.style.display = 'block';
-                    featContainer.innerHTML = regular.map(p => {
-                        const price = p.price || 0;
-                        const hasPromo = p.promoPrice && p.promoPrice < price;
-                        const displayPrice = hasPromo ? p.promoPrice : price;
-                        const outOfStock = p.stock === 0;
-                        return `
-                            <div onclick="window.location.href='product.html?id=${p.id}'" style="position:relative; background:#fff; border-radius:16px; box-shadow:0 4px 15px rgba(0,0,0,0.05); padding:15px; cursor:pointer; transition:transform 0.3s, box-shadow 0.3s; display:flex; flex-direction:column;"
-                                onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 10px 30px rgba(0,0,0,0.1)'"
-                                onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.05)'">
-                                ${hasPromo ? `<span style="position:absolute; top:10px; right:10px; background:#e74c3c; color:#fff; padding:4px 9px; border-radius:8px; font-size:0.8rem; font-weight:700; z-index:1;">-${Math.round(((price-p.promoPrice)/price)*100)}%</span>` : ''}
-                                ${outOfStock ? `<span style="position:absolute; top:10px; right:10px; background:#ffebee; color:#c62828; padding:4px 9px; border-radius:8px; font-size:0.75rem; font-weight:700; z-index:1;">نفذ</span>` : ''}
-                                <div style="background:url('${safeCssUrl(p.imageUrl)}') center/contain no-repeat; height:160px; border-radius:12px; margin-bottom:12px;"></div>
-                                <span style="color:#757575; font-size:0.8rem;">${escapeHtml(p.category || '')}</span>
-                                <h4 style="margin:6px 0 10px; font-size:0.95rem; color:#212121; line-height:1.4;">${escapeHtml(p.name)}</h4>
-                                <div style="margin-top:auto;">
-                                    <div style="margin-bottom:10px;">
-                                        <span style="color:#0d7c3e; font-weight:900; font-size:1.1rem;">${formatCurrency(displayPrice)}</span>
-                                        ${hasPromo ? `<span style="text-decoration:line-through; color:#9e9e9e; font-size:0.85rem; margin-right:6px;">${formatCurrency(price)}</span>` : ''}
-                                    </div>
-                                    <a href="product.html?id=${p.id}" style="display:block; width:100%; text-align:center; background:${outOfStock ? '#bdbdbd' : '#1a9e52'}; color:#fff; padding:10px; border-radius:10px; font-weight:bold; text-decoration:none; font-size:0.9rem; transition:background 0.3s;">
-                                        ${outOfStock ? 'نفذ من المخزون' : 'عرض المنتج'}
-                                    </a>
-                                </div>
-                            </div>`;
-                    }).join('');
-                }
-            } catch (err) {
-                console.error('Homepage products error:', err);
-            }
-        }
-
-        loadHomepageProducts();
-    </script>
+    <script type="module" src="js/home.js"></script>
 </body>
 </html>

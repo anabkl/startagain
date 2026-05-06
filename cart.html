@@ -1,128 +1,100 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="fr" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>سلة المشتريات | Parashop Tawfiq</title>
+    <title>Panier | parapharmacie.me</title>
+    <meta name="description" content="Panier parapharmacie.me avec quantites, resume de commande, WhatsApp order CTA, livraison au Maroc et paiement a la livraison.">
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>
-        /* ============================================
-           PREMIUM CART UI (Bypass Cache)
-           ============================================ */
-        body { background-color: #f8faf9; }
-        .cart-header-title { font-size: 2rem; color: #0d7c3e; margin: 40px 0 20px; font-weight: 800; display: flex; align-items: center; gap: 15px; }
-        
-        .cart { display: flex; gap: 30px; align-items: flex-start; flex-wrap: wrap; margin-bottom: 60px; }
-        
-        /* Table Section */
-        .cart__table-wrapper { flex: 1; min-width: 60%; background: #fff; border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); }
-        .cart-table { width: 100%; border-collapse: collapse; }
-        .cart-table th { text-align: right; padding-bottom: 20px; border-bottom: 2px solid #f0f0f0; color: #9e9e9e; font-weight: 600; font-size: 0.95rem; }
-        .cart-table__row { border-bottom: 1px solid #f9f9f9; transition: 0.3s ease; }
-        .cart-table__row:hover { background: #fafdfb; }
-        .cart-table td { padding: 20px 10px; vertical-align: middle; }
-        
-        /* Product Info in Table */
-        .cart-table__product { display: flex; align-items: center; gap: 15px; }
-        .cart-table__img { width: 80px; height: 80px; object-fit: contain; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 5px; }
-        .cart-table__name { font-weight: 700; color: #212121; font-size: 1.05rem; }
-        .cart-table__price, .cart-table__subtotal { font-weight: 700; color: #424242; font-size: 1.05rem; }
-        .cart-table__subtotal { color: #1a9e52; }
-        
-        /* Qty Controls */
-        .qty-control { display: inline-flex; align-items: center; background: #f5f5f5; border-radius: 10px; padding: 5px; }
-        .qty-control__btn { background: #fff; border: none; width: 32px; height: 32px; border-radius: 8px; font-weight: bold; font-size: 1.2rem; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.05); color: #1a9e52; transition: 0.2s; }
-        .qty-control__btn:hover { background: #1a9e52; color: #fff; }
-        .qty-control__input { width: 40px; text-align: center; border: none; background: transparent; font-weight: 800; font-size: 1.1rem; color: #212121; }
-        
-        /* Remove Button */
-        .btn-remove { background: #fee2e2; color: #e74c3c; border: none; width: 40px; height: 40px; border-radius: 10px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
-        .btn-remove:hover { background: #e74c3c; color: #fff; transform: scale(1.05); }
-        
-        /* Summary Section */
-        .cart__summary { width: 350px; background: #fff; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); position: sticky; top: 100px; border: 1px solid #f0f5f2; }
-        .cart__summary h3 { font-size: 1.3rem; color: #212121; margin-bottom: 25px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; }
-        .cart__summary-row { display: flex; justify-content: space-between; margin-bottom: 18px; font-size: 1.1rem; color: #616161; }
-        .cart__summary-row--total { font-size: 1.5rem; font-weight: 800; color: #0d7c3e; border-top: 2px dashed #e0e0e0; padding-top: 20px; margin-top: 10px; }
-        .cart__actions { display: flex; flex-direction: column; gap: 15px; margin-top: 30px; }
-        
-        /* Buttons */
-        .btn-checkout { background: #1a9e52; color: #fff; padding: 18px; border-radius: 12px; text-align: center; font-weight: 800; font-size: 1.1rem; border: none; display: flex; justify-content: center; gap: 10px; transition: 0.3s; }
-        .btn-checkout:hover { background: #0d7c3e; transform: translateY(-3px); box-shadow: 0 8px 20px rgba(26, 158, 82, 0.3); }
-        .btn-continue { background: #f5f5f5; color: #424242; padding: 15px; border-radius: 12px; text-align: center; font-weight: bold; border: none; transition: 0.3s; display: flex; justify-content: center; gap: 10px; }
-        .btn-continue:hover { background: #eeeeee; color: #212121; }
-
-        /* Empty Cart */
-        .cart-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 20px; text-align: center; background: #fff; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); }
-        .cart-empty__icon { font-size: 5rem; color: #e0e0e0; margin-bottom: 20px; }
-        
-        @media(max-width: 992px) { 
-            .cart { flex-direction: column; } 
-            .cart__summary { width: 100%; position: relative; top: 0; } 
-            .cart-table th:nth-child(2), .cart-table td:nth-child(2) { display: none; } /* Hide price on mobile to save space */
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 </head>
 <body>
-
-    <header class="header__main" style="background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05);">
-        <div class="container header__main-inner" style="justify-content: space-between;">
-            <a href="index.html" class="header__logo">
-                <img src="assets/images/logo-head.png" alt="Parashop Tawfiq" style="height: 55px;">
-            </a>
+    <header class="site-header">
+        <div class="header__main">
+            <div class="container header__main-inner">
+                <a href="index.html" class="header__logo">
+                    <img src="assets/images/logo-head.png" alt="parapharmacie.me">
+                    <span><strong>parapharmacie.me</strong><small>Panier</small></span>
+                </a>
+                <div class="header__actions">
+                    <a href="shop.html" class="header__action-btn"><i class="fa-solid fa-store"></i><span>Boutique</span></a>
+                    <a href="cart.html" class="header__action-btn header__cart">
+                        <i class="fa-solid fa-bag-shopping"></i>
+                        <span class="header__cart-count" id="cart-count">0</span>
+                        <span>Panier</span>
+                    </a>
+                </div>
+            </div>
         </div>
     </header>
 
-    <main class="container">
-        <h1 class="cart-header-title"><i class="fas fa-shopping-bag"></i> سلة المشتريات</h1>
-
-        <div id="cart-empty" class="cart-empty" style="display: none;">
-            <i class="fas fa-cart-arrow-down cart-empty__icon"></i>
-            <h2 style="color: #424242; margin-bottom: 10px;">سلتك فارغة حالياً</h2>
-            <p style="color: #757575; margin-bottom: 30px;">يبدو أنك لم تقم بإضافة أي منتجات بعد.</p>
-            <a href="shop.html" class="btn-checkout" style="width: auto; padding: 15px 40px;"><i class="fas fa-store"></i> تصفح المنتجات</a>
-        </div>
-
-        <div id="cart-content" class="cart">
-
-            <div class="cart__table-wrapper">
-                <table class="cart-table">
-                    <thead>
-                        <tr>
-                            <th>المنتج</th>
-                            <th>السعر</th>
-                            <th style="text-align: center;">الكمية</th>
-                            <th>المجموع الفرعي</th>
-                            <th style="text-align: center;">حذف</th>
-                        </tr>
-                    </thead>
-                    <tbody id="cart-items">
-                        </tbody>
-                </table>
+    <main class="section">
+        <div class="container">
+            <div class="page-title">
+                <p class="eyebrow">Commande</p>
+                <h1>Votre panier</h1>
+                <p>Controlez les quantites avant de confirmer avec paiement a la livraison ou WhatsApp.</p>
             </div>
 
-            <aside class="cart__summary">
-                <h3>ملخص الطلب</h3>
-                <div class="cart__summary-row">
-                    <span>عدد المنتجات:</span>
-                    <span id="cart-count" style="font-weight: bold; color: #212121;">0</span>
+            <div id="cart-empty" class="empty-state" style="display:none;">
+                <i class="fa-solid fa-bag-shopping"></i>
+                <h2>Votre panier est vide</h2>
+                <p>Ajoutez des soins visage, produits cosmetiques, complements alimentaires ou essentiels bebe et maman.</p>
+                <a href="shop.html" class="btn btn--primary">Explorer la boutique</a>
+            </div>
+
+            <div id="cart-content" class="cart-layout">
+                <div class="cart__items">
+                    <div class="cart__table-wrapper">
+                        <table class="cart-table">
+                            <thead>
+                                <tr>
+                                    <th>Produit</th>
+                                    <th>Prix</th>
+                                    <th>Quantite</th>
+                                    <th>Sous-total</th>
+                                    <th>Retirer</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cart-items"></tbody>
+                        </table>
+                    </div>
+                    <div class="cart__cards" id="cart-cards"></div>
                 </div>
-                <div class="cart__summary-row cart__summary-row--total">
-                    <span>الإجمالي:</span>
-                    <span id="cart-total" class="cart__total-price">0.00 DH</span>
-                </div>
-                <div class="cart__actions">
-                    <a href="checkout.html" id="checkout-btn" class="btn-checkout">متابعة الدفع <i class="fas fa-arrow-left"></i></a>
-                    <a href="shop.html" class="btn-continue"><i class="fas fa-redo"></i> أضف منتجات أخرى</a>
-                </div>
-            </aside>
+
+                <aside class="cart__summary">
+                    <h2>Resume</h2>
+                    <div class="cart__summary-row">
+                        <span>Nombre d'articles</span>
+                        <strong id="cart-items-count">0</strong>
+                    </div>
+                    <div class="cart__summary-row">
+                        <span>Livraison</span>
+                        <strong>A confirmer</strong>
+                    </div>
+                    <div class="cart__summary-row cart__summary-row--total">
+                        <span>Total</span>
+                        <strong id="cart-total">0.00 DH</strong>
+                    </div>
+                    <div class="cart__actions">
+                        <a href="checkout.html" id="checkout-btn" class="btn btn--primary">
+                            <i class="fa-solid fa-credit-card"></i>
+                            Passer au checkout
+                        </a>
+                        <a href="https://wa.me/212675698351" target="_blank" rel="noreferrer" id="whatsapp-cart-link" class="btn btn--whatsapp">
+                            <i class="fa-brands fa-whatsapp"></i>
+                            Commander sur WhatsApp
+                        </a>
+                        <a href="shop.html" class="btn btn--secondary">Continuer mes achats</a>
+                    </div>
+                    <p class="summary-note">Paiement a la livraison disponible. Les frais de livraison sont confirmes selon la ville.</p>
+                </aside>
+            </div>
         </div>
     </main>
 
-    <script type="module" src="js/cart.js?v=v2"></script>
-    <!-- WhatsApp Float -->
-    <a href="https://wa.me/212675698351" target="_blank" aria-label="واتساب" style="background:#25D366; position:fixed; bottom:20px; right:20px; width:60px; height:60px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:35px; box-shadow:0 4px 10px rgba(0,0,0,0.3); z-index:1000; transition:0.3s; text-decoration:none;"><i class="fab fa-whatsapp"></i></a>
+    <script type="module" src="js/main.js"></script>
+    <script type="module" src="js/cart.js"></script>
 </body>
 </html>
