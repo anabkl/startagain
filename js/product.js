@@ -1,4 +1,4 @@
-import { getCatalogProduct, getEffectivePrice, getProductImage } from './catalog.js';
+import { getCatalogProduct, getEffectivePrice, getOldPrice, getProductImage, isProductUnavailable } from './catalog.js';
 import { formatCurrency, showToast } from './utils.js';
 import { getCart, saveCart } from './main.js';
 
@@ -32,7 +32,7 @@ function syncCartFallbackLink() {
 
 function addProductToCart(event) {
     event?.preventDefault();
-    if (!currentProduct || currentProduct.stock === 0) return;
+    if (!currentProduct || isProductUnavailable(currentProduct)) return;
 
     const cart = getCart();
     const existing = cart.find((item) => item.id === currentProduct.id);
@@ -52,18 +52,19 @@ function addProductToCart(event) {
 }
 
 function getWhatsAppUrl() {
-    const message = `Bonjour parapharmacie.me, je souhaite commander ou demander la disponibilite de: ${currentProduct?.name || ''} - ${window.location.href}`;
+    const message = `Bonjour parapharmacie.me, je souhaite commander ou demander la disponibilite de: ${currentProduct?.name || ''}\nQuantite: ${quantity}\nPrix indicatif: ${formatCurrency(getEffectivePrice(currentProduct || {}))}\nLien: ${window.location.href}`;
     return `https://wa.me/212675698351?text=${encodeURIComponent(message)}`;
 }
 
 function renderProduct(product) {
     currentProduct = product;
     const price = getEffectivePrice(product);
-    const hasPromo = product.promoPrice && product.promoPrice < product.price;
-    const discount = hasPromo ? Math.round(((product.price - product.promoPrice) / product.price) * 100) : null;
+    const oldPrice = getOldPrice(product);
+    const discount = oldPrice ? Math.round(((oldPrice - price) / oldPrice) * 100) : null;
+    const unavailable = isProductUnavailable(product);
 
     document.title = `${product.name} | parapharmacie.me Maroc`;
-    document.querySelector('meta[name="description"]')?.setAttribute('content', `${product.name} disponible sur parapharmacie.me, parapharmacie Maroc et Khouribga avec paiement a la livraison.`);
+    document.querySelector('meta[name="description"]')?.setAttribute('content', `${product.name} source sur le marche marocain, disponible sur parapharmacie.me Khouribga avec livraison au Maroc et paiement a la livraison.`);
 
     detail.innerHTML = `
         <div class="product-detail__info" data-reveal>
@@ -84,36 +85,41 @@ function renderProduct(product) {
             </div>
             <div class="product-detail__price">
                 <strong>${formatCurrency(price)}</strong>
-                ${hasPromo ? `<span>${formatCurrency(product.price)}</span><em>-${discount}%</em>` : ''}
+                ${oldPrice ? `<span>${formatCurrency(oldPrice)}</span><em>${escapeHtml(product.promoBadge || `-${discount}%`)}</em>` : ''}
             </div>
+            <p class="product-detail__stock ${unavailable ? 'out' : ''}">${escapeHtml(product.stockStatus || 'En stock')} • Prix indicatif Maroc</p>
             <div class="product-detail__purchase">
                 <div class="qty-control product-detail__qty" aria-label="Quantite">
                     <button class="qty-control__btn" type="button" data-qty="-1" aria-label="Diminuer la quantite">-</button>
                     <span class="qty-control__value" id="qty-val">1</span>
                     <button class="qty-control__btn" type="button" data-qty="1" aria-label="Augmenter la quantite">+</button>
                 </div>
-                <a class="btn btn--primary" id="btn-add-cart" href="cart.html?add=${encodeURIComponent(product.id)}&qty=1" data-product-action="add-to-cart" onclick="window.addProductToCart?.(event)" ${product.stock === 0 ? 'aria-disabled="true"' : ''}>
+                <a class="btn btn--primary ${unavailable ? 'is-disabled' : ''}" id="btn-add-cart" href="cart.html?add=${encodeURIComponent(product.id)}&qty=1" data-product-action="add-to-cart" onclick="window.addProductToCart?.(event)" ${unavailable ? 'aria-disabled="true"' : ''}>
                     <i class="fa-solid fa-cart-plus"></i>
-                    ${product.stock === 0 ? 'Indisponible' : 'Ajouter au panier'}
+                    ${unavailable ? 'Indisponible' : 'Ajouter au panier'}
                 </a>
                 <a class="btn btn--whatsapp" href="${getWhatsAppUrl()}" target="_blank" rel="noreferrer">
                     <i class="fa-brands fa-whatsapp"></i>
                     Commander sur WhatsApp
                 </a>
             </div>
-            <p class="product-detail__description">${escapeHtml(product.description)}</p>
+            <p class="product-detail__description">${escapeHtml(product.shortDescription || product.description)}</p>
             <div class="product-detail__trust">
                 <span><i class="fa-solid fa-check"></i> Produit authentique</span>
                 <span><i class="fa-solid fa-truck-fast"></i> Livraison au Maroc</span>
                 <span><i class="fa-solid fa-hand-holding-dollar"></i> Paiement a la livraison</span>
             </div>
+            <a class="product-detail__source" href="${escapeHtml(product.sourceUrl)}" target="_blank" rel="noreferrer">
+                Source catalogue publique
+                <i class="fa-solid fa-up-right-from-square"></i>
+            </a>
             <div class="product-detail__note">
                 <strong>Conseil responsable:</strong> les descriptions sont informatives et ne remplacent pas l’avis d’un professionnel de sante.
             </div>
         </div>
         <div class="product-detail__media" data-reveal>
-            <span class="product-detail__badge">${escapeHtml(product.category)}</span>
-            <img src="${getProductImage(product)}" alt="${escapeHtml(product.name)}">
+            <span class="product-detail__badge">${escapeHtml(product.promoBadge || product.category)}</span>
+            <img src="${getProductImage(product)}" alt="${escapeHtml(product.name)}" loading="lazy">
         </div>
     `;
 

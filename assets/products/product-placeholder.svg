@@ -1,0 +1,13 @@
+<svg width="720" height="720" viewBox="0 0 720 720" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Produit parapharmacie.me en attente de visuel</title>
+  <desc id="desc">Placeholder propre pour les produits dont les droits photo doivent etre verifies.</desc>
+  <rect width="720" height="720" rx="48" fill="#F7FBF8"/>
+  <rect x="64" y="64" width="592" height="592" rx="40" fill="#FFFFFF" stroke="#D8ECE3" stroke-width="4"/>
+  <path d="M214 514H506C528.091 514 546 496.091 546 474V260C546 237.909 528.091 220 506 220H214C191.909 220 174 237.909 174 260V474C174 496.091 191.909 514 214 514Z" fill="#EAF7F1" stroke="#2D8F74" stroke-width="8"/>
+  <path d="M264 514V220" stroke="#2D8F74" stroke-width="8"/>
+  <path d="M456 220V514" stroke="#2D8F74" stroke-width="8"/>
+  <path d="M316 176C316 151.699 335.699 132 360 132C384.301 132 404 151.699 404 176V220H316V176Z" fill="#FFFFFF" stroke="#2D8F74" stroke-width="8"/>
+  <path d="M346 326H374V368H416V396H374V438H346V396H304V368H346V326Z" fill="#0F7F64"/>
+  <text x="360" y="585" text-anchor="middle" fill="#1E594B" font-family="Arial, sans-serif" font-size="34" font-weight="700">parapharmacie.me</text>
+  <text x="360" y="626" text-anchor="middle" fill="#6A7D76" font-family="Arial, sans-serif" font-size="22">visuel produit a valider</text>
+</svg>

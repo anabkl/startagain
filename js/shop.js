@@ -2,7 +2,9 @@ import {
     categories,
     getCatalogProducts,
     getEffectivePrice,
+    getOldPrice,
     getProductImage,
+    isProductUnavailable,
     matchesCategory,
     matchesProduct
 } from './catalog.js';
@@ -24,15 +26,17 @@ function escapeHtml(value) {
 }
 
 function getDiscount(product) {
-    if (!product.promoPrice || product.promoPrice >= product.price) return null;
-    return Math.round(((product.price - product.promoPrice) / product.price) * 100);
+    const oldPrice = getOldPrice(product);
+    const price = getEffectivePrice(product);
+    if (!oldPrice) return null;
+    return Math.round(((oldPrice - price) / oldPrice) * 100);
 }
 
 function addToCart(productId, quantity = 1) {
     const product = allProducts.find((item) => item.id === productId);
 
     if (!product) return;
-    if (product.stock === 0) {
+    if (isProductUnavailable(product)) {
         showToast('Ce produit est actuellement indisponible.', 'error');
         return;
     }
@@ -83,9 +87,13 @@ function buildCategoryButtons() {
 function renderProductCard(product) {
     const price = getEffectivePrice(product);
     const discount = getDiscount(product);
-    const oldPrice = discount ? `<span class="product-card__old-price">${formatCurrency(product.price)}</span>` : '';
-    const stockLabel = product.stock === 0 ? '<span class="product-card__stock out">Rupture</span>' : '<span class="product-card__stock">En stock</span>';
-    const badge = discount ? `-${discount}%` : product.badge || 'Parapharmacie';
+    const oldPriceValue = getOldPrice(product);
+    const oldPrice = oldPriceValue ? `<span class="product-card__old-price">${formatCurrency(oldPriceValue)}</span>` : '';
+    const unavailable = isProductUnavailable(product);
+    const stockLabel = unavailable
+        ? '<span class="product-card__stock out">Rupture</span>'
+        : `<span class="product-card__stock">${escapeHtml(product.stockStatus || 'En stock')}</span>`;
+    const badge = product.promoBadge || (discount ? `-${discount}%` : product.badge || product.category || 'Parapharmacie');
 
     return `
         <article class="product-card" data-reveal>
@@ -100,6 +108,7 @@ function renderProductCard(product) {
                 </div>
                 <a href="product.html?id=${encodeURIComponent(product.id)}" class="product-card__title">${escapeHtml(product.name)}</a>
                 <p class="product-card__brand">${escapeHtml(product.brand || 'parapharmacie.me')}</p>
+                <p class="product-card__description">${escapeHtml(product.shortDescription || product.description || '')}</p>
                 <div class="product-card__rating" aria-label="Note ${product.rating || 4.7} sur 5">
                     <i class="fa-solid fa-star"></i>
                     <span>${product.rating || '4.7'} (${product.reviews || 12})</span>
@@ -109,7 +118,7 @@ function renderProductCard(product) {
                         <strong>${formatCurrency(price)}</strong>
                         ${oldPrice}
                     </div>
-                    <button class="icon-btn add-to-cart-btn" type="button" data-product-id="${escapeHtml(product.id)}" ${product.stock === 0 ? 'disabled' : ''} aria-label="Ajouter ${escapeHtml(product.name)} au panier">
+                    <button class="icon-btn add-to-cart-btn" type="button" data-product-id="${escapeHtml(product.id)}" ${unavailable ? 'disabled' : ''} aria-label="Ajouter ${escapeHtml(product.name)} au panier">
                         <i class="fa-solid fa-cart-plus"></i>
                     </button>
                 </div>

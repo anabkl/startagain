@@ -3,7 +3,9 @@ import {
     faqs,
     getCatalogProducts,
     getEffectivePrice,
+    getOldPrice,
     getProductImage,
+    isProductUnavailable,
     testimonials,
     trustBadges
 } from './catalog.js';
@@ -72,16 +74,17 @@ function renderProducts(products) {
             <div class="product-card__body">
                 <div class="product-card__meta">
                     <span>${escapeHtml(product.category)}</span>
-                    <span class="product-card__stock">En stock</span>
+                    <span class="product-card__stock ${isProductUnavailable(product) ? 'out' : ''}">${escapeHtml(product.stockStatus || 'En stock')}</span>
                 </div>
                 <a href="product.html?id=${encodeURIComponent(product.id)}" class="product-card__title">${escapeHtml(product.name)}</a>
                 <p class="product-card__brand">${escapeHtml(product.brand)}</p>
+                <p class="product-card__description">${escapeHtml(product.shortDescription || product.description || '')}</p>
                 <div class="product-card__footer">
                     <div class="product-card__price">
                         <strong>${formatCurrency(getEffectivePrice(product))}</strong>
-                        ${product.promoPrice ? `<span class="product-card__old-price">${formatCurrency(product.price)}</span>` : ''}
+                        ${getOldPrice(product) ? `<span class="product-card__old-price">${formatCurrency(getOldPrice(product))}</span>` : ''}
                     </div>
-                    <button class="icon-btn" type="button" data-home-product="${escapeHtml(product.id)}" aria-label="Ajouter ${escapeHtml(product.name)} au panier">
+                    <button class="icon-btn" type="button" data-home-product="${escapeHtml(product.id)}" ${isProductUnavailable(product) ? 'disabled' : ''} aria-label="Ajouter ${escapeHtml(product.name)} au panier">
                         <i class="fa-solid fa-cart-plus"></i>
                     </button>
                 </div>
