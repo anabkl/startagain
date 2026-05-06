@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>لوحة التحكم | Parashop Tawfiq</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
   <link rel="stylesheet" href="admin.css" />
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
@@ -19,6 +22,7 @@
     <nav class="sidebar__nav">
       <a href="#" class="active" data-tab="products"><i class="fas fa-plus-circle"></i> إضافة منتج</a>
       <a href="#" data-tab="packs"><i class="fas fa-box-open"></i> إضافة باك/بانر</a>
+      <a href="#" data-tab="manage-products"><i class="fas fa-list-check"></i> إدارة المنتجات</a>
       <a href="orders.html"><i class="fas fa-list-alt"></i> الطلبات</a>
     </nav>
     <div class="sidebar__logout">
@@ -34,6 +38,7 @@
     <div class="admin-tabs">
       <button class="tab-btn active" data-tab="products">إضافة منتج عادي</button>
       <button class="tab-btn" data-tab="packs">إضافة باك / بانر</button>
+      <button class="tab-btn" data-tab="manage-products">إدارة المنتجات</button>
     </div>
 
     <!-- Tab: Add Product -->
@@ -120,170 +125,83 @@
         </form>
       </div>
     </div>
+
+    <div class="tab-panel" id="tab-manage-products">
+      <div class="admin-card admin-card--wide">
+        <div class="admin-card__header">
+          <div>
+            <h2>إدارة المنتجات</h2>
+            <p class="admin-muted">تعديل سريع للكتالوغ المحلي: إخفاء، تفعيل، تغيير السعر، الحالة والوصف.</p>
+          </div>
+          <span class="admin-mode" id="adminBackendMode">Local</span>
+        </div>
+
+        <div class="product-admin-toolbar">
+          <input type="search" id="adminProductSearch" placeholder="بحث بالاسم، الماركة، التصنيف..." aria-label="بحث في المنتجات">
+          <button class="tab-btn" type="button" id="resetProductOverrides">إعادة المنتجات المخفية</button>
+        </div>
+
+        <div class="admin-products-list" id="adminProductsList"></div>
+
+        <form class="admin-product-editor" id="adminProductEditor" hidden>
+          <h3>تعديل المنتج</h3>
+          <input type="hidden" id="editProductId">
+          <div class="form-row">
+            <div class="form-group">
+              <label>اسم المنتج</label>
+              <input type="text" id="editName" required>
+            </div>
+            <div class="form-group">
+              <label>الماركة</label>
+              <input type="text" id="editBrand" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>السعر الحالي (DH)</label>
+              <input type="number" id="editPrice" step="0.01" min="0" required>
+            </div>
+            <div class="form-group">
+              <label>السعر القديم (اختياري)</label>
+              <input type="number" id="editOldPrice" step="0.01" min="0">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>التصنيف</label>
+              <select id="editCategory"></select>
+            </div>
+            <div class="form-group">
+              <label>حالة المخزون</label>
+              <select id="editStockStatus">
+                <option value="En stock">En stock</option>
+                <option value="Stock limite">Stock limite</option>
+                <option value="Rupture de stock">Rupture de stock</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>مسار الصورة / رابط الصورة</label>
+            <input type="text" id="editImage" placeholder="assets/products/...webp">
+          </div>
+          <div class="form-group">
+            <label>الوصف</label>
+            <textarea id="editDescription" required></textarea>
+          </div>
+          <label class="admin-checkbox">
+            <input type="checkbox" id="editActive">
+            <span>المنتج ظاهر في المتجر</span>
+          </label>
+          <div class="admin-editor-actions">
+            <button type="submit" class="btn-submit"><i class="fas fa-save"></i> حفظ التعديلات</button>
+            <button type="button" class="tab-btn" id="cancelProductEdit">إلغاء</button>
+          </div>
+          <p id="productEditStatus" class="status-msg"></p>
+        </form>
+      </div>
+    </div>
   </main>
 
-  <script type="module">
-    import { auth, db, storage } from './js/firebase.js';
-    import {
-      addDoc,
-      collection,
-      serverTimestamp,
-      doc,
-      getDoc,
-    } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
-    import {
-      ref,
-      uploadBytes,
-      getDownloadURL,
-    } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js';
-    import {
-      onAuthStateChanged,
-      signOut,
-    } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js';
-
-    // ---- Admin guard ----
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        window.location.href = 'login.html';
-        return;
-      }
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      if (!userDoc.exists() || userDoc.data().role !== 'admin') {
-        window.location.href = 'index.html';
-        return;
-      }
-      document.getElementById('pageContent').style.display = 'block';
-    });
-
-    // ---- Logout ----
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      signOut(auth).then(() => { window.location.href = 'index.html'; });
-    });
-
-    // ---- Tab switching ----
-    document.querySelectorAll('[data-tab]').forEach(el => {
-      el.addEventListener('click', (e) => {
-        e.preventDefault();
-        const tab = el.dataset.tab;
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.sidebar__nav a[data-tab]').forEach(a => a.classList.remove('active'));
-        document.querySelectorAll(`[data-tab="${tab}"]`).forEach(t => t.classList.add('active'));
-        const panel = document.getElementById(`tab-${tab}`);
-        if (panel) panel.classList.add('active');
-      });
-    });
-
-    // ---- Helper: upload image and return URL ----
-    async function uploadImage(file, folder) {
-      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-      const imagePath = `${folder}/${crypto.randomUUID()}_${safeName}`;
-      const imageRef = ref(storage, imagePath);
-      await uploadBytes(imageRef, file);
-      return { imageUrl: await getDownloadURL(imageRef), imagePath };
-    }
-
-    // ---- Helper: show status ----
-    function showStatus(el, message, type) {
-      el.textContent = message;
-      el.className = `status-msg ${type}`;
-    }
-
-    // ---- Product form ----
-    document.getElementById('productForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const form = e.target;
-      const statusEl = document.getElementById('productStatus');
-      const btn = form.querySelector('.btn-submit');
-      btn.disabled = true;
-      showStatus(statusEl, 'جارٍ الرفع...', '');
-
-      try {
-        const data = new FormData(form);
-        const { imageUrl, imagePath } = await uploadImage(data.get('image'), 'products');
-
-        await addDoc(collection(db, 'products'), {
-          type: 'product',
-          name: data.get('name').trim(),
-          description: data.get('description').trim(),
-          price: Number(data.get('price')),
-          promoPrice: data.get('promoPrice') ? Number(data.get('promoPrice')) : null,
-          category: data.get('category').trim(),
-          brand: data.get('brand').trim(),
-          imageUrl,
-          imagePath,
-          createdAt: serverTimestamp(),
-          createdBy: auth.currentUser.uid,
-        });
-
-        showStatus(statusEl, '✅ تم حفظ المنتج بنجاح!', 'success');
-        form.reset();
-      } catch (err) {
-        console.error(err);
-        showStatus(statusEl, `❌ فشل الحفظ: ${err.message}`, 'error');
-      } finally {
-        btn.disabled = false;
-      }
-    });
-
-   // ---- Pack/Banner form ----
-   document.getElementById('packForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const form = e.target;
-      const statusEl = document.getElementById('packStatus');
-      const btn = form.querySelector('.btn-submit');
-      
-      btn.disabled = true;
-      showStatus(statusEl, 'جارٍ الرفع... (المرجو الانتظار)', '');
-
-      try {
-        console.log("1. بدأ جمع البيانات...");
-        const data = new FormData(form);
-        
-        console.log("2. جاري رفع الصورة...");
-        const imageFile = data.get('image');
-        if (!imageFile || imageFile.size === 0) {
-            throw new Error("المرجو اختيار صورة صالحة!");
-        }
-        const { imageUrl, imagePath } = await uploadImage(imageFile, 'packs');
-        console.log("3. تم رفع الصورة بنجاح:", imageUrl);
-
-        // حماية متقدمة لتاريخ الانتهاء باش ما يكراشيش
-        let endTimeStamp = null;
-        const endTimeValue = data.get('endTime');
-        if (endTimeValue) {
-            const parsedDate = new Date(endTimeValue);
-            if (!isNaN(parsedDate.getTime())) {
-                endTimeStamp = parsedDate.getTime();
-            }
-        }
-        console.log("4. وقت الانتهاء:", endTimeStamp);
-
-        console.log("5. جاري الحفظ في Firestore...");
-        await addDoc(collection(db, 'products'), {
-          type: 'pack',
-          name: data.get('name').trim(),
-          description: data.get('description').trim(),
-          promoPrice: Number(data.get('promoPrice')),
-          packType: data.get('packType'),
-          endTime: endTimeStamp,
-          imageUrl: imageUrl,
-          imagePath: imagePath,
-          createdAt: serverTimestamp(),
-          createdBy: auth.currentUser.uid,
-        });
-
-        console.log("6. تمت العملية بنجاح!");
-        showStatus(statusEl, '✅ تم حفظ الباك / العرض بنجاح!', 'success');
-        form.reset();
-      } catch (err) {
-        console.error("خطأ أثناء الحفظ:", err);
-        showStatus(statusEl, `❌ فشل الحفظ: ${err.message}`, 'error');
-      } finally {
-        btn.disabled = false;
-        console.log("7. تم إعادة تفعيل الزر.");
-      }
-    });
-  </script>
+  <script type="module" src="js/admin-dashboard.js"></script>
 </body>
 </html>

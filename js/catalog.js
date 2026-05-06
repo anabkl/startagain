@@ -2,6 +2,7 @@ import { isFirebaseEnabled } from './runtime-config.js';
 import { catalogProducts, categories, localCityKeywords, productImageFallbacks } from './catalog-data.js';
 
 const FALLBACK_IMAGE = 'assets/products/product-placeholder.svg';
+export const LOCAL_PRODUCT_OVERRIDES_KEY = 'parapharmacie_product_overrides';
 const CATEGORY_ALIASES = {
     'soins-visage': 'visage',
     'produits-cosmetiques': 'visage',
@@ -13,6 +14,8 @@ const CATEGORY_ALIASES = {
 
 export { categories, localCityKeywords };
 export const mockProducts = catalogProducts;
+
+const categorySlugByName = Object.fromEntries(categories.map((category) => [category.name, category.slug]));
 
 export const trustBadges = [
     { icon: 'fa-truck-fast', title: 'Livraison au Maroc', text: 'Khouribga, Oued Zem, Boujniba, Boulanouare et villes marocaines sur confirmation.' },
@@ -60,6 +63,68 @@ export const faqs = [
 
 export function getProductImage(product) {
     return product?.image || product?.imageUrl || productImageFallbacks[product?.categorySlug] || FALLBACK_IMAGE;
+}
+
+export function getLocalProductOverrides() {
+    if (typeof window === 'undefined') return {};
+
+    try {
+        return JSON.parse(window.localStorage.getItem(LOCAL_PRODUCT_OVERRIDES_KEY)) || {};
+    } catch {
+        return {};
+    }
+}
+
+export function saveLocalProductOverride(productId, override) {
+    const overrides = getLocalProductOverrides();
+    overrides[productId] = {
+        ...(overrides[productId] || {}),
+        ...override,
+        updatedAt: new Date().toISOString()
+    };
+    window.localStorage.setItem(LOCAL_PRODUCT_OVERRIDES_KEY, JSON.stringify(overrides));
+    return overrides[productId];
+}
+
+export function setLocalProductActive(productId, active) {
+    return saveLocalProductOverride(productId, { active });
+}
+
+function coerceOptionalNumber(value, fallback = null) {
+    if (value === '' || value === null || value === undefined) return fallback;
+    const number = Number(value);
+    return Number.isFinite(number) ? number : fallback;
+}
+
+function applyProductOverride(product, override = {}) {
+    const next = { ...product, ...override };
+    const categorySlug = categorySlugByName[next.category] || next.categorySlug;
+    const priceMAD = coerceOptionalNumber(next.priceMAD ?? next.promoPrice ?? next.price, product.priceMAD);
+    const oldPriceMAD = coerceOptionalNumber(next.oldPriceMAD, null);
+    const hasPromo = oldPriceMAD && priceMAD && oldPriceMAD > priceMAD;
+    const image = next.image || next.imageUrl || productImageFallbacks[categorySlug] || FALLBACK_IMAGE;
+
+    return {
+        ...next,
+        categorySlug,
+        priceMAD,
+        oldPriceMAD: hasPromo ? oldPriceMAD : null,
+        price: hasPromo ? oldPriceMAD : priceMAD,
+        promoPrice: hasPromo ? priceMAD : null,
+        image,
+        imageUrl: image,
+        active: next.active !== false,
+        stockStatus: next.stockStatus || product.stockStatus || 'En stock',
+        stock: next.stockStatus === 'Rupture de stock' ? 0 : (next.stock ?? product.stock ?? 24)
+    };
+}
+
+export function applyLocalProductOverrides(products, { includeInactive = false } = {}) {
+    const overrides = getLocalProductOverrides();
+
+    return products
+        .map((product) => applyProductOverride(product, overrides[product.id]))
+        .filter((product) => includeInactive || product.active !== false);
 }
 
 export function getProductInitials(product) {
@@ -156,6 +221,7 @@ function normalizeExternalProduct(product) {
         imageSource: product.imageSource || 'Firebase product image source pending documentation',
         imageRightsStatus: product.imageRightsStatus || 'needs-rights-review',
         imageReplacementNote: product.imageReplacementNote || 'Confirm ecommerce usage rights before production launch.',
+        active: product.active !== false,
         stockStatus: product.stockStatus || (product.stock === 0 ? 'Rupture de stock' : 'En stock')
     };
 }
@@ -180,21 +246,21 @@ function withTimeout(promise, timeoutMs = 3000) {
 
 export async function getCatalogProducts() {
     if (!isFirebaseEnabled()) {
-        return { products: catalogProducts, source: 'local-catalog' };
+        return { products: applyLocalProductOverrides(catalogProducts), source: 'local-catalog' };
     }
 
     try {
         const firebaseProducts = await withTimeout(loadFirebaseProducts());
-        const publicProducts = firebaseProducts.filter((product) => product.type !== 'pack');
+        const publicProducts = firebaseProducts.filter((product) => product.type !== 'pack' && product.active !== false);
 
         if (publicProducts.length > 0) {
-            return { products: publicProducts, source: 'firebase' };
+            return { products: applyLocalProductOverrides(publicProducts), source: 'firebase' };
         }
     } catch (error) {
         console.info('Using local production catalog:', error?.message || error);
     }
 
-    return { products: catalogProducts, source: 'local-catalog' };
+    return { products: applyLocalProductOverrides(catalogProducts), source: 'local-catalog' };
 }
 
 export async function getCatalogProduct(id) {
