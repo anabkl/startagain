@@ -9,7 +9,7 @@ export function showToast(message, type = 'success') {
 
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    toast.innerHTML = `<span style="margin-right:8px;">${type === 'success' ? '✅' : '⚠️'}</span> ${message}`;
+    toast.innerHTML = `<span style="margin-right:8px;">${type === 'success' ? '✓' : '!'}</span> ${message}`;
 
     container.appendChild(toast);
 
@@ -27,5 +27,5 @@ export function showToast(message, type = 'success') {
 
 // دالة لتنسيق الثمن بالدرهم المغربي
 export function formatCurrency(amount) {
-    return Number(amount).toFixed(2) + ' DH';
+    return `${Number(amount || 0).toFixed(2)} DH`;
 }

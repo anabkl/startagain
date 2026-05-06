@@ -1,100 +1,107 @@
-import { db } from './firebase.js';
-import { collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
+import { getCart, saveCart } from './main.js';
 import { showToast, formatCurrency } from './utils.js';
-import { updateCartCount } from './main.js';
+import { saveOrder, buildWhatsAppOrderMessage } from './order-service.js';
 
-const CART_KEY = 'parashop_cart';
 const checkoutForm = document.getElementById('checkout-form');
 const orderTotalEl = document.getElementById('order-total-amount');
 const summaryList = document.getElementById('summary-items-list');
+const subtotalEl = document.getElementById('order-subtotal-amount');
 
-// ============================================
-// 1. حساب السعر الفعلي (يدعم promoPrice)
-// ============================================
-function getEffectivePrice(item) {
-    return item.promoPrice && item.promoPrice < item.price ? item.promoPrice : item.price;
+function escapeHtml(value) {
+    const div = document.createElement('div');
+    div.textContent = value || '';
+    return div.innerHTML;
 }
 
-// ============================================
-// 2. عرض ملخص الطلب في صفحة Checkout
-// ============================================
+function getEffectivePrice(item) {
+    return Number(item.effectivePrice || item.promoPrice || item.discountPrice || item.price || 0);
+}
+
+function getCartTotal(cart) {
+    return cart.reduce((sum, item) => sum + getEffectivePrice(item) * (item.quantity || 1), 0);
+}
+
 function renderOrderSummary() {
-    const cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
+    const cart = getCart();
 
     if (cart.length === 0) {
-        showToast('سلتك فارغة! سيتم تحويلك للمتجر.', 'error');
-        setTimeout(() => { window.location.href = 'shop.html'; }, 1500);
+        showToast('Votre panier est vide. Redirection vers la boutique.', 'error');
+        setTimeout(() => { window.location.href = 'shop.html'; }, 1200);
         return;
     }
 
-    let total = 0;
-    let html = '';
+    const total = getCartTotal(cart);
 
-    cart.forEach(item => {
-        const price = getEffectivePrice(item);
-        const subtotal = price * (item.quantity || 1);
-        total += subtotal;
-
-        html += `
-            <div style="display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #f0f0f0;">
-                <img src="${item.imageUrl}" alt="${item.name}" style="width:55px; height:55px; object-fit:cover; border-radius:10px; border:1px solid #eee;">
-                <div style="flex:1;">
-                    <p style="margin:0; font-weight:700; font-size:0.9rem; color:#333;">${item.name}</p>
-                    <p style="margin:4px 0 0; color:#9e9e9e; font-size:0.8rem;">${formatCurrency(price)} × ${item.quantity || 1}</p>
+    if (summaryList) {
+        summaryList.innerHTML = cart.map((item) => {
+            const price = getEffectivePrice(item);
+            return `
+                <div class="summary-product">
+                    <img src="${escapeHtml(item.imageUrl || 'assets/images/photopharamcie.png')}" alt="${escapeHtml(item.name)}">
+                    <div>
+                        <strong>${escapeHtml(item.name)}</strong>
+                        <span>${formatCurrency(price)} x ${item.quantity || 1}</span>
+                    </div>
+                    <em>${formatCurrency(price * (item.quantity || 1))}</em>
                 </div>
-                <span style="font-weight:800; color:#0d7c3e; white-space:nowrap;">${formatCurrency(subtotal)}</span>
-            </div>
-        `;
-    });
+            `;
+        }).join('');
+    }
 
-    if (summaryList) summaryList.innerHTML = html;
+    if (subtotalEl) subtotalEl.textContent = formatCurrency(total);
     if (orderTotalEl) orderTotalEl.textContent = formatCurrency(total);
 }
 
-// ============================================
-// 3. معالجة الطلب (COD فقط - بدون Stripe)
-// ============================================
-async function processOrder(e) {
-    e.preventDefault();
+function getFormValue(id) {
+    return document.getElementById(id)?.value.trim() || '';
+}
 
-    // قلبنا على البوطونة بالـ class ديالها حيت كاينه برا الفورم
-    const btn = document.querySelector('.btn-confirm'); 
+function validatePhone(phone) {
+    return /^(05|06|07)\d{8}$/.test(phone.replace(/\s+/g, ''));
+}
+
+async function processOrder(event) {
+    event.preventDefault();
+
+    const btn = event.submitter || document.querySelector('.btn-confirm');
     const originalText = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري معالجة الطلب...';
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Confirmation...';
 
-    const cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
+    const cart = getCart();
     if (cart.length === 0) {
-        showToast("سلتك فارغة!", "error");
+        showToast('Votre panier est vide.', 'error');
         btn.disabled = false;
         btn.innerHTML = originalText;
         return;
     }
 
-    // التحقق من الحقول
-    const firstName = document.getElementById('firstName').value.trim();
-    const lastName = document.getElementById('lastName').value.trim();
-    const whatsapp = document.getElementById('whatsapp').value.trim().replace(/\s+/g, '');
-    const city = document.getElementById('city').value.trim();
-    const address = document.getElementById('address').value.trim();
+    const firstName = getFormValue('firstName');
+    const lastName = getFormValue('lastName');
+    const email = getFormValue('email');
+    const whatsapp = getFormValue('whatsapp').replace(/\s+/g, '');
+    const city = getFormValue('city');
+    const address = getFormValue('address');
 
     if (!firstName || !lastName || !whatsapp || !city || !address) {
-        showToast("المرجو ملء جميع الحقول الإجبارية", "error");
+        showToast('Veuillez remplir les champs obligatoires.', 'error');
         btn.disabled = false;
         btn.innerHTML = originalText;
         return;
     }
 
-    const phoneRegex = /^(06|07|05)\d{8}$/;
-    if (!phoneRegex.test(whatsapp)) {
-        showToast("رقم واتساب غير صالح (مثال: 0675698351)", "error");
+    if (!validatePhone(whatsapp)) {
+        showToast('Numero WhatsApp invalide. Exemple: 0675698351', 'error');
         btn.disabled = false;
         btn.innerHTML = originalText;
         return;
     }
 
-    const email = (document.getElementById('email')?.value || '').trim();
-    const total = cart.reduce((sum, item) => sum + getEffectivePrice(item) * (item.quantity || 1), 0);
+    const items = cart.map((item) => ({
+        ...item,
+        effectivePrice: getEffectivePrice(item)
+    }));
+    const total = getCartTotal(items);
 
     const orderData = {
         firstName,
@@ -103,68 +110,32 @@ async function processOrder(e) {
         whatsapp,
         city,
         address,
-        items: cart,
+        items,
         total,
         paymentMethod: 'COD',
-        status: 'pending',
-        createdAt: serverTimestamp()
+        status: 'pending'
     };
 
     try {
-        const docRef = await addDoc(collection(db, "orders"), orderData);
-        const orderId = docRef.id;
-
-        // مسح السلة
-        localStorage.removeItem(CART_KEY);
-        updateCartCount();
-
-        // بناء رسالة واتساب
-        const itemsList = cart.map((item, i) => {
-            const p = getEffectivePrice(item);
-            return `${i+1}. ${item.name} × ${item.quantity || 1} = ${formatCurrency(p * (item.quantity || 1))}`;
-        }).join('\n');
-
-        const waMessage = `🛒 *طلب جديد - Parashop Tawfiq*
-
-👤 *العميل:* ${firstName} ${lastName}
-📞 *واتساب:* ${whatsapp}
-📧 *الإيميل:* ${email || 'غير محدد'}
-🏙️ *المدينة:* ${city}
-📍 *العنوان:* ${address}
-
-📦 *المنتجات:*
-${itemsList}
-
-💰 *المجموع:* ${formatCurrency(total)}
-💳 *طريقة الدفع:* الدفع عند الاستلام
-🆔 *رقم الطلب:* #${orderId.slice(0,8)}
-🕐 *التاريخ:* ${new Date().toLocaleString('ar-MA')}`;
-
+        const savedOrder = await saveOrder(orderData);
+        const waMessage = buildWhatsAppOrderMessage(orderData, savedOrder.id, formatCurrency);
         const waUrl = `https://wa.me/212675698351?text=${encodeURIComponent(waMessage)}`;
 
-        // تحويل لصفحة النجاح أو واتساب
-        showToast("✅ تم تسجيل طلبك بنجاح!", "success");
+        localStorage.setItem('parapharmacie_last_whatsapp_url', waUrl);
+        saveCart([]);
+        showToast('Commande enregistree. Ouverture de WhatsApp...', 'success');
 
         setTimeout(() => {
-            window.open(waUrl, '_blank');
-            window.location.href = 'success.html';
-        }, 1500);
-
+            window.open(waUrl, '_blank', 'noopener');
+            window.location.href = `success.html?order=${encodeURIComponent(savedOrder.id)}&source=${savedOrder.source}`;
+        }, 900);
     } catch (error) {
-        console.error("Order error:", error);
-        showToast("حدث خطأ أثناء تسجيل الطلب. حاول مرة أخرى.", "error");
+        console.error('Order error:', error);
+        showToast('Impossible de confirmer la commande pour le moment.', 'error');
         btn.disabled = false;
         btn.innerHTML = originalText;
     }
 }
 
-// ============================================
-// 4. التهيئة
-// ============================================
-if (checkoutForm) {
-    checkoutForm.addEventListener('submit', processOrder);
-}
-
-// عرض ملخص الطلب عند فتح الصفحة
+if (checkoutForm) checkoutForm.addEventListener('submit', processOrder);
 renderOrderSummary();
-console.log("Checkout.js v2 Loaded ✅");

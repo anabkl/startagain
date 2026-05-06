@@ -1,108 +1,99 @@
-// تحديث رقم المنتجات في السلة
+export const CART_KEY = 'parashop_cart';
+
+export function getCart() {
+    return JSON.parse(localStorage.getItem(CART_KEY)) || [];
+}
+
+export function saveCart(cart) {
+    localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    updateCartCount();
+}
+
 export function updateCartCount() {
-    const cart = JSON.parse(localStorage.getItem('parashop_cart')) || [];
-    const count = cart.reduce((total, item) => total + (item.quantity || 1), 0);
+    const count = getCart().reduce((total, item) => total + (item.quantity || 1), 0);
     const badges = document.querySelectorAll('.header__cart-count, #cart-count');
-    
-    badges.forEach(badge => {
+
+    badges.forEach((badge) => {
         badge.textContent = count;
         badge.style.display = count > 0 ? 'flex' : 'none';
     });
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    
-    // 1. تشغيل قائمة الهاتف (Mobile Menu)
+function initMobileNavigation() {
     const menuToggle = document.getElementById('menuToggle');
     const mainNav = document.getElementById('mainNav');
 
-    if (menuToggle && mainNav) {
-        menuToggle.addEventListener('click', () => {
-            menuToggle.classList.toggle('active');
-            mainNav.classList.toggle('open');
+    if (!menuToggle || !mainNav) return;
+
+    menuToggle.addEventListener('click', () => {
+        const isOpen = mainNav.classList.toggle('open');
+        menuToggle.classList.toggle('active', isOpen);
+        menuToggle.setAttribute('aria-expanded', String(isOpen));
+    });
+
+    mainNav.querySelectorAll('a').forEach((link) => {
+        link.addEventListener('click', () => {
+            mainNav.classList.remove('open');
+            menuToggle.classList.remove('active');
+            menuToggle.setAttribute('aria-expanded', 'false');
         });
-    }
+    });
+}
 
-    // 2. تشغيل السلايدر (Hero Slider)
-    const slides = document.querySelectorAll('.hero__slide');
-    const dots = document.querySelectorAll('.hero__dot');
-    const prevBtn = document.getElementById('prevSlide');
-    const nextBtn = document.getElementById('nextSlide');
-    let currentSlide = 0;
-    let slideInterval;
-
-    function goToSlide(n) {
-        slides.forEach(slide => slide.classList.remove('active'));
-        dots.forEach(dot => dot.classList.remove('active'));
-        
-        currentSlide = (n + slides.length) % slides.length;
-        if(slides[currentSlide]) slides[currentSlide].classList.add('active');
-        if(dots[currentSlide]) dots[currentSlide].classList.add('active');
-    }
-
-    function nextSlide() { goToSlide(currentSlide + 1); }
-    function prevSlide() { goToSlide(currentSlide - 1); }
-    function startSlider() { slideInterval = setInterval(nextSlide, 5000); }
-
-    if (slides.length > 0) {
-        if(nextBtn) nextBtn.addEventListener('click', () => { nextSlide(); clearInterval(slideInterval); startSlider(); });
-        if(prevBtn) prevBtn.addEventListener('click', () => { prevSlide(); clearInterval(slideInterval); startSlider(); });
-        
-        dots.forEach((dot, index) => {
-            dot.addEventListener('click', () => {
-                goToSlide(index);
-                clearInterval(slideInterval);
-                startSlider();
-            });
-        });
-        startSlider();
-    }
-
-    // 3. زر الرجوع للأعلى (Back to Top)
-    const backToTopBtn = document.getElementById('backToTop');
-    if (backToTopBtn) {
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 300) {
-                backToTopBtn.style.opacity = '1';
-                backToTopBtn.style.visibility = 'visible';
-            } else {
-                backToTopBtn.style.opacity = '0';
-                backToTopBtn.style.visibility = 'hidden';
-            }
-        });
-
-        backToTopBtn.addEventListener('click', () => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        });
-    }
-
-    // 4. تحديث العداد عند تحميل الصفحة
-    updateCartCount();
-    
-    // الاستماع لأي تغيير في السلة من صفحات أخرى
-    window.addEventListener('storage', updateCartCount);
-
-    // 5. وظيفة البحث - توجيه للمتجر مع معامل البحث
+function initHeaderSearch() {
     const searchInput = document.querySelector('.header__search-input');
     const searchBtn = document.querySelector('.header__search-btn');
 
     function doSearch() {
         const term = searchInput ? searchInput.value.trim() : '';
-        if (term) {
-            window.location.href = 'shop.html?q=' + encodeURIComponent(term);
-        } else {
-            window.location.href = 'shop.html';
-        }
+        window.location.href = term ? `shop.html?q=${encodeURIComponent(term)}` : 'shop.html';
     }
 
-    if (searchBtn) {
-        searchBtn.onclick = doSearch;
-    }
+    if (searchBtn) searchBtn.addEventListener('click', doSearch);
     if (searchInput) {
-        // Remove old inline onclick if any
-        searchInput.onclick = null;
-        searchInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') doSearch();
+        searchInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') doSearch();
         });
     }
+}
+
+function initFaqAccordions() {
+    document.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-faq-question]');
+        if (!button) return;
+
+        const item = button.closest('.faq__item');
+        const isOpen = item.classList.toggle('open');
+        button.setAttribute('aria-expanded', String(isOpen));
+    });
+}
+
+function initRevealAnimations() {
+    const elements = document.querySelectorAll('[data-reveal]');
+    if (!('IntersectionObserver' in window) || elements.length === 0) {
+        elements.forEach((element) => element.classList.add('is-visible'));
+        return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.15 });
+
+    elements.forEach((element) => observer.observe(element));
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initMobileNavigation();
+    initHeaderSearch();
+    initFaqAccordions();
+    initRevealAnimations();
+    updateCartCount();
 });
+
+window.addEventListener('storage', updateCartCount);
+document.addEventListener('content:updated', initRevealAnimations);

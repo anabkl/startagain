@@ -1,185 +1,204 @@
-// js/cart.js
-import { updateCartCount } from './main.js';
-import { showToast } from './utils.js';
+import { getCart, saveCart, updateCartCount } from './main.js';
+import { showToast, formatCurrency } from './utils.js';
+import { getCatalogProduct, getEffectivePrice as getCatalogEffectivePrice } from './catalog.js';
 
-// ============================================
-// 1. عناصر DOM
-// ============================================
-const cartItemsContainer = document.getElementById('cart-items');   // tbody للجدول
-const cartCardsContainer = document.getElementById('cart-cards');   // بطاقات الموبايل
-const cartTotalElement   = document.getElementById('cart-total');
-const cartCountElement   = document.getElementById('cart-count');
-const cartEmptyDiv       = document.getElementById('cart-empty');
-const cartContentDiv     = document.getElementById('cart-content');
-const checkoutBtn        = document.getElementById('checkout-btn');
+const cartItemsContainer = document.getElementById('cart-items');
+const cartCardsContainer = document.getElementById('cart-cards');
+const cartTotalElement = document.getElementById('cart-total');
+const cartCountElement = document.getElementById('cart-items-count');
+const cartEmptyDiv = document.getElementById('cart-empty');
+const cartContentDiv = document.getElementById('cart-content');
+const whatsappCartLink = document.getElementById('whatsapp-cart-link');
 
-const CART_KEY = 'parashop_cart';
-
-// ============================================
-// 2. دالة الحصول على السعر الفعلي
-//    تدعم promoPrice و discountPrice
-// ============================================
-function getEffectivePrice(item) {
-    return item.promoPrice || item.discountPrice || item.price;
+function escapeHtml(value) {
+    const div = document.createElement('div');
+    div.textContent = value || '';
+    return div.innerHTML;
 }
 
-// ============================================
-// 3. دالة رسم السلة (Render)
-// ============================================
-function renderCart() {
-    const cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
+function getEffectivePrice(item) {
+    return Number(item.effectivePrice || item.promoPrice || item.discountPrice || item.price || 0);
+}
 
-    // --- حالة السلة الفارغة ---
-    if (cart.length === 0) {
-        cartEmptyDiv.style.display   = 'flex';
-        cartContentDiv.style.display = 'none';
+function getTotal(cart) {
+    return cart.reduce((sum, item) => sum + getEffectivePrice(item) * (item.quantity || 1), 0);
+}
+
+function updateQuantity(index, newQty) {
+    const cart = getCart();
+    const qty = Number.parseInt(newQty, 10);
+
+    if (Number.isNaN(qty) || qty < 1) {
+        showToast('Quantite invalide.', 'error');
+        renderCart();
         return;
     }
 
-    cartEmptyDiv.style.display   = 'none';
-    cartContentDiv.style.display = 'block';
+    cart[index].quantity = Math.min(qty, 99);
+    saveCart(cart);
+    renderCart();
+}
 
-    let total     = 0;
-    let totalQty  = 0;
-    let tableHTML = '';
-    let cardsHTML = '';
+function removeFromCart(index) {
+    const cart = getCart();
+    const removedItem = cart[index];
+    cart.splice(index, 1);
+    saveCart(cart);
+    renderCart();
+    showToast(`"${removedItem.name}" a ete retire du panier.`, 'error');
+}
 
-    cart.forEach((item, index) => {
-        const price    = getEffectivePrice(item);
-        const subtotal = price * item.quantity;
-        total    += subtotal;
-        totalQty += item.quantity;
+function renderDesktopRows(cart) {
+    return cart.map((item, index) => {
+        const price = getEffectivePrice(item);
+        const subtotal = price * (item.quantity || 1);
 
-        // --- صف الجدول (Desktop) ---
-        tableHTML += `
+        return `
             <tr class="cart-table__row">
                 <td class="cart-table__product">
-                    <img src="${item.imageUrl}" alt="${item.name}" class="cart-table__img">
-                    <span class="cart-table__name">${item.name}</span>
-                </td>
-                <td class="cart-table__price">${price.toFixed(2)} DH</td>
-                <td class="cart-table__qty">
-                    <div class="qty-control">
-                        <button class="qty-control__btn" data-action="decrease" data-index="${index}" aria-label="إنقاص الكمية">−</button>
-                        <input  class="qty-control__input" type="number" min="1" max="99" value="${item.quantity}" data-index="${index}" aria-label="الكمية">
-                        <button class="qty-control__btn" data-action="increase" data-index="${index}" aria-label="زيادة الكمية">+</button>
+                    <img src="${escapeHtml(item.imageUrl || 'assets/images/photopharamcie.png')}" alt="${escapeHtml(item.name)}" class="cart-table__img">
+                    <div>
+                        <span class="cart-table__name">${escapeHtml(item.name)}</span>
+                        <small>${escapeHtml(item.brand || item.category || 'parapharmacie.me')}</small>
                     </div>
                 </td>
-                <td class="cart-table__subtotal">${subtotal.toFixed(2)} DH</td>
+                <td class="cart-table__price">${formatCurrency(price)}</td>
+                <td class="cart-table__qty">
+                    <div class="qty-control">
+                        <button class="qty-control__btn" data-action="decrease" data-index="${index}" aria-label="Diminuer la quantite">-</button>
+                        <input class="qty-control__input" type="number" min="1" max="99" value="${item.quantity || 1}" data-index="${index}" aria-label="Quantite">
+                        <button class="qty-control__btn" data-action="increase" data-index="${index}" aria-label="Augmenter la quantite">+</button>
+                    </div>
+                </td>
+                <td class="cart-table__subtotal">${formatCurrency(subtotal)}</td>
                 <td class="cart-table__remove">
-                    <button class="btn-remove" data-index="${index}" aria-label="حذف المنتج">
-                        <i class="fas fa-trash-alt"></i>
+                    <button class="btn-remove" data-index="${index}" aria-label="Supprimer le produit">
+                        <i class="fa-solid fa-trash"></i>
                     </button>
                 </td>
             </tr>
         `;
+    }).join('');
+}
 
-        // --- بطاقة الموبايل ---
-        cardsHTML += `
-            <div class="cart-card">
-                <img src="${item.imageUrl}" alt="${item.name}" class="cart-card__img">
+function renderMobileCards(cart) {
+    return cart.map((item, index) => {
+        const price = getEffectivePrice(item);
+        const subtotal = price * (item.quantity || 1);
+
+        return `
+            <article class="cart-card">
+                <img src="${escapeHtml(item.imageUrl || 'assets/images/photopharamcie.png')}" alt="${escapeHtml(item.name)}" class="cart-card__img">
                 <div class="cart-card__details">
-                    <h4 class="cart-card__name">${item.name}</h4>
-                    <p class="cart-card__price">${price.toFixed(2)} DH</p>
+                    <h3 class="cart-card__name">${escapeHtml(item.name)}</h3>
+                    <p class="cart-card__price">${formatCurrency(price)}</p>
                     <div class="qty-control">
-                        <button class="qty-control__btn" data-action="decrease" data-index="${index}">−</button>
-                        <input  class="qty-control__input" type="number" min="1" max="99" value="${item.quantity}" data-index="${index}">
-                        <button class="qty-control__btn" data-action="increase" data-index="${index}">+</button>
+                        <button class="qty-control__btn" data-action="decrease" data-index="${index}" aria-label="Diminuer la quantite">-</button>
+                        <input class="qty-control__input" type="number" min="1" max="99" value="${item.quantity || 1}" data-index="${index}" aria-label="Quantite">
+                        <button class="qty-control__btn" data-action="increase" data-index="${index}" aria-label="Augmenter la quantite">+</button>
                     </div>
-                    <p class="cart-card__subtotal">المجموع: <strong>${subtotal.toFixed(2)} DH</strong></p>
+                    <p class="cart-card__subtotal">Sous-total: <strong>${formatCurrency(subtotal)}</strong></p>
                 </div>
-                <button class="btn-remove" data-index="${index}" aria-label="حذف المنتج">
-                    <i class="fas fa-trash-alt"></i>
+                <button class="btn-remove" data-index="${index}" aria-label="Supprimer le produit">
+                    <i class="fa-solid fa-trash"></i>
                 </button>
-            </div>
+            </article>
         `;
-    });
-
-    // --- تحديث DOM ---
-    // --- تحديث DOM ---
-    if (cartItemsContainer) cartItemsContainer.innerHTML = tableHTML;
-    if (cartCardsContainer) cartCardsContainer.innerHTML = cardsHTML; // زدنا هاد الشرط باش ما يتبلونطاش
-    if (cartTotalElement) cartTotalElement.innerText = total.toFixed(2) + ' DH';
-    if (cartCountElement) cartCountElement.innerText = totalQty;
+    }).join('');
 }
 
-// ============================================
-// 4. تحديث الكمية
-// ============================================
-function updateQuantity(index, newQty) {
-    const cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
-    const qty  = parseInt(newQty);
+function updateWhatsAppLink(cart) {
+    if (!whatsappCartLink) return;
 
-    if (isNaN(qty) || qty < 1) {
-        showToast('الكمية غير صالحة', 'error');
-        renderCart();
+    const items = cart.map((item) => `${item.name} x ${item.quantity || 1}`).join('\n');
+    const message = `Bonjour parapharmacie.me, je souhaite confirmer cette commande:\n${items}\nTotal: ${formatCurrency(getTotal(cart))}`;
+    whatsappCartLink.href = `https://wa.me/212675698351?text=${encodeURIComponent(message)}`;
+}
+
+function renderCart() {
+    const cart = getCart();
+
+    if (cart.length === 0) {
+        cartEmptyDiv.style.display = 'flex';
+        cartContentDiv.style.display = 'none';
+        if (cartItemsContainer) cartItemsContainer.innerHTML = '';
+        if (cartCardsContainer) cartCardsContainer.innerHTML = '';
+        if (cartTotalElement) cartTotalElement.textContent = formatCurrency(0);
+        if (cartCountElement) cartCountElement.textContent = '0';
+        updateCartCount();
         return;
     }
 
-    if (qty > 99) {
-        showToast('الحد الأقصى هو 99', 'error');
-        renderCart();
-        return;
+    cartEmptyDiv.style.display = 'none';
+    cartContentDiv.style.display = 'flex';
+
+    const total = getTotal(cart);
+    const totalQty = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+
+    if (cartItemsContainer) cartItemsContainer.innerHTML = renderDesktopRows(cart);
+    if (cartCardsContainer) cartCardsContainer.innerHTML = renderMobileCards(cart);
+    if (cartTotalElement) cartTotalElement.textContent = formatCurrency(total);
+    if (cartCountElement) cartCountElement.textContent = totalQty;
+    updateWhatsAppLink(cart);
+    updateCartCount();
+}
+
+async function hydrateCartFromQuery() {
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get('add');
+    if (!productId) return;
+
+    const qty = Math.max(1, Math.min(Number.parseInt(params.get('qty') || '1', 10) || 1, 20));
+    const { product } = await getCatalogProduct(productId);
+
+    if (product && product.stock !== 0) {
+        const cart = getCart();
+        const existing = cart.find((item) => item.id === product.id);
+
+        if (existing) {
+            existing.quantity = (existing.quantity || 1) + qty;
+        } else {
+            cart.push({
+                ...product,
+                effectivePrice: getCatalogEffectivePrice(product),
+                quantity: qty
+            });
+        }
+
+        saveCart(cart);
+        showToast(`"${product.name}" a ete ajoute au panier.`, 'success');
     }
 
-    cart[index].quantity = qty;
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    renderCart();
-    updateCartCount();
+    window.history.replaceState({}, document.title, 'cart.html');
 }
 
-// ============================================
-// 5. حذف منتج من السلة
-// ============================================
-function removeFromCart(index) {
-    const cart = JSON.parse(localStorage.getItem(CART_KEY)) || [];
-    const removedItem = cart[index];
-    cart.splice(index, 1);
-    localStorage.setItem(CART_KEY, JSON.stringify(cart));
-    renderCart();
-    updateCartCount();
-    showToast(`تم حذف "${removedItem.name}" من السلة`, 'error');
-}
-
-// ============================================
-// 6. Event Delegation (بدل onclick في HTML)
-// ============================================
-document.addEventListener('click', (e) => {
-    const target = e.target.closest('[data-action]');
+document.addEventListener('click', (event) => {
+    const target = event.target.closest('[data-action]');
     if (target) {
-        const index  = parseInt(target.dataset.index);
-        const action = target.dataset.action;
-        const cart   = JSON.parse(localStorage.getItem(CART_KEY)) || [];
+        const index = Number.parseInt(target.dataset.index, 10);
+        const cart = getCart();
+        const currentQty = cart[index]?.quantity || 1;
 
-        if (action === 'increase') {
-            updateQuantity(index, cart[index].quantity + 1);
-        } else if (action === 'decrease') {
-            if (cart[index].quantity > 1) {
-                updateQuantity(index, cart[index].quantity - 1);
-            } else {
-                removeFromCart(index);
-            }
+        if (target.dataset.action === 'increase') updateQuantity(index, currentQty + 1);
+        if (target.dataset.action === 'decrease') {
+            currentQty > 1 ? updateQuantity(index, currentQty - 1) : removeFromCart(index);
         }
         return;
     }
 
-    const removeBtn = e.target.closest('.btn-remove');
-    if (removeBtn) {
-        const index = parseInt(removeBtn.dataset.index);
-        removeFromCart(index);
+    const removeBtn = event.target.closest('.btn-remove');
+    if (removeBtn) removeFromCart(Number.parseInt(removeBtn.dataset.index, 10));
+});
+
+document.addEventListener('change', (event) => {
+    if (event.target.classList.contains('qty-control__input')) {
+        updateQuantity(Number.parseInt(event.target.dataset.index, 10), event.target.value);
     }
 });
 
-// Event Listener للـ input المباشر على الكمية
-document.addEventListener('change', (e) => {
-    if (e.target.classList.contains('qty-control__input')) {
-        const index = parseInt(e.target.dataset.index);
-        updateQuantity(index, e.target.value);
-    }
-});
+async function initCart() {
+    await hydrateCartFromQuery();
+    renderCart();
+}
 
-// ============================================
-// 7. التهيئة
-// ============================================
-renderCart();
-console.log("Cart.js Loaded ✅");
+initCart();
