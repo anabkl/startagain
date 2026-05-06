@@ -1,6 +1,6 @@
 import { getCart, saveCart } from './main.js';
 import { showToast, formatCurrency } from './utils.js';
-import { saveOrder, buildWhatsAppOrderMessage } from './order-service.js';
+import { DEFAULT_ORDER_STATUS, saveOrder, buildWhatsAppOrderMessage } from './order-service.js';
 import { getProductImage } from './catalog.js';
 
 const checkoutForm = document.getElementById('checkout-form');
@@ -20,6 +20,25 @@ function getEffectivePrice(item) {
 
 function getCartTotal(cart) {
     return cart.reduce((sum, item) => sum + getEffectivePrice(item) * (item.quantity || 1), 0);
+}
+
+function normalizeMoroccanPhone(phone) {
+    const original = String(phone || '').trim();
+    const compact = original.replace(/[\s().-]/g, '');
+
+    if (/^0[67]\d{8}$/.test(compact)) {
+        return { original, normalized: `+212${compact.slice(1)}`, isValid: true };
+    }
+
+    if (/^\+212[67]\d{8}$/.test(compact)) {
+        return { original, normalized: compact, isValid: true };
+    }
+
+    if (/^212[67]\d{8}$/.test(compact)) {
+        return { original, normalized: `+${compact}`, isValid: true };
+    }
+
+    return { original, normalized: '', isValid: false };
 }
 
 function renderOrderSummary() {
@@ -57,10 +76,6 @@ function getFormValue(id) {
     return document.getElementById(id)?.value.trim() || '';
 }
 
-function validatePhone(phone) {
-    return /^(05|06|07)\d{8}$/.test(phone.replace(/\s+/g, ''));
-}
-
 async function processOrder(event) {
     event.preventDefault();
 
@@ -80,19 +95,19 @@ async function processOrder(event) {
     const firstName = getFormValue('firstName');
     const lastName = getFormValue('lastName');
     const email = getFormValue('email');
-    const whatsapp = getFormValue('whatsapp').replace(/\s+/g, '');
+    const phone = normalizeMoroccanPhone(getFormValue('whatsapp'));
     const city = getFormValue('city');
     const address = getFormValue('address');
 
-    if (!firstName || !lastName || !whatsapp || !city || !address) {
+    if (!firstName || !lastName || !phone.original || !city || !address) {
         showToast('Veuillez remplir les champs obligatoires.', 'error');
         btn.disabled = false;
         btn.innerHTML = originalText;
         return;
     }
 
-    if (!validatePhone(whatsapp)) {
-        showToast('Numero WhatsApp invalide. Exemple: 0675698351', 'error');
+    if (!phone.isValid) {
+        showToast('Numero WhatsApp invalide. Exemples acceptes: 0675698351, +212675698351 ou 212675698351.', 'error');
         btn.disabled = false;
         btn.innerHTML = originalText;
         return;
@@ -102,32 +117,42 @@ async function processOrder(event) {
         ...item,
         effectivePrice: getEffectivePrice(item)
     }));
-    const total = getCartTotal(items);
+    const subtotal = getCartTotal(items);
+    const deliveryFee = 0;
+    const deliveryLabel = 'A confirmer';
+    const total = subtotal + deliveryFee;
 
     const orderData = {
         firstName,
         lastName,
         email,
-        whatsapp,
+        phoneOriginal: phone.original,
+        phoneNormalized: phone.normalized,
+        whatsapp: phone.normalized,
         city,
         address,
         items,
+        subtotal,
+        deliveryFee,
+        deliveryLabel,
         total,
         paymentMethod: 'COD',
-        status: 'pending'
+        status: DEFAULT_ORDER_STATUS
     };
 
     try {
         const savedOrder = await saveOrder(orderData);
-        const waMessage = buildWhatsAppOrderMessage(orderData, savedOrder.id, formatCurrency);
+        const savedOrderData = savedOrder.order || { ...orderData, id: savedOrder.id, source: savedOrder.source };
+        const waMessage = buildWhatsAppOrderMessage(savedOrderData, savedOrder.id, formatCurrency);
         const waUrl = `https://wa.me/212675698351?text=${encodeURIComponent(waMessage)}`;
 
         localStorage.setItem('parapharmacie_last_whatsapp_url', waUrl);
+        localStorage.setItem('parapharmacie_last_order_id', savedOrder.id);
+        localStorage.setItem('parapharmacie_last_order_source', savedOrder.source);
         saveCart([]);
-        showToast('Commande enregistree. Ouverture de WhatsApp...', 'success');
+        showToast('Commande enregistree avec succes.', 'success');
 
         setTimeout(() => {
-            window.open(waUrl, '_blank', 'noopener');
             window.location.href = `success.html?order=${encodeURIComponent(savedOrder.id)}&source=${savedOrder.source}`;
         }, 900);
     } catch (error) {

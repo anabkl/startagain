@@ -1839,6 +1839,50 @@ img {
     color: var(--muted);
 }
 
+.success-order {
+    margin-top: 22px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: white;
+    text-align: left;
+}
+
+.success-order__number,
+.success-order__item,
+.success-order__total {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+}
+
+.success-order__number span,
+.success-order__item span,
+.success-order__total span {
+    color: var(--muted);
+}
+
+.success-order__number strong,
+.success-order__item strong,
+.success-order__total strong {
+    color: var(--green-900);
+}
+
+.success-order__items {
+    display: grid;
+}
+
+.success-order__item {
+    font-size: 0.92rem;
+}
+
+.success-order__total {
+    border-bottom: 0;
+    font-weight: 900;
+}
+
 .success-card__trust {
     display: flex;
     justify-content: center;
