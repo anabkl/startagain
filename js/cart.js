@@ -1,6 +1,6 @@
 import { getCart, saveCart, updateCartCount } from './main.js';
 import { showToast, formatCurrency } from './utils.js';
-import { getCatalogProduct, getEffectivePrice as getCatalogEffectivePrice, getProductImage, isProductUnavailable } from './catalog.js';
+import { getCatalogProduct, getCategoryLabel, getEffectivePrice as getCatalogEffectivePrice, getProductImage, isProductUnavailable } from './catalog.js';
 
 const cartItemsContainer = document.getElementById('cart-items');
 const cartCardsContainer = document.getElementById('cart-cards');
@@ -59,7 +59,7 @@ function renderDesktopRows(cart) {
                     <img src="${escapeHtml(getProductImage(item))}" alt="${escapeHtml(item.name)}" class="cart-table__img" loading="lazy" decoding="async" width="144" height="144">
                     <div>
                         <span class="cart-table__name">${escapeHtml(item.name)}</span>
-                        <small>${escapeHtml(item.brand || item.category || 'parapharmacie.me')}</small>
+                        <small>${escapeHtml(item.brand || getCategoryLabel(item.category || item.categorySlug) || 'parapharmacie.me')}</small>
                     </div>
                 </td>
                 <td class="cart-table__price">${formatCurrency(price)}</td>

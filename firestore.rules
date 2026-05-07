@@ -1,22 +1,177 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
 
-    // المنتجات: الكل يقرا، غير المسجلين يكتبوا
+    function userPath(uid) {
+      return /databases/$(database)/documents/users/$(uid);
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && exists(userPath(request.auth.uid))
+        && get(userPath(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isOwner(userId) {
+      return signedIn() && request.auth.uid == userId;
+    }
+
+    function productFields() {
+      return [
+        'id',
+        'type',
+        'name',
+        'slug',
+        'brand',
+        'category',
+        'description',
+        'shortDescription',
+        'imageUrl',
+        'image',
+        'imagePath',
+        'gallery',
+        'price',
+        'priceMAD',
+        'promoPrice',
+        'oldPriceMAD',
+        'stock',
+        'stockStatus',
+        'tags',
+        'keywords',
+        'searchKeywords',
+        'rating',
+        'reviewsCount',
+        'isPromotion',
+        'isFeatured',
+        'isPublished',
+        'active',
+        'sourceUrl',
+        'imageNeedsReview',
+        'packType',
+        'endTime',
+        'createdBy',
+        'createdAt',
+        'updatedAt'
+      ];
+    }
+
+    function validProductWrite() {
+      return request.resource.data.keys().hasOnly(productFields())
+        && request.resource.data.name is string
+        && (
+          request.resource.data.type == 'pack'
+          || (
+            request.resource.data.brand is string
+            && request.resource.data.category is string
+            && (
+              request.resource.data.priceMAD is number
+              || request.resource.data.price is number
+            )
+          )
+        );
+    }
+
+    function userFields() {
+      return [
+        'uid',
+        'name',
+        'email',
+        'city',
+        'address',
+        'whatsapp',
+        'phoneOriginal',
+        'role',
+        'photoURL',
+        'createdAt',
+        'updatedAt'
+      ];
+    }
+
+    function validUserCreate(userId) {
+      return request.resource.data.keys().hasOnly(userFields())
+        && request.resource.data.uid == userId
+        && request.resource.data.role == 'user'
+        && request.resource.data.email == request.auth.token.email;
+    }
+
+    function validUserSelfUpdate() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+        'uid',
+        'role',
+        'createdAt'
+      ]);
+    }
+
+    function orderFields() {
+      return [
+        'id',
+        'firstName',
+        'lastName',
+        'email',
+        'phoneOriginal',
+        'phoneNormalized',
+        'whatsapp',
+        'city',
+        'address',
+        'paymentMethod',
+        'items',
+        'subtotal',
+        'deliveryFee',
+        'deliveryLabel',
+        'total',
+        'status',
+        'statusHistory',
+        'createdAt',
+        'updatedAt',
+        'source'
+      ];
+    }
+
+    function validOrderCreate(orderId) {
+      return request.resource.data.keys().hasOnly(orderFields())
+        && request.resource.data.id == orderId
+        && request.resource.data.firstName is string
+        && request.resource.data.lastName is string
+        && request.resource.data.phoneNormalized is string
+        && request.resource.data.city is string
+        && request.resource.data.address is string
+        && request.resource.data.items is list
+        && request.resource.data.items.size() > 0
+        && request.resource.data.items.size() <= 40
+        && request.resource.data.total is number
+        && request.resource.data.total >= 0
+        && request.resource.data.paymentMethod == 'COD';
+    }
+
     match /products/{productId} {
       allow read: if true;
-      allow create, update, delete: if request.auth != null;
+      allow create, update: if isAdmin() && validProductWrite();
+      allow delete: if isAdmin();
     }
 
-    // الطلبات: أي واحد يقدر يخلق طلب، الأدمن يقرا الكل
     match /orders/{orderId} {
-      allow create: if true;
-      allow read, update: if request.auth != null;
+      allow create: if validOrderCreate(orderId);
+      allow read: if isAdmin()
+        || (
+          signedIn()
+          && resource.data.email is string
+          && resource.data.email == request.auth.token.email
+        );
+      allow update, delete: if isAdmin();
     }
 
-    // المستخدمين
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow create: if isOwner(userId) && validUserCreate(userId);
+      allow read: if isOwner(userId) || isAdmin();
+      allow update: if isAdmin() || (isOwner(userId) && validUserSelfUpdate());
+      allow delete: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

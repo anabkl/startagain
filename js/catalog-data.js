@@ -71,7 +71,7 @@ export const categories = [
         description: 'Tests, confort et produits de suivi bien-etre non substitutifs au conseil medical.'
     },
     {
-        slug: 'complements-alimentaires',
+        slug: 'supplements',
         name: 'Compléments alimentaires',
         arabicName: 'مكملات غذائية',
         icon: 'fa-leaf',
@@ -95,7 +95,7 @@ export const categories = [
         description: 'Selection bio ou eco-responsable pour les routines familiales.'
     },
     {
-        slug: 'para-medical',
+        slug: 'paramedical',
         name: 'Para-médical',
         arabicName: 'شبه طبي',
         icon: 'fa-kit-medical',
@@ -120,28 +120,127 @@ export const productImageFallbacks = {
     solaire: 'assets/products/category-fallback-solaire.webp',
     hygiene: 'assets/products/category-fallback-hygiene.webp',
     sante: 'assets/products/category-fallback-sante.webp',
+    supplements: 'assets/products/category-fallback-complements-alimentaires.webp',
     'complements-alimentaires': 'assets/products/category-fallback-complements-alimentaires.webp',
     homme: 'assets/products/category-fallback-homme.webp',
     bio: 'assets/products/category-fallback-bio.webp',
+    paramedical: 'assets/products/category-fallback-para-medical.webp',
     'para-medical': 'assets/products/category-fallback-para-medical.webp',
     promotions: 'assets/products/category-fallback-promotions.webp'
 };
 
+export const categoryAliases = {
+    visage: 'visage',
+    face: 'visage',
+    'soins visage': 'visage',
+    'produits cosmetiques': 'visage',
+    'produits cosmétiques': 'visage',
+    'الوجه': 'visage',
+    'البشرة': 'visage',
+    'البشره': 'visage',
+    'العناية بالوجه': 'visage',
+    'العنايه بالوجه': 'visage',
+    'العناية بالبشرة': 'visage',
+    'العنايه بالبشره': 'visage',
+    'عناية بالبشرة': 'visage',
+    'عنايه بالبشره': 'visage',
+    corps: 'corps',
+    body: 'corps',
+    'الجسم': 'corps',
+    'العناية بالجسم': 'corps',
+    'العنايه بالجسم': 'corps',
+    cheveux: 'cheveux',
+    hair: 'cheveux',
+    'الشعر': 'cheveux',
+    'العناية بالشعر': 'cheveux',
+    'العنايه بالشعر': 'cheveux',
+    'bébé & maman': 'bebe-maman',
+    'bebe & maman': 'bebe-maman',
+    'bebe-maman': 'bebe-maman',
+    'bébé et maman': 'bebe-maman',
+    'bebe et maman': 'bebe-maman',
+    'الأم والطفل': 'bebe-maman',
+    'الام والطفل': 'bebe-maman',
+    solaire: 'solaire',
+    sun: 'solaire',
+    spf: 'solaire',
+    'واقي الشمس': 'solaire',
+    hygiene: 'hygiene',
+    hygiène: 'hygiene',
+    'النظافة': 'hygiene',
+    'النظافه': 'hygiene',
+    sante: 'sante',
+    santé: 'sante',
+    health: 'sante',
+    'الصحة': 'sante',
+    'الصحه': 'sante',
+    'صحة': 'sante',
+    'صحه': 'sante',
+    supplements: 'supplements',
+    supplement: 'supplements',
+    complements: 'supplements',
+    'complements-alimentaires': 'supplements',
+    'compléments alimentaires': 'supplements',
+    'complements alimentaires': 'supplements',
+    'مكملات غذائية': 'supplements',
+    'مكملات غذائيه': 'supplements',
+    'مكملات': 'supplements',
+    homme: 'homme',
+    men: 'homme',
+    'العناية بالرجل': 'homme',
+    'العنايه بالرجل': 'homme',
+    bio: 'bio',
+    naturel: 'bio',
+    'طبيعي': 'bio',
+    paramedical: 'paramedical',
+    'para-medical': 'paramedical',
+    'para-médical': 'paramedical',
+    'شبه طبي': 'paramedical',
+    promotions: 'promotions',
+    promotion: 'promotions',
+    promo: 'promotions',
+    'عروض': 'promotions'
+};
+
 const categorySlugByName = Object.fromEntries(categories.map((category) => [category.name, category.slug]));
+const categoryBySlug = Object.fromEntries(categories.map((category) => [category.slug, category]));
+
+function normalizeCategoryKey(value) {
+    return String(value || '')
+        .toLowerCase()
+        .trim()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[أإآ]/g, 'ا')
+        .replace(/ة/g, 'ه')
+        .replace(/ى/g, 'ي')
+        .replace(/[\u064B-\u065F]/g, '');
+}
+
+export function getCategorySlug(value) {
+    if (!value) return 'visage';
+    if (categoryBySlug[value]) return value;
+    if (categorySlugByName[value]) return categorySlugByName[value];
+    return categoryAliases[normalizeCategoryKey(value)] || categoryAliases[String(value).trim()] || 'visage';
+}
+
+export function getCategoryMeta(value) {
+    return categoryBySlug[getCategorySlug(value)] || categoryBySlug.visage;
+}
 
 const descriptionByCategory = {
-    Visage: 'Soin visage de parapharmacie pour completer une routine cosmetique claire, avec usage conseille selon le type de peau.',
-    Corps: 'Soin corps ou toilette quotidienne pense pour le confort de la peau, sans promesse medicale.',
-    Cheveux: 'Produit capillaire pour accompagner une routine cheveux simple, a utiliser selon les conseils de la marque.',
-    'Bébé & Maman': 'Essentiel famille pour la toilette ou les accessoires bebe, avec confirmation de disponibilite avant expedition.',
-    Solaire: 'Protection solaire ou soin SPF a integrer dans une routine de jour, en renouvelant selon les indications du fabricant.',
-    Hygiène: 'Produit d hygiene pratique pour la maison, la salle de bain ou la routine quotidienne.',
-    Santé: 'Produit de suivi ou de confort vendu en parapharmacie, a utiliser en complement des conseils d un professionnel si necessaire.',
-    'Compléments alimentaires': 'Complement alimentaire a utiliser dans le cadre d une alimentation variee et d un mode de vie equilibre.',
-    Homme: 'Soin homme pour le rasage, la barbe ou la routine visage, avec texture adaptee au quotidien.',
-    Bio: 'Produit bio ou eco-responsable pour une routine plus naturelle, avec disponibilite a confirmer.',
-    'Para-médical': 'Materiel para-medical ou accessoire de mesure a utiliser selon les instructions du fabricant.',
-    Promotions: 'Offre promotionnelle sourcee sur le marche marocain, a confirmer au moment de la commande.'
+    visage: 'Soin visage de parapharmacie pour completer une routine cosmetique claire, avec usage conseille selon le type de peau.',
+    corps: 'Soin corps ou toilette quotidienne pense pour le confort de la peau, sans promesse medicale.',
+    cheveux: 'Produit capillaire pour accompagner une routine cheveux simple, a utiliser selon les conseils de la marque.',
+    'bebe-maman': 'Essentiel famille pour la toilette ou les accessoires bebe, avec confirmation de disponibilite avant expedition.',
+    solaire: 'Protection solaire ou soin SPF a integrer dans une routine de jour, en renouvelant selon les indications du fabricant.',
+    hygiene: 'Produit d hygiene pratique pour la maison, la salle de bain ou la routine quotidienne.',
+    sante: 'Produit de suivi ou de confort vendu en parapharmacie, a utiliser en complement des conseils d un professionnel si necessaire.',
+    supplements: 'Complement alimentaire a utiliser dans le cadre d une alimentation variee et d un mode de vie equilibre.',
+    homme: 'Soin homme pour le rasage, la barbe ou la routine visage, avec texture adaptee au quotidien.',
+    bio: 'Produit bio ou eco-responsable pour une routine plus naturelle, avec disponibilite a confirmer.',
+    paramedical: 'Materiel para-medical ou accessoire de mesure a utiliser selon les instructions du fabricant.',
+    promotions: 'Offre promotionnelle sourcee sur le marche marocain, a confirmer au moment de la commande.'
 };
 
 const commonSearchKeywords = [
@@ -1040,7 +1139,8 @@ const rawProducts = [
 ];
 
 function createProduct(product, index) {
-    const categorySlug = categorySlugByName[product.category];
+    const categorySlug = getCategorySlug(product.category);
+    const categoryMeta = getCategoryMeta(categorySlug);
     const ratingSeed = (index % 4) / 10;
     const reviews = 18 + ((index * 7) % 84);
     const hasPromo = Boolean(product.oldPriceMAD && product.oldPriceMAD > product.priceMAD);
@@ -1051,6 +1151,9 @@ function createProduct(product, index) {
     return {
         ...product,
         slug: product.slug || product.id,
+        category: categorySlug,
+        categoryLabel: categoryMeta.name,
+        categoryArabicName: categoryMeta.arabicName,
         categorySlug,
         oldPriceMAD: product.oldPriceMAD || null,
         promoBadge: product.promoBadge || (hasPromo ? 'Promo' : null),
@@ -1062,17 +1165,20 @@ function createProduct(product, index) {
         imageSource: product.imageSource || (usesGeneratedFallback ? 'Generated owned category fallback asset by parapharmacie.me' : 'Approved product image source pending documentation'),
         imageRightsStatus: product.imageRightsStatus || (usesGeneratedFallback ? 'owned-fallback-needs-approved-product-packshot' : 'needs-rights-review'),
         imageReplacementNote: product.imageReplacementNote || 'Replace with an owned, distributor-supplied, or brand-approved ecommerce packshot before production launch.',
-        shortDescription: product.shortDescription || descriptionByCategory[product.category],
-        description: product.shortDescription || descriptionByCategory[product.category],
+        shortDescription: product.shortDescription || descriptionByCategory[categorySlug],
+        description: product.shortDescription || descriptionByCategory[categorySlug],
         tags: [
-            product.category,
+            categoryMeta.name,
+            categoryMeta.arabicName,
             product.brand,
             ...(product.tags || [])
         ],
         searchKeywords: [
             product.name,
             product.brand,
-            product.category,
+            categorySlug,
+            categoryMeta.name,
+            categoryMeta.arabicName,
             ...(product.tags || []),
             ...commonSearchKeywords
         ],

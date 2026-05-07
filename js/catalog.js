@@ -1,5 +1,12 @@
 import { isFirebaseEnabled } from './runtime-config.js';
-import { catalogProducts, categories, localCityKeywords, productImageFallbacks } from './catalog-data.js';
+import {
+    catalogProducts,
+    categories,
+    getCategoryMeta,
+    getCategorySlug,
+    localCityKeywords,
+    productImageFallbacks
+} from './catalog-data.js';
 
 const FALLBACK_IMAGE = 'assets/products/product-placeholder.svg';
 export const LOCAL_PRODUCT_OVERRIDES_KEY = 'parapharmacie_product_overrides';
@@ -7,15 +14,14 @@ const CATEGORY_ALIASES = {
     'soins-visage': 'visage',
     'produits-cosmetiques': 'visage',
     'hygiene-bien-etre': 'hygiene',
-    complements: 'complements-alimentaires',
-    sante: 'sante',
-    'para-medical': 'para-medical'
+    complements: 'supplements',
+    'complements-alimentaires': 'supplements',
+    'para-medical': 'paramedical',
+    sante: 'sante'
 };
 
-export { categories, localCityKeywords };
+export { categories, getCategorySlug, localCityKeywords };
 export const mockProducts = catalogProducts;
-
-const categorySlugByName = Object.fromEntries(categories.map((category) => [category.name, category.slug]));
 
 export const trustBadges = [
     { icon: 'fa-truck-fast', title: 'Livraison au Maroc', text: 'Khouribga, Oued Zem, Boujniba, Boulanouare et villes marocaines sur confirmation.' },
@@ -65,6 +71,19 @@ export function getProductImage(product) {
     return product?.image || product?.imageUrl || productImageFallbacks[product?.categorySlug] || FALLBACK_IMAGE;
 }
 
+export function getCategoryLabel(value, locale = 'fr') {
+    const meta = getCategoryMeta(value);
+    return locale === 'ar' ? meta.arabicName : meta.name;
+}
+
+export function getCategoryUrl(value) {
+    return `categorie/${encodeURIComponent(getCategorySlug(value))}/`;
+}
+
+export function getProductUrl(product) {
+    return `produit/${encodeURIComponent(product?.slug || product?.id || '')}/`;
+}
+
 export function getLocalProductOverrides() {
     if (typeof window === 'undefined') return {};
 
@@ -98,7 +117,8 @@ function coerceOptionalNumber(value, fallback = null) {
 
 function applyProductOverride(product, override = {}) {
     const next = { ...product, ...override };
-    const categorySlug = categorySlugByName[next.category] || next.categorySlug;
+    const categorySlug = getCategorySlug(next.category || next.categorySlug);
+    const categoryMeta = getCategoryMeta(categorySlug);
     const priceMAD = coerceOptionalNumber(next.priceMAD ?? next.promoPrice ?? next.price, product.priceMAD);
     const oldPriceMAD = coerceOptionalNumber(next.oldPriceMAD, null);
     const hasPromo = oldPriceMAD && priceMAD && oldPriceMAD > priceMAD;
@@ -106,6 +126,9 @@ function applyProductOverride(product, override = {}) {
 
     return {
         ...next,
+        category: categorySlug,
+        categoryLabel: categoryMeta.name,
+        categoryArabicName: categoryMeta.arabicName,
         categorySlug,
         priceMAD,
         oldPriceMAD: hasPromo ? oldPriceMAD : null,
@@ -190,6 +213,8 @@ export function matchesProduct(product, query) {
         product.name,
         product.brand,
         product.category,
+        product.categoryLabel,
+        product.categoryArabicName,
         product.shortDescription,
         product.description,
         product.tags,
@@ -201,17 +226,24 @@ export function matchesProduct(product, query) {
 }
 
 export function matchesCategory(product, categorySlug) {
-    const normalizedCategory = CATEGORY_ALIASES[categorySlug] || categorySlug;
-    return normalizedCategory === 'all' || product.categorySlug === normalizedCategory || product.category === normalizedCategory;
+    if (!categorySlug || categorySlug === 'all') return true;
+    const normalizedCategory = CATEGORY_ALIASES[categorySlug] || getCategorySlug(categorySlug);
+    return product.categorySlug === normalizedCategory || product.category === normalizedCategory;
 }
 
 function normalizeExternalProduct(product) {
     const priceMAD = Number(product.priceMAD || product.promoPrice || product.price || 0);
     const oldPriceMAD = Number(product.oldPriceMAD || product.price || 0);
+    const categorySlug = getCategorySlug(product.category || product.categorySlug);
+    const categoryMeta = getCategoryMeta(categorySlug);
 
     return {
         ...product,
         slug: product.slug || product.id,
+        category: categorySlug,
+        categoryLabel: categoryMeta.name,
+        categoryArabicName: categoryMeta.arabicName,
+        categorySlug,
         priceMAD,
         oldPriceMAD: oldPriceMAD > priceMAD ? oldPriceMAD : null,
         shortDescription: product.shortDescription || product.description || 'Produit de parapharmacie a confirmer avant expedition.',

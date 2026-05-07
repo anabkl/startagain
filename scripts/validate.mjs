@@ -12,13 +12,23 @@ const requiredFiles = [
   'css/style.css',
   'js/main.js',
   'js/runtime-config.js',
+  'js/analytics.js',
   'js/catalog.js',
+  'js/smart-search.js',
   'js/shop.js',
   'js/product.js',
   'js/cart.js',
+  'js/phone.js',
   'js/checkout.js',
   'js/success.js',
-  'js/order-service.js'
+  'js/order-service.js',
+  'js/auth.js',
+  'js/login.js',
+  'js/register.js',
+  'js/admin-dashboard.js',
+  'favicon.svg',
+  'site.webmanifest',
+  'admin.css'
 ];
 
 const htmlFiles = (await readdir(root)).filter((file) => file.endsWith('.html'));
@@ -51,6 +61,7 @@ for (const htmlFile of htmlFiles) {
   for (const match of matches) {
     const reference = match[1];
     if (!isLocalReference(reference)) continue;
+    if (reference.startsWith('categorie/') || reference.startsWith('produit/')) continue;
     if (reference.endsWith('.html') || reference.includes('/')) {
       await exists(reference);
     }

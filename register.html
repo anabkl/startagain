@@ -1,71 +1,98 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="fr" dir="ltr">
 <head>
     <meta charset="UTF-8">
-    <title>إنشاء حساب | Parashop Tawfiq</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creer un compte | parapharmacie.me</title>
+    <meta name="description" content="Creez votre compte parapharmacie.me pour commander vos produits de parapharmacie au Maroc avec paiement a la livraison.">
+    <link rel="canonical" href="https://parapharmacie.me/register.html">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
     <link rel="manifest" href="site.webmanifest">
     <link rel="stylesheet" href="css/style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        .auth-card { max-width: 500px; margin: 50px auto; background: #fff; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .input-group { margin-bottom: 15px; text-align: right; }
-        .input-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #444; }
-        .input-group input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; }
-        .btn-reg { width: 100%; padding: 15px; background: #1a9e52; color: #fff; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
-<body style="background: #f0f4f2;">
-    <div class="auth-card">
-        <h2 style="text-align:center; color:#0d7c3e; margin-bottom:30px;">إنشاء حساب جديد</h2>
-        <form id="regForm">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <div class="input-group"><label>الاسم *</label><input type="text" id="fname" required></div>
-                <div class="input-group"><label>النسب *</label><input type="text" id="lname" required></div>
+<body class="auth-page">
+    <main class="auth-shell auth-shell--register">
+        <section class="auth-hero" aria-label="Compte parapharmacie.me">
+            <a class="auth-brand" href="index.html" aria-label="Retour a l'accueil">
+                <img src="assets/images/logo-head.png" alt="parapharmacie.me">
+                <span>parapharmacie.me</span>
+            </a>
+            <div class="auth-hero__content">
+                <p class="eyebrow">Compte client securise</p>
+                <h1>Commandez vos soins parapharmacie avec livraison rapide au Maroc.</h1>
+                <p>Un compte vous aide a accelerer le checkout, suivre vos commandes et recevoir une confirmation humaine avant expedition.</p>
+                <div class="auth-trust">
+                    <span><i class="fa-solid fa-location-dot"></i> Khouribga et regions</span>
+                    <span><i class="fa-solid fa-shield-heart"></i> Produits verifies</span>
+                    <span><i class="fa-solid fa-lock"></i> Donnees minimales</span>
+                </div>
             </div>
-            <div class="input-group"><label>رقم الواتساب (إجباري) *</label><input type="tel" id="wa" placeholder="06XXXXXXXX" required></div>
-            <div class="input-group"><label>المدينة *</label><input type="text" id="city" required></div>
-            <div class="input-group"><label>العنوان الكامل *</label><input type="text" id="addr" required></div>
-            <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
-            <div class="input-group"><label>البريد الإلكتروني *</label><input type="email" id="email" required></div>
-            <div class="input-group"><label>كلمة المرور *</label><input type="password" id="pass" minlength="6" required></div>
-            <button type="submit" class="btn-reg">تأكيد التسجيل</button>
-        <p id="reg-error" style="display:none; margin-top:15px; background:#ffebee; color:#c62828; padding:12px; border-radius:8px; font-size:0.95rem;"><i class="fas fa-exclamation-circle" style="margin-left:6px;"></i><span id="reg-error-text"></span></p>
-        </form>
-        <p style="text-align:center; margin-top:20px; font-size:0.9rem;">لديك حساب بالفعل؟ <a href="login.html" style="color:#0d7c3e; font-weight:bold;">تسجيل الدخول</a></p>
-    </div>
+            <div class="auth-floating-card">
+                <span class="auth-floating-card__icon"><i class="fa-solid fa-bag-shopping"></i></span>
+                <div>
+                    <strong>Checkout plus rapide</strong>
+                    <p>Vos informations restent pre-remplies pour les prochaines commandes.</p>
+                </div>
+            </div>
+        </section>
 
-    <script type="module">
-        import { registerUser } from './js/auth.js';
+        <section class="auth-panel" aria-labelledby="register-title">
+            <div class="auth-card">
+                <div class="auth-card__header">
+                    <span class="auth-card__badge">Nouveau client</span>
+                    <h2 id="register-title">Creer un compte</h2>
+                    <p>Remplissez vos informations de livraison principales.</p>
+                </div>
 
-        const regForm = document.getElementById('regForm');
+                <form id="register-form" class="auth-form" novalidate>
+                    <label class="auth-field" for="name">
+                        <span>Nom complet</span>
+                        <input id="name" name="name" type="text" autocomplete="name" placeholder="Prenom et nom" required>
+                    </label>
+                    <label class="auth-field" for="whatsapp">
+                        <span>WhatsApp</span>
+                        <input id="whatsapp" name="whatsapp" type="tel" autocomplete="tel" inputmode="tel" placeholder="0675698351" required>
+                    </label>
+                    <div class="auth-form__grid">
+                        <label class="auth-field" for="city">
+                            <span>Ville</span>
+                            <input id="city" name="city" type="text" autocomplete="address-level2" placeholder="Khouribga" required>
+                        </label>
+                        <label class="auth-field" for="email">
+                            <span>Email</span>
+                            <input id="email" name="email" type="email" autocomplete="email" placeholder="votre@email.com" required>
+                        </label>
+                    </div>
+                    <label class="auth-field" for="address">
+                        <span>Adresse</span>
+                        <input id="address" name="address" type="text" autocomplete="street-address" placeholder="Adresse complete" required>
+                    </label>
+                    <label class="auth-field" for="password">
+                        <span>Mot de passe</span>
+                        <input id="password" name="password" type="password" autocomplete="new-password" minlength="6" placeholder="6 caracteres minimum" required>
+                    </label>
 
-        function showError(msg, code) {
-            const errorBox = document.getElementById('reg-error');
-            const errorText = document.getElementById('reg-error-text');
-            if (code === 'auth/email-already-in-use') {
-                errorText.innerHTML = `هذا البريد الإلكتروني مستخدم بالفعل. <a href="login.html" style="color:#c62828; font-weight:bold; text-decoration:underline;">جرب تسجيل الدخول</a>`;
-            } else {
-                errorText.textContent = msg;
-            }
-            errorBox.style.display = 'block';
-        }
+                    <p id="auth-status" class="auth-status" role="status" aria-live="polite"></p>
 
-        regForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            errorBox.style.display = 'none';
-            const userData = {
-                firstName: document.getElementById('fname').value,
-                lastName: document.getElementById('lname').value,
-                whatsapp: document.getElementById('wa').value,
-                city: document.getElementById('city').value,
-                address: document.getElementById('addr').value
-            };
-            registerUser(document.getElementById('email').value, document.getElementById('pass').value, userData, showError);
-        });
-    </script>
-    <!-- WhatsApp Float -->
-    <a href="https://wa.me/212675698351" target="_blank" aria-label="واتساب" style="background:#25D366; position:fixed; bottom:20px; right:20px; width:60px; height:60px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:35px; box-shadow:0 4px 10px rgba(0,0,0,0.3); z-index:1000; transition:0.3s; text-decoration:none;"><i class="fab fa-whatsapp"></i></a>
+                    <button id="register-submit" class="btn btn--primary auth-submit" type="submit">
+                        <i class="fa-solid fa-user-plus"></i>
+                        Creer mon compte
+                    </button>
+                </form>
+
+                <div class="auth-card__footer">
+                    <span>Vous avez deja un compte ?</span>
+                    <a href="login.html">Se connecter</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script type="module" src="js/register.js"></script>
 </body>
 </html>

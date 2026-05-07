@@ -2,11 +2,14 @@ import {
     categories,
     faqs,
     getCatalogProducts,
+    getCategoryLabel,
+    getCategoryUrl,
     getEffectivePrice,
     getOldPrice,
     getProductImage,
     getProductImageReviewLabel,
     getProductInitials,
+    getProductUrl,
     isProductUnavailable,
     testimonials,
     trustBadges
@@ -39,7 +42,7 @@ function renderCategories() {
     if (!grid) return;
 
     grid.innerHTML = categories.map((category) => `
-        <a href="shop.html?category=${category.slug}" class="category-card" style="--category-bg: ${category.color}" data-reveal>
+        <a href="${getCategoryUrl(category.slug)}" class="category-card" style="--category-bg: ${category.color}" data-reveal>
             <i class="fa-solid ${category.icon}"></i>
             <span>${escapeHtml(category.name)}</span>
             <strong>${escapeHtml(category.arabicName)}</strong>
@@ -69,17 +72,17 @@ function renderProducts(products) {
 
     grid.innerHTML = featured.map((product) => `
         <article class="product-card" data-reveal>
-            <a href="product.html?id=${encodeURIComponent(product.id)}" class="product-card__media product-image-frame" data-image-review="${product.imageNeedsReview ? 'true' : 'false'}">
+            <a href="${getProductUrl(product)}" class="product-card__media product-image-frame" data-image-review="${product.imageNeedsReview ? 'true' : 'false'}">
                 <span class="product-card__badge">${escapeHtml(product.badge || 'Best seller')}</span>
                 <img src="${escapeHtml(getProductImage(product))}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" width="720" height="720">
                 ${product.imageNeedsReview ? `<span class="product-image-frame__initials" title="${escapeHtml(getProductImageReviewLabel(product))}" aria-hidden="true">${escapeHtml(getProductInitials(product))}</span>` : ''}
             </a>
             <div class="product-card__body">
                 <div class="product-card__meta">
-                    <span>${escapeHtml(product.category)}</span>
+                    <span>${escapeHtml(getCategoryLabel(product.category || product.categorySlug))}</span>
                     <span class="product-card__stock ${isProductUnavailable(product) ? 'out' : ''}">${escapeHtml(product.stockStatus || 'En stock')}</span>
                 </div>
-                <a href="product.html?id=${encodeURIComponent(product.id)}" class="product-card__title">${escapeHtml(product.name)}</a>
+                <a href="${getProductUrl(product)}" class="product-card__title">${escapeHtml(product.name)}</a>
                 <p class="product-card__brand">${escapeHtml(product.brand)}</p>
                 <p class="product-card__description">${escapeHtml(product.shortDescription || product.description || '')}</p>
                 <div class="product-card__footer">

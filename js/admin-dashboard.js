@@ -2,6 +2,7 @@ import { isFirebaseEnabled } from './runtime-config.js';
 import {
     LOCAL_PRODUCT_OVERRIDES_KEY,
     applyLocalProductOverrides,
+    getCategoryLabel,
     mockProducts,
     saveLocalProductOverride,
     setLocalProductActive
@@ -109,25 +110,60 @@ function requireFirebaseForm(statusEl) {
     showStatus(statusEl, 'Mode local: activez Firebase avec ?backend=firebase pour ajouter de nouveaux produits.', 'error');
 }
 
+function slugify(value) {
+    return String(value || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '')
+        || crypto.randomUUID();
+}
+
 async function saveFirebaseProduct(form, statusEl, button) {
     const { auth, db, firestore } = await loadFirebaseContext();
     const data = new FormData(form);
     const imageFile = data.get('image');
     if (!imageFile || imageFile.size === 0) throw new Error('المرجو اختيار صورة صالحة.');
     const { imageUrl, imagePath } = await uploadImage(imageFile, 'products');
+    const docRef = firestore.doc(firestore.collection(db, 'products'));
+    const name = data.get('name').trim();
+    const brand = data.get('brand').trim();
+    const category = data.get('category');
+    const description = data.get('description').trim();
+    const regularPrice = Number(data.get('price'));
+    const promoPrice = data.get('promoPrice') ? Number(data.get('promoPrice')) : null;
+    const hasPromo = promoPrice && promoPrice < regularPrice;
 
-    await firestore.addDoc(firestore.collection(db, 'products'), {
+    await firestore.setDoc(docRef, {
+        id: docRef.id,
         type: 'product',
-        name: data.get('name').trim(),
-        description: data.get('description').trim(),
-        price: Number(data.get('price')),
-        priceMAD: Number(data.get('price')),
-        promoPrice: data.get('promoPrice') ? Number(data.get('promoPrice')) : null,
-        category: data.get('category').trim(),
-        brand: data.get('brand').trim(),
+        name,
+        slug: slugify(name),
+        brand,
+        category,
+        description,
+        shortDescription: description,
+        price: regularPrice,
+        priceMAD: hasPromo ? promoPrice : regularPrice,
+        promoPrice: hasPromo ? promoPrice : null,
+        oldPriceMAD: hasPromo ? regularPrice : null,
         imageUrl,
+        image: imageUrl,
         imagePath,
+        gallery: [imageUrl],
+        stock: 24,
+        stockStatus: 'En stock',
+        tags: [brand, getCategoryLabel(category)],
+        keywords: [name, brand, category, getCategoryLabel(category)],
+        rating: 4.7,
+        reviewsCount: 0,
+        isPromotion: Boolean(hasPromo),
+        isFeatured: false,
+        isPublished: true,
         active: true,
+        sourceUrl: 'admin-upload',
+        imageNeedsReview: false,
         createdAt: firestore.serverTimestamp(),
         updatedAt: firestore.serverTimestamp(),
         createdBy: auth.currentUser.uid
@@ -229,7 +265,7 @@ function renderProductsList() {
     refreshEditableProducts();
     const query = normalizeText(productSearch?.value);
     const products = editableProducts.filter((product) => {
-        const haystack = normalizeText([product.name, product.brand, product.category, product.id].join(' '));
+        const haystack = normalizeText([product.name, product.brand, product.category, product.categoryLabel, product.id].join(' '));
         return !query || query.split(/\s+/).every((word) => haystack.includes(word));
     });
 
@@ -238,7 +274,7 @@ function renderProductsList() {
             <img src="${escapeHtml(product.image || product.imageUrl)}" alt="${escapeHtml(product.name)}" loading="lazy">
             <div>
                 <strong>${escapeHtml(product.name)}</strong>
-                <span>${escapeHtml(product.brand)} · ${escapeHtml(product.category)}</span>
+                <span>${escapeHtml(product.brand)} · ${escapeHtml(getCategoryLabel(product.category))}</span>
                 <small>${escapeHtml(product.id)}</small>
             </div>
             <div class="admin-product-price">${getProductPrice(product).toFixed(2)} DH</div>
@@ -256,7 +292,7 @@ function populateCategorySelect(selectedCategory) {
     const select = document.getElementById('editCategory');
     if (!select) return;
     select.innerHTML = categories.map((category) => `
-        <option value="${escapeHtml(category.name)}" ${category.name === selectedCategory ? 'selected' : ''}>${escapeHtml(category.name)}</option>
+        <option value="${escapeHtml(category.slug)}" ${category.slug === selectedCategory ? 'selected' : ''}>${escapeHtml(category.name)}</option>
     `).join('');
 }
 

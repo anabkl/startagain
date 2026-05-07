@@ -6,7 +6,8 @@ function getBackendParam() {
 }
 
 export function isLocalPreview() {
-    return typeof window !== 'undefined' && LOCAL_HOSTS.includes(window.location.hostname);
+    return typeof window !== 'undefined'
+        && (window.location.protocol === 'file:' || LOCAL_HOSTS.includes(window.location.hostname));
 }
 
 export function isFirebaseEnabled() {

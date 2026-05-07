@@ -16,10 +16,10 @@ const themes = [
   { slug: 'solaire', colors: ['#fff5cf', '#e9f8f0', '#ffffff'], accent: '#f2b544' },
   { slug: 'hygiene', colors: ['#e8f7f5', '#f3fbff', '#ffffff'], accent: '#23a6a6' },
   { slug: 'sante', colors: ['#edf5ff', '#effaf3', '#ffffff'], accent: '#4a8bd6' },
-  { slug: 'complements-alimentaires', colors: ['#eff8e8', '#fff8dc', '#ffffff'], accent: '#76a843' },
+  { slug: 'supplements', colors: ['#eff8e8', '#fff8dc', '#ffffff'], accent: '#76a843' },
   { slug: 'homme', colors: ['#edf3f4', '#e8f0fb', '#ffffff'], accent: '#607686' },
   { slug: 'bio', colors: ['#eff8e5', '#e4f4ee', '#ffffff'], accent: '#6ea646' },
-  { slug: 'para-medical', colors: ['#edf4ff', '#f4fbff', '#ffffff'], accent: '#598ed4' },
+  { slug: 'paramedical', colors: ['#edf4ff', '#f4fbff', '#ffffff'], accent: '#598ed4' },
   { slug: 'promotions', colors: ['#fff0e8', '#eef8f1', '#ffffff'], accent: '#e57a42' }
 ];
 

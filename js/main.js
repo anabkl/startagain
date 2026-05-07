@@ -1,3 +1,5 @@
+import { trackSearch } from './analytics.js';
+
 export const CART_KEY = 'parashop_cart';
 
 export function getCart() {
@@ -46,6 +48,7 @@ function initHeaderSearch() {
 
     function doSearch() {
         const term = searchInput ? searchInput.value.trim() : '';
+        if (term) trackSearch(term);
         window.location.href = term ? `shop.html?q=${encodeURIComponent(term)}` : 'shop.html';
     }
 

@@ -4,7 +4,7 @@
   "description": "parapharmacie.me - parapharmacie e-commerce moderne au Maroc",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "node scripts/build.mjs",
+    "build": "NODE_NO_WARNINGS=1 node scripts/build.mjs",
     "lint": "node scripts/validate.mjs",
     "generate:images": "node scripts/generate-product-fallbacks.mjs",
     "generate:sitemap": "NODE_NO_WARNINGS=1 node scripts/generate-sitemap.mjs",

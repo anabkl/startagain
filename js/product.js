@@ -1,14 +1,18 @@
 import {
     getCatalogProduct,
+    getCategoryLabel,
+    getCategoryUrl,
     getEffectivePrice,
     getOldPrice,
     getProductImage,
     getProductImageReviewLabel,
     getProductInitials,
+    getProductUrl,
     isProductUnavailable
 } from './catalog.js';
 import { formatCurrency, showToast } from './utils.js';
 import { getCart, saveCart } from './main.js';
+import { trackAddToCart, trackEvent } from './analytics.js';
 
 const detail = document.getElementById('product-detail');
 const loading = document.getElementById('product-loading');
@@ -49,6 +53,7 @@ function addProductToCart(event) {
     }
 
     saveCart(cart);
+    trackAddToCart(currentProduct, quantity, getEffectivePrice(currentProduct));
     showToast(`"${currentProduct.name}" a ete ajoute au panier.`, 'success');
 }
 
@@ -68,7 +73,7 @@ function setMeta(selector, attribute, value) {
 }
 
 function getAbsoluteUrl(path) {
-    return new URL(path, window.location.href).href;
+    return new URL(String(path || '').replace(/^\/+/, ''), `${window.location.origin}/`).href;
 }
 
 function upsertJsonLd(id, data) {
@@ -83,10 +88,22 @@ function upsertJsonLd(id, data) {
     script.textContent = JSON.stringify(data);
 }
 
+function upsertCanonical(url) {
+    let link = document.querySelector('link[rel="canonical"]');
+    if (!link) {
+        link = document.createElement('link');
+        link.rel = 'canonical';
+        document.head.appendChild(link);
+    }
+    link.href = url;
+}
+
 function updateProductSeo(product, price) {
     const description = `${product.name} par ${product.brand}, prix indicatif ${formatCurrency(price)} sur parapharmacie.me Khouribga avec livraison au Maroc et paiement a la livraison.`;
     const title = `${product.name} | parapharmacie.me Maroc`;
-    const productUrl = getAbsoluteUrl(`product.html?id=${encodeURIComponent(product.id)}`);
+    const productUrl = getAbsoluteUrl(getProductUrl(product));
+    const categoryLabel = getCategoryLabel(product.category || product.categorySlug);
+    const categoryUrl = getAbsoluteUrl(getCategoryUrl(product.category || product.categorySlug));
     const imageUrl = getAbsoluteUrl(getProductImage(product));
     const availability = isProductUnavailable(product)
         ? 'https://schema.org/OutOfStock'
@@ -98,6 +115,7 @@ function updateProductSeo(product, price) {
     setMeta('meta[property="og:description"]', 'content', description);
     setMeta('meta[property="og:image"]', 'content', imageUrl);
     setMeta('meta[property="og:url"]', 'content', productUrl);
+    upsertCanonical(productUrl);
 
     upsertJsonLd('product-jsonld', {
         '@context': 'https://schema.org',
@@ -109,7 +127,7 @@ function updateProductSeo(product, price) {
             '@type': 'Brand',
             name: product.brand
         },
-        category: product.category,
+        category: categoryLabel,
         image: [imageUrl],
         url: productUrl,
         offers: {
@@ -121,6 +139,17 @@ function updateProductSeo(product, price) {
             url: productUrl
         }
     });
+
+    upsertJsonLd('product-breadcrumb-jsonld', {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Accueil', item: 'https://parapharmacie.me/' },
+            { '@type': 'ListItem', position: 2, name: 'Boutique', item: 'https://parapharmacie.me/shop.html' },
+            { '@type': 'ListItem', position: 3, name: categoryLabel, item: categoryUrl },
+            { '@type': 'ListItem', position: 4, name: product.name, item: productUrl }
+        ]
+    });
 }
 
 function renderProduct(product) {
@@ -131,7 +160,18 @@ function renderProduct(product) {
     const discount = oldPrice ? Math.round(((oldPrice - price) / oldPrice) * 100) : null;
     const unavailable = isProductUnavailable(product);
     const imageReviewLabel = getProductImageReviewLabel(product);
+    const categoryLabel = getCategoryLabel(product.category || product.categorySlug);
     updateProductSeo(product, price);
+    trackEvent('view_item', {
+        currency: 'MAD',
+        value: price,
+        items: [{
+            item_id: product.id,
+            item_name: product.name,
+            item_brand: product.brand,
+            item_category: product.category
+        }]
+    });
 
     detail.innerHTML = `
         <div class="product-detail__info" data-reveal>
@@ -140,7 +180,9 @@ function renderProduct(product) {
                 <span>/</span>
                 <a href="shop.html">Boutique</a>
                 <span>/</span>
-                <span>${escapeHtml(product.brand || product.category)}</span>
+                <a href="${getCategoryUrl(product.category || product.categorySlug)}">${escapeHtml(categoryLabel)}</a>
+                <span>/</span>
+                <span>${escapeHtml(product.brand || categoryLabel)}</span>
             </nav>
             <p class="eyebrow">Parapharmacie Maroc</p>
             <h1>${escapeHtml(product.name)}</h1>
@@ -185,7 +227,7 @@ function renderProduct(product) {
             </div>
         </div>
         <div class="product-detail__media product-image-frame" data-image-review="${product.imageNeedsReview ? 'true' : 'false'}" data-reveal>
-            <span class="product-detail__badge">${escapeHtml(product.promoBadge || product.category)}</span>
+            <span class="product-detail__badge">${escapeHtml(product.promoBadge || categoryLabel)}</span>
             <img src="${escapeHtml(getProductImage(product))}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" width="720" height="720">
             ${product.imageNeedsReview ? `<span class="product-image-frame__initials product-image-frame__initials--large" title="${escapeHtml(imageReviewLabel)}" aria-hidden="true">${escapeHtml(getProductInitials(product))}</span>` : ''}
         </div>
@@ -208,9 +250,9 @@ function renderRelated(products) {
     if (related.length === 0) return;
 
     relatedGrid.innerHTML = related.map((product) => `
-        <a href="product.html?id=${encodeURIComponent(product.id)}" class="related-card">
+        <a href="${getProductUrl(product)}" class="related-card">
             <img src="${escapeHtml(getProductImage(product))}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" width="320" height="320">
-            <span>${escapeHtml(product.category)}</span>
+            <span>${escapeHtml(getCategoryLabel(product.category || product.categorySlug))}</span>
             <strong>${escapeHtml(product.name)}</strong>
             <em>${formatCurrency(getEffectivePrice(product))}</em>
         </a>
@@ -221,7 +263,10 @@ function renderRelated(products) {
 }
 
 async function initProduct() {
-    const productId = new URLSearchParams(window.location.search).get('id');
+    const pathProduct = window.location.pathname.match(/\/produit\/([^/]+)/)?.[1];
+    const productId = pathProduct
+        ? decodeURIComponent(pathProduct)
+        : new URLSearchParams(window.location.search).get('id');
 
     if (!productId) {
         window.location.href = 'shop.html';

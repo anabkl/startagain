@@ -1,80 +1,65 @@
 import { auth, db } from './firebase.js';
-import { 
-    createUserWithEmailAndPassword, 
-    signInWithEmailAndPassword, 
-    signOut, 
-    onAuthStateChanged 
+import {
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    signOut,
+    updateProfile
 } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js';
-import { doc, setDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
+import { doc, getDoc, serverTimestamp, setDoc } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
+import { normalizeMoroccanPhone } from './phone.js';
 import { showToast } from './utils.js';
 
-// --- 1. خلق حساب جديد (Register) ---
-export async function registerUser(email, password, userData, onError) {
-    try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
+export { normalizeMoroccanPhone };
 
-        // حفظ المعلومات فـ Firestore (Collection: users)
-        await setDoc(doc(db, "users", user.uid), {
-            uid: user.uid,
-            firstName: userData.firstName,
-            lastName: userData.lastName,
-            whatsapp: userData.whatsapp,
-            city: userData.city,
-            address: userData.address,
-            role: 'client',
-            createdAt: new Date().toISOString()
-        });
+export async function registerUser(email, password, userData) {
+    const name = String(userData.name || '').trim();
+    const phone = normalizeMoroccanPhone(userData.whatsapp);
+    if (!name) throw new Error('المرجو إدخال الاسم الكامل.');
+    if (!phone.isValid) throw new Error('رقم واتساب غير صالح. استعمل 0675698351 أو +212675698351.');
 
-        showToast("تم إنشاء الحساب بنجاح! 🎉", "success");
-        window.location.href = 'index.html';
-    } catch (error) {
-        console.error(error);
-        const msg = getRegisterErrorMessage(error.code);
-        if (typeof onError === 'function') {
-            onError(msg, error.code);
-        } else {
-            showToast(msg, "error");
-        }
-    }
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    await updateProfile(user, { displayName: name, photoURL: userData.photoURL || '' });
+
+    await setDoc(doc(db, 'users', user.uid), {
+        uid: user.uid,
+        name,
+        email: user.email,
+        city: userData.city || '',
+        address: userData.address || '',
+        whatsapp: phone.normalized,
+        phoneOriginal: phone.original,
+        role: 'user',
+        photoURL: userData.photoURL || '',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+    });
+
+    showToast('تم إنشاء الحساب بنجاح.', 'success');
+    return user;
 }
 
-function getRegisterErrorMessage(code) {
-    switch (code) {
-        case 'auth/email-already-in-use':
-            return 'هذا البريد الإلكتروني مستخدم بالفعل. جرب تسجيل الدخول.';
-        case 'auth/weak-password':
-            return 'كلمة المرور ضعيفة جداً. استخدم 6 أحرف على الأقل.';
-        case 'auth/invalid-email':
-            return 'صيغة البريد الإلكتروني غير صالحة.';
-        case 'auth/operation-not-allowed':
-            return 'تسجيل الحسابات غير مفعّل حالياً. تواصل معنا.';
-        default:
-            return 'حدث خطأ أثناء التسجيل. حاول مرة أخرى.';
-    }
-}
-
-// --- 2. تسجيل الدخول (Login) ---
 export async function loginUser(email, password) {
-    try {
-        await signInWithEmailAndPassword(auth, email, password);
-        showToast("مرحباً بك مجدداً! 👋", "success");
-        
-        // التحقق واش هو Admin باش نصيفطوه لـ Orders
-        const user = auth.currentUser;
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists() && userDoc.data().role === 'admin') {
-            window.location.href = 'orders.html';
-        } else {
-            window.location.href = 'index.html';
-        }
-    } catch (error) {
-        showToast("خطأ: البريد أو كلمة المرور غير صحيحة", "error");
-    }
+    const credential = await signInWithEmailAndPassword(auth, email, password);
+    const user = credential.user;
+    const userDoc = await getDoc(doc(db, 'users', user.uid));
+    const role = userDoc.exists() ? userDoc.data().role : 'user';
+    showToast('مرحباً بك مجدداً.', 'success');
+    return { user, role };
 }
 
-// --- 3. تسجيل الخروج ---
 export async function logoutUser() {
     await signOut(auth);
     window.location.href = 'index.html';
+}
+
+export function getAuthErrorMessage(error) {
+    const code = error?.code;
+    if (code === 'auth/email-already-in-use') return 'هذا البريد الإلكتروني مستخدم بالفعل. جرب تسجيل الدخول.';
+    if (code === 'auth/weak-password') return 'كلمة المرور ضعيفة. استعمل 6 أحرف على الأقل.';
+    if (code === 'auth/invalid-email') return 'صيغة البريد الإلكتروني غير صالحة.';
+    if (code === 'auth/invalid-credential' || code === 'auth/wrong-password' || code === 'auth/user-not-found') return 'البريد الإلكتروني أو كلمة المرور غير صحيحة.';
+    if (code === 'auth/too-many-requests') return 'محاولات كثيرة. حاول مرة أخرى بعد قليل.';
+    if (error?.message) return error.message;
+    return 'حدث خطأ. حاول مرة أخرى.';
 }

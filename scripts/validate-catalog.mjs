@@ -8,7 +8,7 @@ const catalogModuleUrl = pathToFileURL(path.join(root, 'js/catalog-data.js')).hr
 
 const { catalogProducts, categories, productImageFallbacks } = await import(catalogModuleUrl);
 
-const validCategories = new Set(categories.map((category) => category.name));
+const validCategories = new Set(categories.map((category) => category.slug));
 const validFallbackImages = new Set(Object.values(productImageFallbacks));
 const ids = new Set();
 const errors = [];
@@ -34,6 +34,7 @@ for (const product of catalogProducts) {
     if (!product.name) fail(product, 'missing name');
     if (!product.brand) fail(product, 'missing brand');
     if (!product.category) fail(product, 'missing category');
+    if (!product.categoryLabel) fail(product, 'missing categoryLabel');
     if (!isValidPrice(Number(product.priceMAD))) fail(product, 'invalid priceMAD');
     if (!product.sourceUrl) fail(product, 'missing sourceUrl');
     if (!product.image) fail(product, 'missing image or fallback');
@@ -52,7 +53,7 @@ for (const product of catalogProducts) {
     }
 
     if (!validCategories.has(product.category)) {
-        fail(product, `invalid category "${product.category}"`);
+        fail(product, `invalid category slug "${product.category}"`);
     }
 
     try {
@@ -100,8 +101,11 @@ const sampleIds = [
 ];
 
 for (const sampleId of sampleIds) {
-    if (!catalogProducts.some((product) => product.id === sampleId || product.slug === sampleId)) {
+    const sampleProduct = catalogProducts.find((product) => product.id === sampleId || product.slug === sampleId);
+    if (!sampleProduct) {
         fail({ id: sampleId }, 'sample product detail route has no matching catalog item');
+    } else if (!sampleProduct.slug || sampleProduct.slug.includes('?')) {
+        fail(sampleProduct, 'sample product detail route must use a clean slug');
     }
 }
 
@@ -117,4 +121,4 @@ if (errors.length) {
 
 for (const warning of warnings) console.warn(`Warning: ${warning}`);
 console.log(`Validated ${catalogProducts.length} catalog products across ${validCategories.size} categories.`);
-console.log(`Sample product route format OK: product.html?id=${sampleIds[0]}`);
+console.log(`Sample product route format OK: /produit/${sampleIds[0]}/`);

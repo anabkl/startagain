@@ -4,6 +4,8 @@ This project is a static storefront with optional Firebase-backed catalog, admin
 
 ## Recommended Hosts
 
+The current codebase is a fast static Vite storefront, not a Next.js app. Production-ready clean category/product URLs are generated during `npm run build`, and Firebase Hosting rewrites are included in `firebase.json`.
+
 ### Netlify
 
 1. Connect the GitHub repository.
@@ -26,6 +28,15 @@ This project is a static storefront with optional Firebase-backed catalog, admin
 1. Run `npm run generate:sitemap && npm run build`.
 2. Upload the contents of `dist/` to the host.
 3. Confirm `sitemap.xml`, `robots.txt`, HTML pages, and assets are available at the root.
+4. Confirm generated clean routes exist, for example `dist/categorie/visage/index.html` and `dist/produit/avene-cleanance-gel-400/index.html`.
+
+### Firebase Hosting
+
+1. Install and authenticate Firebase CLI.
+2. Confirm the Firebase project and authorized domains.
+3. Run `npm run generate:sitemap && npm run build`.
+4. Deploy hosting and rules with `firebase deploy --only hosting,firestore:rules,storage`.
+5. Test `/`, `/shop.html`, `/categorie/visage/`, and `/produit/avene-cleanance-gel-400/` on the production domain.
 
 ## Environment and Backend
 
@@ -34,6 +45,8 @@ This project is a static storefront with optional Firebase-backed catalog, admin
 - Keep Firebase disabled for public launch until catalog, stock, and rules are confirmed.
 - Confirm Firestore and Storage rules before allowing admin uploads.
 - Add the production domain to Firebase authorized domains.
+- Firestore product categories must use canonical slugs: `visage`, `corps`, `cheveux`, `bebe-maman`, `solaire`, `hygiene`, `sante`, `supplements`, `homme`, `bio`, `paramedical`, and `promotions`.
+- Signup creates `users/{uid}` with role `user`; promote admins manually from the Firebase console after confirming identity.
 
 ## Pre-Launch Checklist
 
@@ -63,10 +76,12 @@ Manual QA:
 
 - `/`
 - `/shop.html`
-- `/product.html?id=avene-cleanance-gel-400`
+- `/categorie/visage/`
+- `/produit/avene-cleanance-gel-400/`
 - `/cart.html`
 - `/checkout.html`
 - `/success.html`
+- `/orders.html`
 
 ## Product Image Policy
 
