@@ -90,7 +90,7 @@ async function processOrder(event) {
     }
 
     if (!phone.isValid) {
-        showToast('Numero WhatsApp invalide. Exemples: 0675698351 ou +212675698351.', 'error');
+        showToast('Numero WhatsApp invalide. Exemples acceptes: 0675698351, +212675698351 ou 212675698351.', 'error');
         btn.disabled = false;
         btn.innerHTML = originalText;
         return;
@@ -100,7 +100,10 @@ async function processOrder(event) {
         ...item,
         effectivePrice: getEffectivePrice(item)
     }));
-    const total = getCartTotal(items);
+    const subtotal = getCartTotal(items);
+    const deliveryFee = 0;
+    const deliveryLabel = 'A confirmer';
+    const total = subtotal + deliveryFee;
 
     const orderData = {
         firstName,
@@ -112,9 +115,9 @@ async function processOrder(event) {
         city,
         address,
         items,
-        subtotal: total,
-        deliveryFee: 0,
-        deliveryLabel: 'A confirmer',
+        subtotal,
+        deliveryFee,
+        deliveryLabel,
         total,
         paymentMethod: 'COD',
         status: DEFAULT_ORDER_STATUS
@@ -122,15 +125,15 @@ async function processOrder(event) {
 
     try {
         const savedOrder = await saveOrder(orderData);
-        const order = savedOrder.order || { ...orderData, id: savedOrder.id };
-        const waMessage = buildWhatsAppOrderMessage(order, savedOrder.id, formatCurrency);
+        const savedOrderData = savedOrder.order || { ...orderData, id: savedOrder.id, source: savedOrder.source };
+        const waMessage = buildWhatsAppOrderMessage(savedOrderData, savedOrder.id, formatCurrency);
         const waUrl = `https://wa.me/212675698351?text=${encodeURIComponent(waMessage)}`;
 
         localStorage.setItem('parapharmacie_last_whatsapp_url', waUrl);
         localStorage.setItem('parapharmacie_last_order_id', savedOrder.id);
         localStorage.setItem('parapharmacie_last_order_source', savedOrder.source);
         saveCart([]);
-        trackPurchase(order);
+        trackPurchase(savedOrderData);
         showToast('Commande enregistree avec succes.', 'success');
 
         setTimeout(() => {

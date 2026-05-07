@@ -1,10 +1,8 @@
-import { getOrderById } from './order-service.js';
+import { buildWhatsAppOrderMessage, getOrderById } from './order-service.js';
 import { formatCurrency } from './utils.js';
 
 const whatsappLink = document.getElementById('success-whatsapp-link');
 const orderBox = document.getElementById('success-order');
-const savedWhatsAppUrl = localStorage.getItem('parapharmacie_last_whatsapp_url');
-
 function escapeHtml(value) {
     const div = document.createElement('div');
     div.textContent = value || '';
@@ -42,15 +40,21 @@ function renderOrder(order) {
     orderBox.hidden = false;
 }
 
-async function initSuccessPage() {
-    if (whatsappLink && savedWhatsAppUrl) {
-        whatsappLink.href = savedWhatsAppUrl;
-    }
-
+async function initSuccess() {
     const orderId = getQueryParam('order') || localStorage.getItem('parapharmacie_last_order_id');
     const source = getQueryParam('source') || localStorage.getItem('parapharmacie_last_order_source');
     const order = await getOrderById(orderId, source);
     renderOrder(order);
+
+    if (whatsappLink) {
+        const fallbackUrl = localStorage.getItem('parapharmacie_last_whatsapp_url') || 'https://wa.me/212675698351';
+        if (order) {
+            const message = buildWhatsAppOrderMessage(order, order.id, formatCurrency);
+            whatsappLink.href = `https://wa.me/212675698351?text=${encodeURIComponent(message)}`;
+        } else {
+            whatsappLink.href = fallbackUrl;
+        }
+    }
 }
 
-initSuccessPage();
+initSuccess();
