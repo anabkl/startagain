@@ -38,9 +38,7 @@
     </div>
 
     <script type="module">
-        import { auth, db } from './js/firebase.js';
-        import { signInWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js';
-        import { doc, getDoc } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
+        import { loginUser } from './js/auth.js';
 
         const form = document.getElementById('clientLoginForm');
         const statusEl = document.getElementById('login-status');
@@ -57,35 +55,20 @@
             statusEl.className = '';
 
             try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                const user = userCredential.user;
-
+                const data = await loginUser(email, password, { suppressRedirect: true });
                 statusEl.textContent = 'تم تسجيل الدخول بنجاح! 👋';
                 statusEl.className = 'status-success';
-
-                // التحقق من الدور
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (userDoc.exists() && userDoc.data().role === 'admin') {
-                    setTimeout(() => { window.location.href = 'admin.html'; }, 1000);
-                } else {
-                    setTimeout(() => { window.location.href = 'index.html'; }, 1000);
-                }
+                setTimeout(() => {
+                    window.location.href = data?.user?.role === 'admin' ? 'admin.html' : 'index.html';
+                }, 700);
             } catch (error) {
-                console.error('Login error:', error.code, error.message);
-                let msg = 'خطأ غير معروف';
-                if (error.code === 'auth/user-not-found') msg = 'هذا البريد غير مسجل';
-                else if (error.code === 'auth/wrong-password') msg = 'كلمة المرور غير صحيحة';
-                else if (error.code === 'auth/invalid-credential') msg = 'البريد أو كلمة المرور غير صحيحة';
-                else if (error.code === 'auth/invalid-email') msg = 'صيغة البريد غير صالحة';
-                else if (error.code === 'auth/too-many-requests') msg = 'تم تجاوز عدد المحاولات. حاول بعد قليل.';
-                statusEl.textContent = msg;
+                statusEl.textContent = error.message || 'خطأ غير معروف';
                 statusEl.className = 'status-error';
                 loginBtn.disabled = false;
                 loginBtn.textContent = 'تسجيل الدخول';
             }
         });
     </script>
-    <!-- WhatsApp Float -->
     <a href="https://wa.me/212675698351" target="_blank" aria-label="واتساب" style="background:#25D366; position:fixed; bottom:20px; right:20px; width:60px; height:60px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:35px; box-shadow:0 4px 10px rgba(0,0,0,0.3); z-index:1000; transition:0.3s; text-decoration:none;"><i class="fab fa-whatsapp"></i></a>
 </body>
 </html>
