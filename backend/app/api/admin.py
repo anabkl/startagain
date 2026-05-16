@@ -5,7 +5,6 @@ from flask import Blueprint
 from app.middleware.authz import admin_required
 from app.utils.response import success_response
 
-
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
 

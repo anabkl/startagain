@@ -8,7 +8,6 @@ from app.utils.response import success_response
 from app.validators.auth import LoginInput, RegisterInput
 from app.validators.common import validate_json
 
-
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 

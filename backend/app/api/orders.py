@@ -9,7 +9,6 @@ from app.utils.response import success_response
 from app.validators.common import validate_json
 from app.validators.order import CreateOrderInput
 
-
 orders_bp = Blueprint("orders", __name__, url_prefix="/orders")
 
 

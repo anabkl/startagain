@@ -16,7 +16,6 @@ from app.middleware.security import apply_security_headers, suspicious_request_l
 from app.utils.errors import AppError
 from app.utils.response import error_response
 
-
 jwt = JWTManager()
 limiter = Limiter(key_func=get_remote_address)
 

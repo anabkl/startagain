@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from flask import Flask, request
 
-
 SECURITY_HEADERS = {
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",

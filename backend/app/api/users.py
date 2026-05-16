@@ -6,7 +6,6 @@ from app.middleware.authz import admin_required
 from app.services.user_service import UserService
 from app.utils.response import success_response
 
-
 users_bp = Blueprint("users", __name__, url_prefix="/users")
 
 

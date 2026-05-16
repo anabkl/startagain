@@ -7,7 +7,6 @@ from app.utils.response import success_response
 from app.validators.common import validate_json
 from app.validators.product import ProductInput
 
-
 products_bp = Blueprint("products", __name__, url_prefix="/products")
 
 

@@ -5,7 +5,6 @@ from pymongo.database import Database
 
 from app.config.settings import Settings
 
-
 _client: MongoClient | None = None
 _db: Database | None = None
 

@@ -9,7 +9,6 @@ from app.repositories.audit_repo import AuditRepository
 from app.repositories.users_repo import UsersRepository
 from app.utils.errors import AppError
 
-
 ph = PasswordHasher()
 
 

@@ -5,7 +5,6 @@ from flask import Blueprint
 from app.config.db import get_db
 from app.utils.response import success_response
 
-
 health_bp = Blueprint("health", __name__, url_prefix="/health")
 
 
