@@ -193,7 +193,7 @@ async function initShop() {
     }
 
     const sourceNote = document.getElementById('catalog-source-note');
-    if (sourceNote && source === 'firebase') {
+    if (sourceNote && source === 'api') {
         sourceNote.textContent = 'Stock synchronise';
     }
 
