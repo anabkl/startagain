@@ -12,8 +12,16 @@ export const ORDER_STATUSES = [
 ];
 
 function createLocalOrderId() {
-    const random = Math.random().toString(36).slice(2, 8).toUpperCase();
-    return `PM-${Date.now().toString(36).toUpperCase()}-${random}`;
+    const bytes = new Uint8Array(4);
+    crypto.getRandomValues(bytes);
+    const random = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
+    return `PM-${Date.now().toString(36).toUpperCase()}-${random.slice(0, 8)}`;
+}
+
+function maskPhone(value) {
+    const phone = String(value || '').replace(/\s+/g, '');
+    if (phone.length < 4) return '***';
+    return `${phone.slice(0, 2)}****${phone.slice(-2)}`;
 }
 
 function safeParseOrders() {
@@ -51,9 +59,8 @@ function normalizeOrder(orderData, id, source = 'local') {
         firstName: orderData.firstName || '',
         lastName: orderData.lastName || '',
         email: orderData.email || '',
-        phoneOriginal: orderData.phoneOriginal || orderData.whatsapp || '',
-        phoneNormalized: orderData.phoneNormalized || orderData.whatsapp || '',
-        whatsapp: orderData.phoneNormalized || orderData.whatsapp || '',
+        whatsappMasked: maskPhone(orderData.phoneNormalized || orderData.whatsapp || orderData.phoneOriginal || ''),
+        whatsapp: maskPhone(orderData.phoneNormalized || orderData.whatsapp || orderData.phoneOriginal || ''),
         city: orderData.city || '',
         address: orderData.address || '',
         paymentMethod: orderData.paymentMethod || 'COD',
@@ -213,7 +220,7 @@ export function buildWhatsAppOrderMessage(order, orderId, formatCurrency) {
     return `Nouvelle commande - parapharmacie.me
 
 Client: ${order.firstName} ${order.lastName}
-WhatsApp: ${order.phoneNormalized || order.whatsapp || order.phoneOriginal}
+WhatsApp: ${order.whatsappMasked || order.whatsapp || '***'}
 Email: ${order.email || 'Non renseigne'}
 Ville: ${order.city}
 Adresse: ${order.address}
