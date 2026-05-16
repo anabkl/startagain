@@ -8,3 +8,11 @@
 node_modules/
 .npm-cache/
 dist/
+
+# Backend Python artifacts
+backend/.venv/
+backend/__pycache__/
+backend/**/*.pyc
+backend/logs/*.log
+backend/uploads/*
+backend/.env

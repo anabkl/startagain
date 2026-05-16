@@ -1,0 +1,48 @@
+version: '3.9'
+
+services:
+  mongo:
+    image: mongo:7.0-jammy
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_dev:/data/db
+
+  redis:
+    image: redis:7.4-alpine
+    ports:
+      - '6379:6379'
+
+  backend:
+    build:
+      context: /home/runner/work/startagain/startagain/backend
+      dockerfile: Dockerfile
+    command: ["python", "run.py"]
+    volumes:
+      - /home/runner/work/startagain/startagain/backend:/app
+    env_file:
+      - /home/runner/work/startagain/startagain/backend/.env.example
+    environment:
+      FLASK_ENV: development
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB_NAME: parapharmacie
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - '5000:5000'
+    depends_on:
+      - mongo
+      - redis
+
+  nginx:
+    image: nginx:1.27-alpine
+    ports:
+      - '8080:80'
+    volumes:
+      - /home/runner/work/startagain/startagain:/usr/share/nginx/html:ro
+      - /home/runner/work/startagain/startagain/docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - /home/runner/work/startagain/startagain/docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+
+volumes:
+  mongo_dev:
