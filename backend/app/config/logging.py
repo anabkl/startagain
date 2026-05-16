@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import logging
 from logging.handlers import RotatingFileHandler
+from pathlib import Path
 
 
 class JsonFormatter(logging.Formatter):
@@ -26,7 +27,11 @@ def configure_logging(level: str = "INFO") -> None:
     stream = logging.StreamHandler()
     stream.setFormatter(JsonFormatter())
 
-    file_handler = RotatingFileHandler("backend/logs/app.log", maxBytes=5 * 1024 * 1024, backupCount=5)
+    log_dir = Path(__file__).resolve().parents[2] / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    file_handler = RotatingFileHandler(
+        str(log_dir / "app.log"), maxBytes=5 * 1024 * 1024, backupCount=5
+    )
     file_handler.setFormatter(JsonFormatter())
 
     root.addHandler(stream)

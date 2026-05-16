@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from datetime import timedelta
-
 import sentry_sdk
 from flask import Flask
 from flask_cors import CORS
@@ -11,7 +9,6 @@ from flask_limiter.util import get_remote_address
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.api import create_api_blueprint
-from app.config.db import init_db
 from app.config.logging import configure_logging
 from app.config.settings import Settings
 from app.middleware.request_context import register_request_context
@@ -46,7 +43,11 @@ def create_app() -> Flask:
 
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
 
-    CORS(app, resources={f"{settings.API_PREFIX}/*": {"origins": settings.CORS_ORIGINS}}, supports_credentials=True)
+    CORS(
+        app,
+        resources={f"{settings.API_PREFIX}/*": {"origins": settings.CORS_ORIGINS}},
+        supports_credentials=True,
+    )
 
     jwt.init_app(app)
     limiter.init_app(app)
@@ -54,8 +55,6 @@ def create_app() -> Flask:
     register_request_context(app)
     apply_security_headers(app)
     suspicious_request_logger(app)
-
-    init_db()
 
     api_bp = create_api_blueprint()
     app.register_blueprint(api_bp, url_prefix=settings.API_PREFIX)

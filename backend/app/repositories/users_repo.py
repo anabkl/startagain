@@ -30,6 +30,11 @@ class UsersRepository:
 
     def list_paginated(self, page: int, per_page: int):
         skip = (page - 1) * per_page
-        cursor = self.col.find({}, {"password_hash": 0}).sort("created_at", -1).skip(skip).limit(per_page)
+        cursor = (
+            self.col.find({}, {"password_hash": 0})
+            .sort("created_at", -1)
+            .skip(skip)
+            .limit(per_page)
+        )
         total = self.col.count_documents({})
         return list(cursor), total

@@ -21,8 +21,12 @@ class ProductService:
             "updated_at": doc.get("updated_at"),
         }
 
-    def list_products(self, page: int, per_page: int, category: str | None, search: str | None, sort: str):
-        docs, total = self.repo.list_paginated(page=page, per_page=per_page, category=category, search=search, sort=sort)
+    def list_products(
+        self, page: int, per_page: int, category: str | None, search: str | None, sort: str
+    ):
+        docs, total = self.repo.list_paginated(
+            page=page, per_page=per_page, category=category, search=search, sort=sort
+        )
         return [self._normalize(item) for item in docs], total
 
     def get_product(self, product_id: str):

@@ -12,7 +12,9 @@ class ProductsRepository:
     def __init__(self) -> None:
         self.col = get_db().products
 
-    def list_paginated(self, *, page: int, per_page: int, category: str | None, search: str | None, sort: str):
+    def list_paginated(
+        self, *, page: int, per_page: int, category: str | None, search: str | None, sort: str
+    ):
         query: dict[str, Any] = {}
         if category:
             query["category"] = category
@@ -26,9 +28,23 @@ class ProductsRepository:
         elif sort == "price_desc":
             sort_field, sort_direction = "price", -1
 
-        projection = {"name": 1, "description": 1, "category": 1, "price": 1, "stock": 1, "image_url": 1, "created_at": 1, "updated_at": 1}
+        projection = {
+            "name": 1,
+            "description": 1,
+            "category": 1,
+            "price": 1,
+            "stock": 1,
+            "image_url": 1,
+            "created_at": 1,
+            "updated_at": 1,
+        }
         skip = (page - 1) * per_page
-        cursor = self.col.find(query, projection).sort(sort_field, sort_direction).skip(skip).limit(per_page)
+        cursor = (
+            self.col.find(query, projection)
+            .sort(sort_field, sort_direction)
+            .skip(skip)
+            .limit(per_page)
+        )
         total = self.col.count_documents(query)
         return list(cursor), total
 

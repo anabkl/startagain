@@ -25,7 +25,9 @@ class OrderService:
             "updated_at": doc.get("updated_at"),
         }
 
-    def create_order(self, *, user_id: str, items: list[dict], shipping_address: dict, payment_method: str):
+    def create_order(
+        self, *, user_id: str, items: list[dict], shipping_address: dict, payment_method: str
+    ):
         if not items:
             raise AppError("Order items cannot be empty", 422)
 
@@ -63,7 +65,9 @@ class OrderService:
                 "total": round(total, 2),
             }
         )
-        self.audit.log("order.created", user_id, {"order_id": str(order["_id"]), "total": order["total"]})
+        self.audit.log(
+            "order.created", user_id, {"order_id": str(order["_id"]), "total": order["total"]}
+        )
         return self._normalize(order)
 
     def my_orders(self, user_id: str, page: int, per_page: int):

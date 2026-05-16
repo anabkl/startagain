@@ -66,17 +66,32 @@ class AuthService:
             failed = int(user.get("failed_logins", 0)) + 1
             updates = {"failed_logins": failed}
             if failed >= self.MAX_FAILED_ATTEMPTS:
-                updates["locked_until"] = datetime.now(timezone.utc) + timedelta(minutes=self.LOCKOUT_MINUTES)
+                updates["locked_until"] = datetime.now(timezone.utc) + timedelta(
+                    minutes=self.LOCKOUT_MINUTES
+                )
             self.users.update_by_id(str(user["_id"]), updates)
-            self.audit.log("auth.login_failed", str(user["_id"]), {"email": user["email"], "failed_logins": failed})
+            self.audit.log(
+                "auth.login_failed",
+                str(user["_id"]),
+                {"email": user["email"], "failed_logins": failed},
+            )
             raise AppError("Invalid credentials", 401) from exc
 
         self.users.update_by_id(str(user["_id"]), {"failed_logins": 0, "locked_until": None})
         refreshed_user = self.users.get_by_id(str(user["_id"]))
-        claims = {"role": refreshed_user.get("role", "client"), "token_version": refreshed_user.get("token_version", 0)}
-        access_token = create_access_token(identity=str(refreshed_user["_id"]), additional_claims=claims)
-        refresh_token = create_refresh_token(identity=str(refreshed_user["_id"]), additional_claims=claims)
-        self.audit.log("auth.login_success", str(refreshed_user["_id"]), {"email": refreshed_user["email"]})
+        claims = {
+            "role": refreshed_user.get("role", "client"),
+            "token_version": refreshed_user.get("token_version", 0),
+        }
+        access_token = create_access_token(
+            identity=str(refreshed_user["_id"]), additional_claims=claims
+        )
+        refresh_token = create_refresh_token(
+            identity=str(refreshed_user["_id"]), additional_claims=claims
+        )
+        self.audit.log(
+            "auth.login_success", str(refreshed_user["_id"]), {"email": refreshed_user["email"]}
+        )
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,

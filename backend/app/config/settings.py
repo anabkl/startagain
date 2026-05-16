@@ -22,8 +22,14 @@ class Settings:
     MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "parapharmacie")
     REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
-    CORS_ORIGINS = [o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost,http://127.0.0.1").split(",") if o.strip()]
-    TRUSTED_PROXIES = [p.strip() for p in os.getenv("TRUSTED_PROXIES", "127.0.0.1").split(",") if p.strip()]
+    CORS_ORIGINS = [
+        o.strip()
+        for o in os.getenv("CORS_ORIGINS", "http://localhost,http://127.0.0.1").split(",")
+        if o.strip()
+    ]
+    TRUSTED_PROXIES = [
+        p.strip() for p in os.getenv("TRUSTED_PROXIES", "127.0.0.1").split(",") if p.strip()
+    ]
 
     MAX_CONTENT_LENGTH = int(os.getenv("MAX_CONTENT_LENGTH", str(1024 * 1024)))
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")

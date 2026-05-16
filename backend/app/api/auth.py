@@ -10,13 +10,16 @@ from app.validators.common import validate_json
 
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
-auth_service = AuthService()
+
+
+def get_auth_service() -> AuthService:
+    return AuthService()
 
 
 @auth_bp.post("/register")
 def register():
     payload = validate_json(RegisterInput, request)
-    user = auth_service.register(payload.name, payload.email, payload.password, payload.role)
+    user = get_auth_service().register(payload.name, payload.email, payload.password, payload.role)
     data = {
         "id": str(user["_id"]),
         "name": user["name"],
@@ -30,7 +33,7 @@ def register():
 @auth_bp.post("/login")
 def login():
     payload = validate_json(LoginInput, request)
-    data = auth_service.login(payload.email, payload.password)
+    data = get_auth_service().login(payload.email, payload.password)
 
     response, status = success_response(data=data, message="Login successful")
     response.set_cookie(
@@ -48,7 +51,7 @@ def login():
 @jwt_required(refresh=True, locations=["cookies", "headers"])
 def refresh_token():
     identity = get_jwt_identity()
-    token = auth_service.rotate_refresh(identity)
+    token = get_auth_service().rotate_refresh(identity)
     response, status = success_response(data=token, message="Token refreshed")
     response.set_cookie(
         "refresh_token",
@@ -74,6 +77,6 @@ def logout():
 def me():
     identity = get_jwt_identity()
     claims = get_jwt()
-    data = auth_service.current_user(identity)
+    data = get_auth_service().current_user(identity)
     data["token_version"] = claims.get("token_version")
     return success_response(data=data)
