@@ -1,27 +1,29 @@
-import { db, storage, auth } from './firebase.js';
-import { collection, addDoc, getDocs, serverTimestamp, doc, updateDoc } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
-import { ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js';
+import { apiFetch } from './auth.js';
 import { showToast } from './utils.js';
 
-// دالة إضافة منتج (خاصة بالعمال والأدمن)
+// دالة إضافة منتج (خاصة بالعمال والأدمن عبر API)
 export async function uploadProduct(productData, imageFile) {
     try {
-        // 1. رفع الصورة لـ Storage
-        const fileRef = ref(storage, `products/${Date.now()}_${imageFile.name}`);
-        const uploadResult = await uploadBytes(fileRef, imageFile);
-        const url = await getDownloadURL(uploadResult.ref);
+        // ملاحظة: رفع الصور متوقف مؤقتاً حتى نزيدو API خاصة بالصور.
+        // غنصيفطو غير البيانات دابا لـ MongoDB.
 
-        // 2. تسجيل البيانات فـ Firestore
-        await addDoc(collection(db, "products"), {
+        const newProduct = {
             name: productData.name,
             brand: productData.brand,
             category: productData.category,
             price: Number(productData.price),
             promoPrice: productData.promoPrice ? Number(productData.promoPrice) : null,
             description: productData.description,
-            imageUrl: url,
-            createdAt: serverTimestamp()
-        });
+            stock: 100, // مخزون افتراضي
+            image_url: null, // مسار الصورة خاوي حالياً
+            sku: "PROD-" + Date.now()
+        };
+
+        // إرسال البيانات للباكاند ديال Render
+        await apiFetch('/products', {
+            method: 'POST',
+            body: JSON.stringify(newProduct)
+        }, { requiresAuth: true });
 
         showToast("تم إضافة المنتج للمتجر بنجاح! ✅", "success");
         return true;
