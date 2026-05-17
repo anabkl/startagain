@@ -9,7 +9,9 @@
     <div id="status" style="font-size: 20px; font-weight: bold; margin-top: 20px;">المرجو الانتظار...</div>
 
     <script type="module">
-        import { catalogData } from './js/catalog-data.js';
+        // هنا صلحنا السمية باش تجيب catalogProducts اللي كينة فملف الداتا
+        import { catalogProducts } from './js/catalog-data.js';
+
         const API_BASE = "https://startagain.onrender.com/api/v1";
 
         async function seedProducts() {
@@ -23,7 +25,8 @@
             }
 
             let count = 0;
-            for (const product of catalogData) {
+            // درنا اللوب على catalogProducts
+            for (const product of catalogProducts) {
                 try {
                     const newProduct = {
                         name: product.name,
@@ -31,7 +34,7 @@
                         price: parseFloat(product.priceMAD) || 0,
                         stock: 100,
                         category: product.category || "General",
-                        image_url: null, // درنا null حيت MongoDB كيطلب رابط حقيقي ماشي مسار محلي
+                        image_url: null,
                         sku: product.id
                     };
 
@@ -45,7 +48,7 @@
                     });
 
                     if (res.ok) count++;
-                    statusDiv.innerHTML = `⏳ تم رفع: ${count} من أصل ${catalogData.length} منتج...`;
+                    statusDiv.innerHTML = `⏳ تم رفع: ${count} من أصل ${catalogProducts.length} منتج...`;
                 } catch (e) {
                     console.error("Error", e);
                 }
