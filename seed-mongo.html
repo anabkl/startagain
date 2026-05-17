@@ -38,7 +38,7 @@
                         sku: product.id
                     };
 
-                    const res = await fetch(`${API_BASE}/products/`, {
+                    const res = await fetch(`${API_BASE}/products`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
