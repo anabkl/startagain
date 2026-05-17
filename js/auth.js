@@ -2,7 +2,7 @@ import { showToast } from './utils.js';
 
 const ACCESS_TOKEN_KEY = 'parapharmacie_access_token';
 const USER_KEY = 'parapharmacie_user';
-const API_BASE = `${window.location.origin}/api/v1`;
+const API_BASE = 'https://startagain.onrender.com/api/v1';
 
 function parseJson(text, fallback = {}) {
     try {
