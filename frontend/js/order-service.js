@@ -1,6 +1,5 @@
-import { isFirebaseEnabled } from './runtime-config.js';
+import { apiFetch } from './auth.js';
 
-export const LOCAL_ORDERS_KEY = 'parapharmacie_orders';
 export const DEFAULT_ORDER_STATUS = 'في الانتظار';
 export const ORDER_STATUSES = [
     'في الانتظار',
@@ -11,11 +10,38 @@ export const ORDER_STATUSES = [
     'ملغي'
 ];
 
-function createLocalOrderId() {
-    const bytes = new Uint8Array(4);
-    crypto.getRandomValues(bytes);
-    const random = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
-    return `PM-${Date.now().toString(36).toUpperCase()}-${random.slice(0, 8)}`;
+function getNowIso() {
+    return new Date().toISOString();
+}
+
+function normalizeStatus(status) {
+    const value = String(status || '').trim();
+    if (!value) return DEFAULT_ORDER_STATUS;
+
+    const map = {
+        pending: 'في الانتظار',
+        confirmed: 'تم التأكيد',
+        preparing: 'قيد التحضير',
+        delivery: 'في التوصيل',
+        delivering: 'في التوصيل',
+        delivered: 'تم التسليم',
+        cancelled: 'ملغي',
+        canceled: 'ملغي'
+    };
+
+    const normalized = map[value.toLowerCase()] || value;
+    return ORDER_STATUSES.includes(normalized) ? normalized : DEFAULT_ORDER_STATUS;
+}
+
+function normalizePhone(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    const digits = raw.replace(/\D+/g, '');
+    if (!digits) return '';
+    if (digits.startsWith('212')) return `+${digits}`;
+    if (digits.startsWith('0')) return `+212${digits.slice(1)}`;
+    if (digits.length === 9) return `+212${digits}`;
+    return raw.startsWith('+') ? raw : `+${digits}`;
 }
 
 function maskPhone(value) {
@@ -24,189 +50,115 @@ function maskPhone(value) {
     return `${phone.slice(0, 2)}****${phone.slice(-2)}`;
 }
 
-function safeParseOrders() {
-    try {
-        const orders = JSON.parse(localStorage.getItem(LOCAL_ORDERS_KEY)) || [];
-        return Array.isArray(orders) ? orders : [];
-    } catch {
-        return [];
-    }
+function pickArray(payload) {
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload?.orders)) return payload.orders;
+    if (Array.isArray(payload?.results)) return payload.results;
+    if (Array.isArray(payload?.items)) return payload.items;
+    return [];
 }
 
-function writeLocalOrders(orders) {
-    localStorage.setItem(LOCAL_ORDERS_KEY, JSON.stringify(orders));
-}
+function normalizeOrder(apiOrder = {}) {
+    const shipping = apiOrder.shipping_address || apiOrder.shippingAddress || {};
+    const fullName = String(apiOrder.customer_name || apiOrder.customerName || '').trim();
+    const [firstFromName = '', ...rest] = fullName.split(/\s+/);
+    const firstName = shipping.first_name || shipping.firstName || apiOrder.firstName || firstFromName;
+    const lastName = shipping.last_name || shipping.lastName || apiOrder.lastName || rest.join(' ');
 
-function getNowIso() {
-    return new Date().toISOString();
-}
+    const phoneOriginal = String(shipping.whatsapp || shipping.phone || apiOrder.whatsapp || apiOrder.phone || '').trim();
+    const phoneNormalized = normalizePhone(phoneOriginal);
 
-function normalizeStatus(status) {
-    if (!status || status === 'pending') return DEFAULT_ORDER_STATUS;
-    return ORDER_STATUSES.includes(status) ? status : DEFAULT_ORDER_STATUS;
-}
-
-function normalizeOrder(orderData, id, source = 'local') {
-    const now = getNowIso();
-    const subtotal = Number(orderData.subtotal ?? orderData.total ?? 0);
-    const deliveryFee = Number(orderData.deliveryFee || 0);
-    const deliveryLabel = orderData.deliveryLabel || 'A confirmer';
-    const total = Number(orderData.total ?? subtotal + deliveryFee);
-    const status = normalizeStatus(orderData.status);
+    const subtotal = Number(apiOrder.subtotal ?? apiOrder.total ?? 0);
+    const deliveryFee = Number(apiOrder.deliveryFee || apiOrder.delivery_fee || 0);
+    const total = Number(apiOrder.total ?? subtotal + deliveryFee);
 
     return {
-        id,
-        firstName: orderData.firstName || '',
-        lastName: orderData.lastName || '',
-        email: orderData.email || '',
-        whatsappMasked: maskPhone(orderData.whatsapp || ''),
-        whatsapp: maskPhone(orderData.whatsapp || ''),
-        city: orderData.city || '',
-        address: orderData.address || '',
-        paymentMethod: orderData.paymentMethod || 'COD',
-        items: Array.isArray(orderData.items) ? orderData.items : [],
+        id: String(apiOrder._id || apiOrder.id || ''),
+        firstName: firstName || '',
+        lastName: lastName || '',
+        email: shipping.email || apiOrder.email || '',
+        phoneOriginal,
+        phoneNormalized,
+        whatsappMasked: maskPhone(phoneNormalized || phoneOriginal),
+        whatsapp: phoneNormalized || phoneOriginal,
+        city: shipping.city || apiOrder.city || '',
+        address: shipping.address || apiOrder.address || '',
+        paymentMethod: String(apiOrder.payment_method || apiOrder.paymentMethod || 'COD').toUpperCase(),
+        items: Array.isArray(apiOrder.items) ? apiOrder.items.map((item) => ({
+            ...item,
+            name: item.name || item.product_name || item.product?.name || item.productName || item.product_id || item.productId || 'Produit',
+            effectivePrice: Number(item.unit_price ?? item.effectivePrice ?? item.priceMAD ?? item.price ?? 0),
+            priceMAD: Number(item.unit_price ?? item.priceMAD ?? item.price ?? 0),
+            quantity: Number(item.quantity || 1)
+        })) : [],
         subtotal,
         deliveryFee,
-        deliveryLabel,
+        deliveryLabel: apiOrder.deliveryLabel || apiOrder.delivery_label || 'A confirmer',
         total,
-        status,
-        statusHistory: Array.isArray(orderData.statusHistory) && orderData.statusHistory.length
-            ? orderData.statusHistory
-            : [{ status, at: now, note: 'Commande creee' }],
-        createdAt: orderData.createdAt || now,
-        updatedAt: orderData.updatedAt || now,
-        source
+        status: normalizeStatus(apiOrder.status),
+        statusHistory: Array.isArray(apiOrder.statusHistory) && apiOrder.statusHistory.length
+            ? apiOrder.statusHistory
+            : [{ status: normalizeStatus(apiOrder.status), at: apiOrder.updatedAt || apiOrder.createdAt || getNowIso(), note: 'Commande creee' }],
+        createdAt: apiOrder.createdAt || getNowIso(),
+        updatedAt: apiOrder.updatedAt || apiOrder.createdAt || getNowIso(),
+        source: 'api'
     };
 }
 
-function getOrderTimestamp(order) {
-    const value = order.createdAt?.toDate ? order.createdAt.toDate() : order.createdAt;
-    const date = value ? new Date(value) : new Date(0);
-    return Number.isNaN(date.getTime()) ? 0 : date.getTime();
-}
-
-function normalizeFirebaseOrder(id, data) {
-    const createdAt = data.createdAt?.toDate ? data.createdAt.toDate().toISOString() : data.createdAt;
-    const updatedAt = data.updatedAt?.toDate ? data.updatedAt.toDate().toISOString() : data.updatedAt;
-    return normalizeOrder({ ...data, createdAt, updatedAt }, data.id || id, 'firebase');
-}
-
-async function getFirestoreApi() {
-    const [{ db }, firestore] = await Promise.all([
-        import('./firebase.js'),
-        import('https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js')
-    ]);
-    return { db, firestore };
-}
-
-async function saveOrderToFirebase(orderData) {
-    const { db, firestore } = await getFirestoreApi();
-    const docRef = firestore.doc(firestore.collection(db, 'orders'));
-    const order = normalizeOrder(orderData, docRef.id, 'firebase');
-
-    await firestore.setDoc(docRef, {
-        ...order,
-        createdAt: firestore.serverTimestamp(),
-        updatedAt: firestore.serverTimestamp()
-    });
-
-    return order;
-}
-
-function saveOrderLocally(orderData) {
-    const order = normalizeOrder(orderData, createLocalOrderId(), 'local');
-    const orders = safeParseOrders();
-    orders.unshift(order);
-    writeLocalOrders(orders);
-    return order;
-}
-
 export async function saveOrder(orderData) {
-    if (!isFirebaseEnabled()) {
-        const order = saveOrderLocally(orderData);
-        return { id: order.id, source: 'local', order };
-    }
+    const payload = await apiFetch('/orders', {
+        method: 'POST',
+        body: JSON.stringify(orderData)
+    }, { requiresAuth: false });
 
-    try {
-        const order = await saveOrderToFirebase(orderData);
-        return { id: order.id, source: 'firebase', order };
-    } catch (error) {
-        console.info('Order saved locally for demo mode:', error?.message || error);
-        const order = saveOrderLocally(orderData);
-        return { id: order.id, source: 'local', order };
-    }
+    const order = normalizeOrder(payload?.order || payload);
+    return { id: order.id, source: 'api', order };
 }
 
 export async function listOrders() {
-    if (!isFirebaseEnabled()) {
-        return safeParseOrders()
-            .map((order) => normalizeOrder(order, order.id, order.source || 'local'))
-            .sort((a, b) => getOrderTimestamp(b) - getOrderTimestamp(a));
-    }
-
-    try {
-        const { db, firestore } = await getFirestoreApi();
-        const q = firestore.query(firestore.collection(db, 'orders'), firestore.orderBy('createdAt', 'desc'));
-        const snap = await firestore.getDocs(q);
-        return snap.docs.map((item) => normalizeFirebaseOrder(item.id, item.data()));
-    } catch (error) {
-        console.info('Using local orders for admin demo:', error?.message || error);
-        return safeParseOrders()
-            .map((order) => normalizeOrder(order, order.id, order.source || 'local'))
-            .sort((a, b) => getOrderTimestamp(b) - getOrderTimestamp(a));
-    }
+    const payload = await apiFetch('/orders', {}, { requiresAuth: true });
+    return pickArray(payload)
+        .map(normalizeOrder)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
-export async function getOrderById(orderId, source = null) {
+export async function listMyOrders() {
+    const payload = await apiFetch('/orders/my-orders', {}, { requiresAuth: true });
+    return pickArray(payload)
+        .map(normalizeOrder)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+export async function getOrderById(orderId) {
     if (!orderId) return null;
-
-    if (source !== 'firebase' || !isFirebaseEnabled()) {
-        const order = safeParseOrders().find((item) => item.id === orderId);
-        return order ? normalizeOrder(order, order.id, order.source || 'local') : null;
-    }
-
-    try {
-        const { db, firestore } = await getFirestoreApi();
-        const snap = await firestore.getDoc(firestore.doc(db, 'orders', orderId));
-        return snap.exists() ? normalizeFirebaseOrder(snap.id, snap.data()) : null;
-    } catch {
-        const order = safeParseOrders().find((item) => item.id === orderId);
-        return order ? normalizeOrder(order, order.id, order.source || 'local') : null;
-    }
+    const payload = await apiFetch(`/orders/${encodeURIComponent(orderId)}`, {}, { requiresAuth: true });
+    return normalizeOrder(payload?.order || payload);
 }
 
 export async function updateOrderStatus(orderId, status, note = 'Status updated') {
-    const statusEntry = { status, at: getNowIso(), note };
+    if (!orderId) throw new Error('Order not found');
 
-    if (!isFirebaseEnabled()) {
-        const orders = safeParseOrders();
-        const order = orders.find((item) => item.id === orderId);
-        if (!order) throw new Error('Order not found');
-        order.status = status;
-        order.updatedAt = statusEntry.at;
-        order.statusHistory = [...(order.statusHistory || []), statusEntry];
-        writeLocalOrders(orders);
-        return order;
+    const body = JSON.stringify({ status, note });
+    try {
+        const payload = await apiFetch(`/orders/${encodeURIComponent(orderId)}/status`, {
+            method: 'PATCH',
+            body
+        }, { requiresAuth: true });
+        return normalizeOrder(payload?.order || payload);
+    } catch {
+        const payload = await apiFetch(`/orders/${encodeURIComponent(orderId)}`, {
+            method: 'PATCH',
+            body
+        }, { requiresAuth: true });
+        return normalizeOrder(payload?.order || payload);
     }
-
-    const { db, firestore } = await getFirestoreApi();
-    const orderRef = firestore.doc(db, 'orders', orderId);
-    await firestore.updateDoc(orderRef, {
-        status,
-        updatedAt: firestore.serverTimestamp(),
-        statusHistory: firestore.arrayUnion(statusEntry)
-    });
-    return getOrderById(orderId, 'firebase');
 }
 
 export async function deleteOrder(orderId) {
-    if (!isFirebaseEnabled()) {
-        writeLocalOrders(safeParseOrders().filter((order) => order.id !== orderId));
-        return true;
-    }
-
-    const { db, firestore } = await getFirestoreApi();
-    await firestore.deleteDoc(firestore.doc(db, 'orders', orderId));
+    if (!orderId) throw new Error('Order not found');
+    await apiFetch(`/orders/${encodeURIComponent(orderId)}`, {
+        method: 'DELETE'
+    }, { requiresAuth: true });
     return true;
 }
 
@@ -217,22 +169,5 @@ export function buildWhatsAppOrderMessage(order, orderId, formatCurrency) {
         return `${index + 1}. ${item.name} x ${quantity} = ${formatCurrency(price * quantity)}`;
     }).join('\n');
 
-    return `Nouvelle commande - parapharmacie.me
-
-Client: ${order.firstName} ${order.lastName}
-WhatsApp: ${order.whatsappMasked || order.whatsapp || '***'}
-Email: ${order.email || 'Non renseigne'}
-Ville: ${order.city}
-Adresse: ${order.address}
-
-Produits:
-${itemsList}
-
-Sous-total: ${formatCurrency(order.subtotal || order.total || 0)}
-Livraison: ${order.deliveryLabel || 'A confirmer'}
-Total: ${formatCurrency(order.total || 0)}
-Paiement: Paiement a la livraison
-Statut: ${order.status || DEFAULT_ORDER_STATUS}
-Commande: #${String(orderId).slice(0, 12)}
-Date: ${new Date(order.createdAt || Date.now()).toLocaleString('fr-MA')}`;
+    return `Nouvelle commande - parapharmacie.me\n\nClient: ${order.firstName} ${order.lastName}\nWhatsApp: ${order.whatsappMasked || order.whatsapp || '***'}\nEmail: ${order.email || 'Non renseigne'}\nVille: ${order.city}\nAdresse: ${order.address}\n\nProduits:\n${itemsList}\n\nSous-total: ${formatCurrency(order.subtotal || order.total || 0)}\nLivraison: ${order.deliveryLabel || 'A confirmer'}\nTotal: ${formatCurrency(order.total || 0)}\nPaiement: Paiement a la livraison\nStatut: ${order.status || DEFAULT_ORDER_STATUS}\nCommande: #${String(orderId).slice(0, 12)}\nDate: ${new Date(order.createdAt || Date.now()).toLocaleString('fr-MA')}`;
 }

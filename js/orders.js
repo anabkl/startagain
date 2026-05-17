@@ -61,7 +61,13 @@ function formatDate(value) {
 }
 
 function getCustomerWhatsApp(order) {
-    return String(order.phoneNormalized || order.whatsapp || order.phoneOriginal || '').replace(/^\+/, '');
+    const raw = String(order.phoneNormalized || order.whatsapp || order.phoneOriginal || '').trim();
+    const digits = raw.replace(/\D+/g, '');
+    if (!digits) return '';
+    if (digits.startsWith('212')) return digits;
+    if (digits.startsWith('0')) return `212${digits.slice(1)}`;
+    if (digits.length === 9) return `212${digits}`;
+    return digits;
 }
 
 function getAdminMessage(order) {
@@ -69,7 +75,7 @@ function getAdminMessage(order) {
 }
 
 function getCustomerContactMessage(order) {
-    return `مرحبا ${getCustomerName(order)}، معكم parapharmacie.me بخصوص طلبكم رقم #${getShortId(order)}. الحالة الحالية: ${order.status || DEFAULT_ORDER_STATUS}.`;
+    return `${getAdminMessage(order)}\n\nتحديث الحالة الحالية: ${order.status || DEFAULT_ORDER_STATUS}.`;
 }
 
 function getWhatsAppHref(order) {

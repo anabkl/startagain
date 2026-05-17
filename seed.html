@@ -10,44 +10,44 @@
 </head>
 <body>
     <h2>أداة إضافة المنتجات التجريبية (للتست)</h2>
-    <button id="seedBtn">إضافة 10 منتجات لـ Firebase</button>
+    <button id="seedBtn">إضافة 10 منتجات عبر API</button>
     <p id="status" style="margin-top:20px; font-weight:bold; color:#0d7c3e;"></p>
 
     <script type="module">
-        import { db } from './js/firebase.js';
-        import { collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
+        import { apiFetch } from './js/auth.js';
 
         const dummyProducts = [
-            { name: "غسول رغوي سيرافي (CeraVe) - 236 مل", description: "غسول للوجه للبشرة العادية إلى الدهنية.", price: 120, promoPrice: 105, category: "الوجه", brand: "CeraVe", imageUrl: "https://ma.jumia.is/unsafe/fit-in/500x500/filters:fill(white)/product/51/971166/1.jpg?7925" },
-            { name: "واقي شمس لاروش بوزيه Anthelios - 50 مل", description: "واقي شمس سائل غير مرئي SPF50+.", price: 210, promoPrice: 189, category: "الوجه", brand: "La Roche-Posay", imageUrl: "https://ma.jumia.is/unsafe/fit-in/500x500/filters:fill(white)/product/55/786445/1.jpg?4385" },
-            { name: "شامبو فيشي ديركوس للقشرة - 200 مل", description: "شامبو مضاد للقشرة للشعر العادي إلى الدهني.", price: 165, promoPrice: null, category: "الشعر", brand: "Vichy", imageUrl: "https://ma.jumia.is/unsafe/fit-in/500x500/filters:fill(white)/product/46/786445/1.jpg?4385" },
-            { name: "كريم مرطب بيوديرما أتوديرم - 500 مل", description: "مرطب يومي غني للبشرة الجافة والحساسة.", price: 230, promoPrice: 199, category: "الوجه", brand: "Bioderma", imageUrl: "https://ma.jumia.is/unsafe/fit-in/500x500/filters:fill(white)/product/52/630245/1.jpg?5715" },
-            { name: "جل استحمام موستيلا للأطفال - 500 مل", description: "جل تنظيف لطيف للأطفال والرضع.", price: 115, promoPrice: 95, category: "الطفل", brand: "Mustela", imageUrl: "https://ma.jumia.is/unsafe/fit-in/500x500/filters:fill(white)/product/21/530245/1.jpg?5715" },
-            { name: "فيتامين سي سيروم فيشي للوجه", description: "سيروم مضاد للأكسدة ومفتح للبشرة.", price: 350, promoPrice: 299, category: "الوجه", brand: "Vichy", imageUrl: "https://ma.jumia.is/unsafe/fit-in/500x500/filters:fill(white)/product/43/786445/1.jpg?4385" },
-            { name: "مكمل غذائي فيتامين D3 - 60 كبسولة", description: "فيتامين دي 3 لدعم المناعة والعظام.", price: 90, promoPrice: null, category: "مكملات", brand: "Sante", imageUrl: "https://ma.jumia.is/unsafe/fit-in/500x500/filters:fill(white)/product/99/123456/1.jpg?1234" },
-            { name: "زيت الأرغان الطبيعي - 100 مل", description: "زيت الأرغان النقي للعناية بالشعر والبشرة.", price: 150, promoPrice: 120, category: "الشعر", brand: "Bio", imageUrl: "https://ma.jumia.is/unsafe/fit-in/500x500/filters:fill(white)/product/88/123456/1.jpg?1234" },
-            { name: "ماء ميسيلار سيرافي لتنظيف المكياج", description: "ماء ميسيلار مرطب ومزيل للمكياج.", price: 140, promoPrice: null, category: "الوجه", brand: "CeraVe", imageUrl: "https://ma.jumia.is/unsafe/fit-in/500x500/filters:fill(white)/product/77/123456/1.jpg?1234" },
-            { name: "جهاز قياس ضغط الدم Omron", description: "جهاز إلكتروني دقيق لقياس ضغط الدم.", price: 450, promoPrice: 390, category: "معدات", brand: "Omron", imageUrl: "https://ma.jumia.is/unsafe/fit-in/500x500/filters:fill(white)/product/66/123456/1.jpg?1234" }
+            { name: "غسول رغوي سيرافي (CeraVe) - 236 مل", description: "غسول للوجه للبشرة العادية إلى الدهنية.", price: 120, promoPrice: 105, category: "الوجه", brand: "CeraVe", image_url: null, sku: `PROD-${Date.now()}-1`, stock: 100 },
+            { name: "واقي شمس لاروش بوزيه Anthelios - 50 مل", description: "واقي شمس سائل غير مرئي SPF50+.", price: 210, promoPrice: 189, category: "الوجه", brand: "La Roche-Posay", image_url: null, sku: `PROD-${Date.now()}-2`, stock: 100 },
+            { name: "شامبو فيشي ديركوس للقشرة - 200 مل", description: "شامبو مضاد للقشرة للشعر العادي إلى الدهني.", price: 165, promoPrice: null, category: "الشعر", brand: "Vichy", image_url: null, sku: `PROD-${Date.now()}-3`, stock: 100 },
+            { name: "كريم مرطب بيوديرما أتوديرم - 500 مل", description: "مرطب يومي غني للبشرة الجافة والحساسة.", price: 230, promoPrice: 199, category: "الوجه", brand: "Bioderma", image_url: null, sku: `PROD-${Date.now()}-4`, stock: 100 },
+            { name: "جل استحمام موستيلا للأطفال - 500 مل", description: "جل تنظيف لطيف للأطفال والرضع.", price: 115, promoPrice: 95, category: "الطفل", brand: "Mustela", image_url: null, sku: `PROD-${Date.now()}-5`, stock: 100 },
+            { name: "فيتامين سي سيروم فيشي للوجه", description: "سيروم مضاد للأكسدة ومفتح للبشرة.", price: 350, promoPrice: 299, category: "الوجه", brand: "Vichy", image_url: null, sku: `PROD-${Date.now()}-6`, stock: 100 },
+            { name: "مكمل غذائي فيتامين D3 - 60 كبسولة", description: "فيتامين دي 3 لدعم المناعة والعظام.", price: 90, promoPrice: null, category: "مكملات", brand: "Sante", image_url: null, sku: `PROD-${Date.now()}-7`, stock: 100 },
+            { name: "زيت الأرغان الطبيعي - 100 مل", description: "زيت الأرغان النقي للعناية بالشعر والبشرة.", price: 150, promoPrice: 120, category: "الشعر", brand: "Bio", image_url: null, sku: `PROD-${Date.now()}-8`, stock: 100 },
+            { name: "ماء ميسيلار سيرافي لتنظيف المكياج", description: "ماء ميسيلار مرطب ومزيل للمكياج.", price: 140, promoPrice: null, category: "الوجه", brand: "CeraVe", image_url: null, sku: `PROD-${Date.now()}-9`, stock: 100 },
+            { name: "جهاز قياس ضغط الدم Omron", description: "جهاز إلكتروني دقيق لقياس ضغط الدم.", price: 450, promoPrice: 390, category: "معدات", brand: "Omron", image_url: null, sku: `PROD-${Date.now()}-10`, stock: 100 }
         ];
 
         document.getElementById('seedBtn').addEventListener('click', async () => {
             const btn = document.getElementById('seedBtn');
             const status = document.getElementById('status');
             btn.disabled = true;
-            status.innerText = "جاري رفع المنتجات إلى قاعدة البيانات... ⏳";
-            
+            status.innerText = "جاري رفع المنتجات إلى API... ⏳";
+
             try {
                 for (const prod of dummyProducts) {
-                    await addDoc(collection(db, 'products'), {
-                        ...prod,
-                        createdAt: serverTimestamp(),
-                        createdBy: "admin_test"
-                    });
+                    await apiFetch('/products', {
+                        method: 'POST',
+                        body: JSON.stringify(prod)
+                    }, { requiresAuth: true });
                 }
-                status.innerText = "✅ تمت إضافة 10 منتجات بنجاح! يمكنك الآن الدخول لموقعك وتصفحها.";
+                status.innerText = "✅ تمت إضافة 10 منتجات بنجاح عبر API.";
             } catch (error) {
                 console.error(error);
                 status.innerText = "❌ حدث خطأ: " + error.message;
+            } finally {
+                btn.disabled = false;
             }
         });
     </script>
