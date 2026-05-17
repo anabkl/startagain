@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>رفع المنتجات لـ MongoDB</title>
+</head>
+<body>
+    <h1>🚀 جاري رفع 93 منتج لـ MongoDB...</h1>
+    <div id="status" style="font-size: 20px; font-weight: bold; margin-top: 20px;">المرجو الانتظار...</div>
+
+    <script type="module">
+        import { catalogData } from './js/catalog-data.js';
+        const API_BASE = "https://startagain.onrender.com/api/v1";
+
+        async function seedProducts() {
+            const statusDiv = document.getElementById('status');
+            const token = localStorage.getItem('parapharmacie_access_token');
+
+            if (!token) {
+                statusDiv.innerHTML = "❌ خطأ: خاصك دير تسجيل الدخول فالسيت بكونط Admin اللول باش يعطيك الصلاحية.";
+                statusDiv.style.color = "red";
+                return;
+            }
+
+            let count = 0;
+            for (const product of catalogData) {
+                try {
+                    const newProduct = {
+                        name: product.name,
+                        description: product.description || "بدون وصف",
+                        price: parseFloat(product.priceMAD) || 0,
+                        stock: 100,
+                        category: product.category || "General",
+                        image_url: null, // درنا null حيت MongoDB كيطلب رابط حقيقي ماشي مسار محلي
+                        sku: product.id
+                    };
+
+                    const res = await fetch(`${API_BASE}/products/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(newProduct)
+                    });
+
+                    if (res.ok) count++;
+                    statusDiv.innerHTML = `⏳ تم رفع: ${count} من أصل ${catalogData.length} منتج...`;
+                } catch (e) {
+                    console.error("Error", e);
+                }
+            }
+            statusDiv.innerHTML = `✅ تمت العملية بنجاح! السلعة كلها دابا فـ MongoDB.`;
+            statusDiv.style.color = "green";
+        }
+
+        seedProducts();
+    </script>
+</body>
+</html>
