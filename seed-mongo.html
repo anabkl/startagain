@@ -9,9 +9,7 @@
     <div id="status" style="font-size: 20px; font-weight: bold; margin-top: 20px;">المرجو الانتظار...</div>
 
     <script type="module">
-        // هنا صلحنا السمية باش تجيب catalogProducts اللي كينة فملف الداتا
         import { catalogProducts } from './js/catalog-data.js';
-
         const API_BASE = "https://startagain.onrender.com/api/v1";
 
         async function seedProducts() {
@@ -25,7 +23,6 @@
             }
 
             let count = 0;
-            // درنا اللوب على catalogProducts
             for (const product of catalogProducts) {
                 try {
                     const newProduct = {
@@ -38,6 +35,7 @@
                         sku: product.id
                     };
 
+                    // ⚠️ هنا حيدنا الشرطة اللي كانت دايرة المشكل ⚠️
                     const res = await fetch(`${API_BASE}/products`, {
                         method: 'POST',
                         headers: {
@@ -47,14 +45,24 @@
                         body: JSON.stringify(newProduct)
                     });
 
-                    if (res.ok) count++;
-                    statusDiv.innerHTML = `⏳ تم رفع: ${count} من أصل ${catalogProducts.length} منتج...`;
+                    if (res.ok) {
+                        count++;
+                        statusDiv.innerHTML = `⏳ تم رفع: ${count} من أصل ${catalogProducts.length} منتج...`;
+                    } else {
+                        console.error("Error from server:", await res.text());
+                    }
                 } catch (e) {
-                    console.error("Error", e);
+                    console.error("Network Error", e);
                 }
             }
-            statusDiv.innerHTML = `✅ تمت العملية بنجاح! السلعة كلها دابا فـ MongoDB.`;
-            statusDiv.style.color = "green";
+
+            if (count > 0) {
+                statusDiv.innerHTML = `✅ تمت العملية بنجاح! ترفعات ${count} منتج لـ MongoDB.`;
+                statusDiv.style.color = "green";
+            } else {
+                statusDiv.innerHTML = `❌ العملية فشلات! المتصفح مازال مبلوكي الطلب.`;
+                statusDiv.style.color = "red";
+            }
         }
 
         seedProducts();
