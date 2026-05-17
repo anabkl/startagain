@@ -8,7 +8,7 @@ const orderTotalEl = document.getElementById('order-total-amount');
 const summaryList = document.getElementById('summary-items-list');
 const subtotalEl = document.getElementById('order-subtotal-amount');
 
-function escapeHtml(value) {
+function sanitizeHtml(value) {
     const div = document.createElement('div');
     div.textContent = value || '';
     return div.innerHTML;
@@ -38,9 +38,9 @@ function renderOrderSummary() {
             const price = getEffectivePrice(item);
             return `
                 <div class="summary-product">
-                    <img src="${escapeHtml(getProductImage(item))}" alt="${escapeHtml(item.name)}" loading="lazy" decoding="async" width="128" height="128">
+                    <img src="${sanitizeHtml(getProductImage(item))}" alt="${sanitizeHtml(item.name)}" loading="lazy" decoding="async" width="128" height="128">
                     <div>
-                        <strong>${escapeHtml(item.name)}</strong>
+                        <strong>${sanitizeHtml(item.name)}</strong>
                         <span>${formatCurrency(price)} x ${item.quantity || 1}</span>
                     </div>
                     <em>${formatCurrency(price * (item.quantity || 1))}</em>
@@ -122,9 +122,9 @@ function showOrderSuccessModal(orderId, waUrl) {
         <div style="background:#fff;border-radius:16px;max-width:520px;width:100%;padding:22px;box-shadow:0 8px 32px rgba(0,0,0,.2);text-align:center;">
             <div style="font-size:40px;color:#1ba94c;margin-bottom:10px;"><i class="fa-solid fa-circle-check"></i></div>
             <h2 style="margin:0 0 8px;">Commande créée avec succès</h2>
-            <p style="margin:0 0 18px;color:#555;">Votre commande #${escapeHtml(String(orderId).slice(0, 12))} a été enregistrée dans notre système.</p>
+            <p style="margin:0 0 18px;color:#555;">Votre commande #${sanitizeHtml(String(orderId).slice(0, 12))} a été enregistrée dans notre système.</p>
             <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;">
-                <a href="${escapeHtml(waUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn--whatsapp"><i class="fa-brands fa-whatsapp"></i> Envoyer sur WhatsApp (optionnel)</a>
+                <a href="${sanitizeHtml(waUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn--whatsapp"><i class="fa-brands fa-whatsapp"></i> Envoyer sur WhatsApp (optionnel)</a>
                 <a href="success.html?order=${encodeURIComponent(orderId)}&source=api" class="btn btn--primary">Voir la confirmation</a>
             </div>
             <button type="button" id="checkout-success-close" class="btn btn--secondary" style="margin-top:12px;">Fermer</button>
