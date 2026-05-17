@@ -24,5 +24,5 @@ COPY . /app
 RUN mkdir -p /app/logs /app/uploads && chown -R app:app /app
 USER app
 EXPOSE 5000
-HEALTHCHECK --interval=30s --timeout=5s --retries=5 CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5000/api/v1/health').read()"
+HEALTHCHECK --interval=30s --timeout=5s --retries=5 CMD python -c "import urllib.request; urllib.request.urlopen('https://startagain.onrender.com/api/v1/health').read()"
 CMD ["gunicorn", "-w", "3", "-k", "gthread", "--threads", "4", "--timeout", "120", "--bind", "0.0.0.0:5000", "wsgi:app"]
