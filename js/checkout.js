@@ -1,7 +1,7 @@
 import { getCart, saveCart } from './main.js';
 import { showToast, formatCurrency } from './utils.js';
 import { getProductImage } from './catalog.js';
-import { apiFetch } from './auth.js';
+import { saveOrder } from './order-service.js';
 
 const checkoutForm = document.getElementById('checkout-form');
 const orderTotalEl = document.getElementById('order-total-amount');
@@ -57,8 +57,22 @@ function getFormValue(id) {
     return document.getElementById(id)?.value.trim() || '';
 }
 
-function validatePhone(phone) {
-    return /^(05|06|07)\d{8}$/.test(phone.replace(/\s+/g, ''));
+function normalizeMoroccanPhone(phone) {
+    const compact = String(phone || '').replace(/[\s.-]/g, '');
+
+    if (/^0[67]\d{8}$/.test(compact)) {
+        return `+212${compact.slice(1)}`;
+    }
+
+    if (/^\+212[67]\d{8}$/.test(compact)) {
+        return compact;
+    }
+
+    if (/^212[67]\d{8}$/.test(compact)) {
+        return `+${compact}`;
+    }
+
+    return null;
 }
 
 function buildWhatsAppOrderMessage(orderData, orderId) {
@@ -70,15 +84,17 @@ function buildWhatsAppOrderMessage(orderData, orderId) {
 
     return `Nouvelle commande - parapharmacie.me
 
-Client: ${orderData.shipping_address.first_name} ${orderData.shipping_address.last_name}
-WhatsApp: ${orderData.shipping_address.whatsapp}
-Email: ${orderData.shipping_address.email || 'Non renseigne'}
-Ville: ${orderData.shipping_address.city}
-Adresse: ${orderData.shipping_address.address}
+Client: ${orderData.firstName} ${orderData.lastName}
+WhatsApp: ${orderData.phoneNormalized}
+Email: ${orderData.email || 'Non renseigne'}
+Ville: ${orderData.city}
+Adresse: ${orderData.address}
 
 Produits:
 ${itemsList}
 
+Sous-total: ${formatCurrency(orderData.subtotal || orderData.total || 0)}
+Livraison: ${orderData.deliveryLabel || 'A confirmer'}
 Total: ${formatCurrency(orderData.total || 0)}
 Paiement: Paiement a la livraison
 Commande: #${String(orderId).slice(0, 12)}
@@ -104,19 +120,20 @@ async function processOrder(event) {
     const firstName = getFormValue('firstName');
     const lastName = getFormValue('lastName');
     const email = getFormValue('email');
-    const whatsapp = getFormValue('whatsapp').replace(/\s+/g, '');
+    const phoneOriginal = getFormValue('whatsapp');
+    const phoneNormalized = normalizeMoroccanPhone(phoneOriginal);
     const city = getFormValue('city');
     const address = getFormValue('address');
 
-    if (!firstName || !lastName || !whatsapp || !city || !address) {
+    if (!firstName || !lastName || !phoneOriginal || !city || !address) {
         showToast('Veuillez remplir les champs obligatoires.', 'error');
         btn.disabled = false;
         btn.innerHTML = originalText;
         return;
     }
 
-    if (!validatePhone(whatsapp)) {
-        showToast('Numero WhatsApp invalide. Exemple: 0675698351', 'error');
+    if (!phoneNormalized) {
+        showToast('Numero WhatsApp invalide. Exemples: 0675698351, +212675698351 ou 212675698351.', 'error');
         btn.disabled = false;
         btn.innerHTML = originalText;
         return;
@@ -124,48 +141,50 @@ async function processOrder(event) {
 
     const items = cart.map((item) => ({
         product_id: String(item.id),
+        id: String(item.id),
         quantity: Number(item.quantity || 1),
         unit_price: getEffectivePrice(item),
-        name: item.name
+        effectivePrice: getEffectivePrice(item),
+        priceMAD: getEffectivePrice(item),
+        name: item.name,
+        image: getProductImage(item)
     }));
 
     const total = getCartTotal(cart);
 
     const orderPayload = {
-        items: items.map((item) => ({ product_id: item.product_id, quantity: item.quantity })),
-        shipping_address: {
-            first_name: firstName,
-            last_name: lastName,
-            email,
-            whatsapp,
-            city,
-            address
-        },
-        payment_method: 'cod'
+        firstName,
+        lastName,
+        email,
+        phoneOriginal,
+        phoneNormalized,
+        whatsapp: phoneNormalized,
+        city,
+        address,
+        paymentMethod: 'COD',
+        items,
+        subtotal: total,
+        deliveryFee: 0,
+        deliveryLabel: 'A confirmer',
+        total
     };
 
     try {
-        const savedOrder = await apiFetch('/orders', {
-            method: 'POST',
-            body: JSON.stringify(orderPayload)
-        }, { requiresAuth: true });
-
-        const normalizedOrder = {
-            ...orderPayload,
-            items,
-            total: Number(savedOrder?.total ?? total)
-        };
-
-        const waMessage = buildWhatsAppOrderMessage(normalizedOrder, savedOrder.id);
+        const savedOrder = await saveOrder(orderPayload);
+        const orderId = savedOrder.id;
+        const source = savedOrder.source || 'local';
+        const normalizedOrder = savedOrder.order || orderPayload;
+        const waMessage = buildWhatsAppOrderMessage(normalizedOrder, orderId);
         const waUrl = `https://wa.me/212675698351?text=${encodeURIComponent(waMessage)}`;
 
         localStorage.setItem('parapharmacie_last_whatsapp_url', waUrl);
+        localStorage.setItem('parapharmacie_last_order_id', orderId);
+        localStorage.setItem('parapharmacie_last_order_source', source);
         saveCart([]);
-        showToast('Commande enregistree. Ouverture de WhatsApp...', 'success');
+        showToast('Commande enregistree avec succes.', 'success');
 
         setTimeout(() => {
-            window.open(waUrl, '_blank', 'noopener');
-            window.location.href = `success.html?order=${encodeURIComponent(savedOrder.id)}&source=api`;
+            window.location.href = `success.html?order=${encodeURIComponent(orderId)}&source=${encodeURIComponent(source)}`;
         }, 900);
     } catch (error) {
         console.error('Order error:', error);

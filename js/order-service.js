@@ -59,8 +59,10 @@ function normalizeOrder(orderData, id, source = 'local') {
         firstName: orderData.firstName || '',
         lastName: orderData.lastName || '',
         email: orderData.email || '',
-        whatsappMasked: maskPhone(orderData.whatsapp || ''),
-        whatsapp: maskPhone(orderData.whatsapp || ''),
+        phoneOriginal: orderData.phoneOriginal || orderData.whatsapp || '',
+        phoneNormalized: orderData.phoneNormalized || orderData.whatsapp || '',
+        whatsappMasked: maskPhone(orderData.phoneNormalized || orderData.whatsapp || ''),
+        whatsapp: orderData.phoneNormalized || orderData.whatsapp || '',
         city: orderData.city || '',
         address: orderData.address || '',
         paymentMethod: orderData.paymentMethod || 'COD',
@@ -220,7 +222,7 @@ export function buildWhatsAppOrderMessage(order, orderId, formatCurrency) {
     return `Nouvelle commande - parapharmacie.me
 
 Client: ${order.firstName} ${order.lastName}
-WhatsApp: ${order.whatsappMasked || order.whatsapp || '***'}
+WhatsApp: ${order.phoneNormalized || order.whatsappMasked || order.whatsapp || '***'}
 Email: ${order.email || 'Non renseigne'}
 Ville: ${order.city}
 Adresse: ${order.address}

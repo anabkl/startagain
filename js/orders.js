@@ -1,3 +1,4 @@
+import './ui-preferences.js';
 import {
     DEFAULT_ORDER_STATUS,
     ORDER_STATUSES,

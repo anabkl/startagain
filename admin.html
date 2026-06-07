@@ -23,6 +23,7 @@
       <a href="#" class="active" data-tab="products"><i class="fas fa-plus-circle"></i> إضافة منتج</a>
       <a href="#" data-tab="packs"><i class="fas fa-box-open"></i> إضافة باك/بانر</a>
       <a href="#" data-tab="manage-products"><i class="fas fa-list-check"></i> إدارة المنتجات</a>
+      <a href="#" data-tab="statistics"><i class="fas fa-chart-line"></i> Statistics / إحصائيات</a>
       <a href="orders.html"><i class="fas fa-list-alt"></i> الطلبات</a>
     </nav>
     <div class="sidebar__logout">
@@ -39,6 +40,7 @@
       <button class="tab-btn active" data-tab="products">إضافة منتج عادي</button>
       <button class="tab-btn" data-tab="packs">إضافة باك / بانر</button>
       <button class="tab-btn" data-tab="manage-products">إدارة المنتجات</button>
+      <button class="tab-btn" data-tab="statistics">Statistics / إحصائيات</button>
     </div>
 
     <!-- Tab: Add Product -->
@@ -198,6 +200,36 @@
           </div>
           <p id="productEditStatus" class="status-msg"></p>
         </form>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="tab-statistics">
+      <div class="admin-card admin-card--wide">
+        <div class="admin-card__header">
+          <div>
+            <h2>Statistics / إحصائيات</h2>
+            <p class="admin-muted">أرقام اليوم مباشرة من MongoDB لمتابعة الأداء بدون تعقيد.</p>
+          </div>
+          <button class="tab-btn" type="button" id="refreshStats"><i class="fas fa-rotate"></i> تحديث</button>
+        </div>
+
+        <div class="stats-grid" aria-live="polite">
+          <article class="stat-card stat-card--revenue">
+            <span><i class="fas fa-coins"></i> Chhal dkhl lyoum</span>
+            <strong id="todayRevenue">...</strong>
+            <small>مداخيل اليوم</small>
+          </article>
+          <article class="stat-card">
+            <span><i class="fas fa-receipt"></i> Commande jdida</span>
+            <strong id="newOrders">...</strong>
+            <small>طلبات جديدة</small>
+          </article>
+          <article class="stat-card">
+            <span><i class="fas fa-user-plus"></i> Client tsjel</span>
+            <strong id="newClients">...</strong>
+            <small>زبناء جدد</small>
+          </article>
+        </div>
       </div>
     </div>
   </main>

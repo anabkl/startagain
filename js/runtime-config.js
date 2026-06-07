@@ -20,5 +20,5 @@ export function isFirebaseEnabled() {
     if (storedBackend === 'firebase') return true;
     if (storedBackend === 'mock') return false;
 
-    return !isLocalPreview();
+    return false;
 }

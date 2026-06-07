@@ -67,6 +67,16 @@ function setMeta(selector, attribute, value) {
     if (element) element.setAttribute(attribute, value);
 }
 
+function setCanonical(url) {
+    let canonical = document.querySelector('link[rel="canonical"]');
+    if (!canonical) {
+        canonical = document.createElement('link');
+        canonical.rel = 'canonical';
+        document.head.appendChild(canonical);
+    }
+    canonical.href = url;
+}
+
 function getAbsoluteUrl(path) {
     return new URL(path, window.location.href).href;
 }
@@ -84,22 +94,36 @@ function upsertJsonLd(id, data) {
 }
 
 function updateProductSeo(product, price) {
-    const description = `${product.name} par ${product.brand}, prix indicatif ${formatCurrency(price)} sur parapharmacie.me Khouribga avec livraison au Maroc et paiement a la livraison.`;
-    const title = `${product.name} | parapharmacie.me Maroc`;
+    const description = `${product.name} par ${product.brand}, prix indicatif ${formatCurrency(price)} chez Parapharmacie Tawfiq Khouribga. Livraison parapharmacie Maroc, produits cosmetiques, soins visage, solaire, paiement a la livraison.`;
+    const title = `${product.name} au Maroc | Parapharmacie Tawfiq Khouribga`;
     const productUrl = getAbsoluteUrl(`product.html?id=${encodeURIComponent(product.id)}`);
     const imageUrl = getAbsoluteUrl(getProductImage(product));
     const availability = isProductUnavailable(product)
         ? 'https://schema.org/OutOfStock'
         : 'https://schema.org/InStock';
+    const rating = Number(product.rating || 0);
+    const reviewsCount = Number(product.reviewsCount || product.reviews || 0);
 
     document.title = title;
     setMeta('meta[name="description"]', 'content', description);
+    setMeta('meta[name="keywords"]', 'content', [
+        product.name,
+        product.brand,
+        product.category,
+        'Parapharmacie Khouribga',
+        'Produits cosmetiques Maroc',
+        'Acheter ecran solaire Maroc',
+        'Livraison paiement a la livraison'
+    ].filter(Boolean).join(', '));
     setMeta('meta[property="og:title"]', 'content', title);
     setMeta('meta[property="og:description"]', 'content', description);
     setMeta('meta[property="og:image"]', 'content', imageUrl);
     setMeta('meta[property="og:url"]', 'content', productUrl);
+    setMeta('meta[name="twitter:title"]', 'content', title);
+    setMeta('meta[name="twitter:description"]', 'content', description);
+    setCanonical(productUrl);
 
-    upsertJsonLd('product-jsonld', {
+    const productSchema = {
         '@context': 'https://schema.org',
         '@type': 'Product',
         name: product.name,
@@ -112,14 +136,65 @@ function updateProductSeo(product, price) {
         category: product.category,
         image: [imageUrl],
         url: productUrl,
+        seller: {
+            '@type': 'Pharmacy',
+            name: 'Parapharmacie Tawfiq',
+            url: 'https://parapharmacie.me',
+            address: {
+                '@type': 'PostalAddress',
+                addressLocality: 'Khouribga',
+                addressCountry: 'MA'
+            }
+        },
         offers: {
             '@type': 'Offer',
             price: Number(price).toFixed(2),
             priceCurrency: 'MAD',
             availability,
             itemCondition: 'https://schema.org/NewCondition',
-            url: productUrl
+            url: productUrl,
+            priceValidUntil: `${new Date().getFullYear() + 1}-12-31`
         }
+    };
+
+    if (rating > 0 && reviewsCount > 0) {
+        productSchema.aggregateRating = {
+            '@type': 'AggregateRating',
+            ratingValue: rating.toFixed(1),
+            reviewCount: reviewsCount
+        };
+    }
+
+    upsertJsonLd('product-jsonld', productSchema);
+    upsertJsonLd('breadcrumb-jsonld', {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+            {
+                '@type': 'ListItem',
+                position: 1,
+                name: 'Accueil',
+                item: getAbsoluteUrl('index.html')
+            },
+            {
+                '@type': 'ListItem',
+                position: 2,
+                name: 'Boutique',
+                item: getAbsoluteUrl('shop.html')
+            },
+            {
+                '@type': 'ListItem',
+                position: 3,
+                name: product.category || 'Parapharmacie Maroc',
+                item: getAbsoluteUrl(`shop.html?category=${encodeURIComponent(product.categorySlug || product.category || '')}`)
+            },
+            {
+                '@type': 'ListItem',
+                position: 4,
+                name: product.name,
+                item: productUrl
+            }
+        ]
     });
 }
 

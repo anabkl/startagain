@@ -12,6 +12,11 @@ body {
     display: flex;
 }
 
+:root[data-theme="dark"] body {
+    background: #111827;
+    color: #e5eef7;
+}
+
 /* ---- Sidebar ---- */
 .sidebar {
     width: 250px;
@@ -154,6 +159,30 @@ body {
     max-width: 700px;
 }
 
+:root[data-theme="dark"] .admin-card,
+:root[data-theme="dark"] .admin-product-editor,
+:root[data-theme="dark"] .admin-product-row,
+:root[data-theme="dark"] .tab-btn,
+:root[data-theme="dark"] .product-admin-toolbar input,
+:root[data-theme="dark"] .form-group input,
+:root[data-theme="dark"] .form-group textarea,
+:root[data-theme="dark"] .form-group select {
+    background: #1e293b;
+    border-color: #334155;
+    color: #e5eef7;
+}
+
+:root[data-theme="dark"] .admin-card h2,
+:root[data-theme="dark"] .form-group label,
+:root[data-theme="dark"] .main-content h1 {
+    color: #e5eef7;
+}
+
+:root[data-theme="dark"] .admin-muted,
+:root[data-theme="dark"] .admin-product-row small {
+    color: #aebed0;
+}
+
 .admin-card--wide {
     max-width: 1120px;
 }
@@ -289,6 +318,149 @@ body {
     color: #0d7c3e;
 }
 
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.stat-card {
+    position: relative;
+    overflow: hidden;
+    min-height: 172px;
+    padding: 22px;
+    border: 1px solid #dcebe5;
+    border-radius: 18px;
+    background:
+        radial-gradient(circle at 16% 0%, rgba(13, 124, 62, 0.16), transparent 32%),
+        linear-gradient(180deg, #ffffff, #f8fcfa);
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+}
+
+.stat-card--revenue {
+    background:
+        radial-gradient(circle at 12% 0%, rgba(13, 124, 62, 0.22), transparent 34%),
+        linear-gradient(135deg, #f7fff9, #eef8ff);
+}
+
+.stat-card span,
+.stat-card small,
+.stat-card strong {
+    display: block;
+}
+
+.stat-card span {
+    color: #0d7c3e;
+    font-weight: 900;
+}
+
+.stat-card strong {
+    margin: 18px 0 8px;
+    color: #123524;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    line-height: 1;
+    direction: ltr;
+    text-align: right;
+}
+
+.stat-card small {
+    color: #64748b;
+    font-weight: 800;
+}
+
+:root[data-theme="dark"] .stat-card {
+    border-color: #334155;
+    background:
+        radial-gradient(circle at 16% 0%, rgba(94, 234, 212, 0.13), transparent 32%),
+        linear-gradient(180deg, #1e293b, #172033);
+}
+
+:root[data-theme="dark"] .stat-card strong {
+    color: #e5eef7;
+}
+
+:root[data-theme="dark"] .stat-card span {
+    color: #5eead4;
+}
+
+.global-preference-controls {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.preference-btn {
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 999px;
+    background: rgba(255,255,255,0.10);
+    color: #fff;
+    cursor: pointer;
+    font-weight: 900;
+}
+
+.preference-btn[aria-pressed="true"] {
+    background: #fff;
+    color: #0d7c3e;
+}
+
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: none;
+    place-items: center;
+    padding: 24px;
+    background: rgba(15, 23, 42, 0.72);
+    backdrop-filter: blur(14px);
+}
+
+.loading-overlay.is-visible {
+    display: grid;
+}
+
+.loading-box {
+    width: min(430px, 100%);
+    padding: 34px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 22px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(246,251,249,0.94));
+    color: #14213d;
+    box-shadow: 0 34px 90px rgba(0, 0, 0, 0.32);
+    text-align: center;
+}
+
+:root[data-theme="dark"] .loading-box {
+    background: linear-gradient(180deg, #1e293b, #172033);
+    color: #e5eef7;
+}
+
+.loading-spinner {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 18px;
+    border: 7px solid rgba(15, 127, 100, 0.14);
+    border-top-color: #0d7c3e;
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+}
+
+.loading-eyebrow {
+    margin: 0 0 8px;
+    color: #0d7c3e;
+    font-size: 0.76rem;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
 .admin-checkbox {
     display: flex;
     align-items: center;
@@ -414,6 +586,9 @@ body {
     .product-admin-toolbar {
         grid-template-columns: 1fr;
         flex-direction: column;
+    }
+    .stats-grid {
+        grid-template-columns: 1fr;
     }
     .admin-product-row {
         grid-template-columns: 56px 1fr;

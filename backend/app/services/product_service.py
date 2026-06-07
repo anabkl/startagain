@@ -10,12 +10,18 @@ class ProductService:
 
     def _normalize(self, doc: dict):
         return {
-            "id": str(doc["_id"]),
+            "id": doc.get("id") or str(doc["_id"]),
             "name": doc.get("name", ""),
+            "slug": doc.get("slug") or doc.get("id") or str(doc["_id"]),
+            "brand": doc.get("brand", ""),
             "description": doc.get("description", ""),
             "category": doc.get("category", ""),
             "price": float(doc.get("price", 0)),
+            "promoPrice": float(doc.get("promoPrice") or 0) or None,
             "stock": int(doc.get("stock", 0)),
+            "tags": doc.get("tags", []),
+            "keywords": doc.get("keywords", []),
+            "isPublished": doc.get("isPublished", True),
             "image_url": doc.get("image_url"),
             "created_at": doc.get("created_at"),
             "updated_at": doc.get("updated_at"),

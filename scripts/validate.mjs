@@ -10,6 +10,8 @@ const requiredFiles = [
   'checkout.html',
   'success.html',
   'css/style.css',
+  'js/api.js',
+  'js/ui-preferences.js',
   'js/main.js',
   'js/runtime-config.js',
   'js/catalog.js',
@@ -18,7 +20,9 @@ const requiredFiles = [
   'js/cart.js',
   'js/checkout.js',
   'js/success.js',
-  'js/order-service.js'
+  'js/order-service.js',
+  'js/login.js',
+  'js/profile.js'
 ];
 
 const htmlFiles = (await readdir(root)).filter((file) => file.endsWith('.html'));
