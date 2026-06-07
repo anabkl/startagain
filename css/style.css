@@ -1880,6 +1880,13 @@ img {
     color: white;
 }
 
+.preference-btn--theme {
+    width: 46px;
+    min-width: 46px;
+    padding-inline: 0;
+    font-size: 1.1rem;
+}
+
 :root[data-theme="dark"] .site-header,
 :root[data-theme="dark"] .header__main,
 :root[data-theme="dark"] .header__nav {

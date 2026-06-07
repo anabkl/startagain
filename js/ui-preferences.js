@@ -76,9 +76,10 @@ function renderControls() {
 
     if (themeButton) {
         const dark = currentTheme === 'dark';
-        themeButton.innerHTML = `<span aria-hidden="true">${dark ? '☀' : '☾'}</span><span>${dark ? copy.themeLight : copy.themeDark}</span>`;
+        themeButton.innerHTML = `<span aria-hidden="true">${dark ? '☀' : '☾'}</span>`;
         themeButton.setAttribute('aria-pressed', String(dark));
-        themeButton.setAttribute('aria-label', copy.ariaTheme);
+        themeButton.setAttribute('aria-label', dark ? copy.themeLight : copy.themeDark);
+        themeButton.setAttribute('title', dark ? copy.themeLight : copy.themeDark);
     }
 }
 
