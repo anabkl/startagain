@@ -30,6 +30,7 @@ const todayRevenueEl = document.getElementById('todayRevenue');
 const newOrdersEl = document.getElementById('newOrders');
 const newClientsEl = document.getElementById('newClients');
 const refreshStatsBtn = document.getElementById('refreshStats');
+const adminWelcomeName = document.getElementById('adminWelcomeName');
 
 let editableProducts = [];
 
@@ -50,7 +51,14 @@ function setPageVisible() {
     if (pageContent) pageContent.style.display = 'block';
 }
 
-// 🛡️ حراسة صفحة الأدمن بالتوكن ديال MongoDB
+function renderAdminWelcome(user) {
+    if (!adminWelcomeName) return;
+    const adminName = String(user?.name || user?.displayName || user?.email || 'Admin').trim();
+    const frenchName = /^admin\b/i.test(adminName) ? adminName : `Admin ${adminName}`;
+    adminWelcomeName.textContent = `Bienvenue, ${frenchName} / مرحباً، ${adminName}`;
+}
+
+// Protect the admin page with the MongoDB session token.
 function initAdminGuard() {
     const user = getCurrentUser();
     const token = getAccessToken();
@@ -66,6 +74,7 @@ function initAdminGuard() {
     }
 
     if (backendMode) backendMode.textContent = 'Mode Render (MongoDB)';
+    renderAdminWelcome(user);
     setPageVisible();
 }
 
@@ -136,7 +145,7 @@ async function saveMongoProduct(form, statusEl, button) {
         body: JSON.stringify(newProduct)
     }, { requiresAuth: true });
 
-    showStatus(statusEl, 'تم حفظ المنتج بنجاح فـ MongoDB!', 'success');
+    showStatus(statusEl, 'تم حفظ المنتج بنجاح في MongoDB.', 'success');
     form.reset();
     button.disabled = false;
 }
@@ -161,7 +170,7 @@ async function saveMongoPack(form, statusEl, button) {
         body: JSON.stringify(newPack)
     }, { requiresAuth: true });
 
-    showStatus(statusEl, 'تم حفظ العرض بنجاح فـ MongoDB!', 'success');
+    showStatus(statusEl, 'تم حفظ العرض بنجاح في MongoDB.', 'success');
     form.reset();
     button.disabled = false;
 }

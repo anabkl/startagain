@@ -3,11 +3,19 @@ import {
     clearSession,
     getAccessToken,
     getCurrentUser,
+    rehydrateSessionFromStorage,
     saveAuthSession
 } from './api.js';
 import { showToast } from './utils.js';
 
-export { apiFetch, clearSession, getAccessToken, getCurrentUser, saveAuthSession };
+export {
+    apiFetch,
+    clearSession,
+    getAccessToken,
+    getCurrentUser,
+    rehydrateSessionFromStorage,
+    saveAuthSession
+};
 
 function normalizeRole(role) {
     return role === 'admin' ? 'admin' : 'user';
