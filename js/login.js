@@ -1,4 +1,9 @@
-import { loginUser } from './auth.js';
+import {
+    getAccessToken,
+    getCurrentUser,
+    loginUser,
+    rehydrateSessionFromStorage
+} from './auth.js';
 
 const form = document.getElementById('login-form');
 const emailInput = document.getElementById('login-email');
@@ -18,6 +23,17 @@ function setStatus(message = '', type = '') {
 function normalizeRole(role) {
     return role === 'admin' ? 'admin' : 'user';
 }
+
+function redirectRememberedSession() {
+    rehydrateSessionFromStorage();
+    const token = getAccessToken();
+    const user = getCurrentUser();
+    if (!token || !user) return;
+
+    window.location.replace(normalizeRole(user.role) === 'admin' ? 'admin.html' : 'profile.html');
+}
+
+redirectRememberedSession();
 
 togglePassword?.addEventListener('click', () => {
     const shouldShow = passwordInput.type === 'password';

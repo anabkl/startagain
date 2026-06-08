@@ -59,11 +59,35 @@ export function hideGlobalLoader() {
 }
 
 export function getAccessToken() {
-    return sessionStorage.getItem(ACCESS_TOKEN_KEY) || localStorage.getItem(ACCESS_TOKEN_KEY) || '';
+    const sessionToken = sessionStorage.getItem(ACCESS_TOKEN_KEY);
+    if (sessionToken) return sessionToken;
+
+    const persistedToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+    if (persistedToken) sessionStorage.setItem(ACCESS_TOKEN_KEY, persistedToken);
+    return persistedToken || '';
 }
 
 export function getCurrentUser() {
-    return parseJson(sessionStorage.getItem(USER_KEY) || localStorage.getItem(USER_KEY) || 'null', null);
+    const sessionUser = sessionStorage.getItem(USER_KEY);
+    if (sessionUser) return parseJson(sessionUser, null);
+
+    const persistedUser = localStorage.getItem(USER_KEY);
+    if (persistedUser) {
+        sessionStorage.setItem(USER_KEY, persistedUser);
+        return parseJson(persistedUser, null);
+    }
+
+    return null;
+}
+
+export function rehydrateSessionFromStorage() {
+    const persistedToken = localStorage.getItem(ACCESS_TOKEN_KEY);
+    const persistedUser = localStorage.getItem(USER_KEY);
+
+    if (persistedToken) sessionStorage.setItem(ACCESS_TOKEN_KEY, persistedToken);
+    if (persistedUser) sessionStorage.setItem(USER_KEY, persistedUser);
+
+    return Boolean(persistedToken && persistedUser);
 }
 
 export function saveAuthSession({ access_token, user }, rememberMe = false) {
@@ -72,7 +96,7 @@ export function saveAuthSession({ access_token, user }, rememberMe = false) {
 
     const role = user?.role || user?.type;
     const canPersist = rememberMe && role !== 'admin';
-    if (canPersist) {
+    if (canPersist && access_token && user) {
         localStorage.setItem(ACCESS_TOKEN_KEY, access_token);
         localStorage.setItem(USER_KEY, JSON.stringify(user));
     } else {

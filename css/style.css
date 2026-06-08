@@ -261,14 +261,18 @@ img {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 22px;
+    gap: clamp(10px, 2.4vw, 24px);
     flex-wrap: wrap;
+    padding-block: 6px;
+    text-align: center;
 }
 
 .header__top-bar span {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    white-space: nowrap;
+    font-size: clamp(0.74rem, 2.5vw, 0.82rem);
 }
 
 .header__main {
@@ -1848,6 +1852,7 @@ img {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    flex: 0 0 auto;
     flex-wrap: wrap;
 }
 
@@ -1883,6 +1888,7 @@ img {
 .preference-btn--theme {
     width: 46px;
     min-width: 46px;
+    height: 46px;
     padding-inline: 0;
     font-size: 1.1rem;
 }
@@ -2826,14 +2832,14 @@ img {
     }
 
     .global-preference-controls {
-        width: 100%;
-        justify-content: center;
-        order: 4;
+        width: auto;
+        justify-content: flex-start;
+        order: 0;
     }
 
     .preference-btn {
-        flex: 1 1 132px;
-        max-width: 190px;
+        flex: 0 0 auto;
+        max-width: none;
     }
 
     .products__grid,

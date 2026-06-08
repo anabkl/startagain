@@ -59,6 +59,52 @@
         .order-product { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
         .status-history { display: grid; gap: 8px; padding: 0; margin: 0; list-style: none; }
         .status-history li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 10px; border-radius: var(--radius); background: var(--surface-soft); }
+        :root[data-theme="dark"] body { background: #111827; color: var(--ink); }
+        :root[data-theme="dark"] .admin-nav,
+        :root[data-theme="dark"] .orders-table-card,
+        :root[data-theme="dark"] .order-modal,
+        :root[data-theme="dark"] .order-modal__header {
+            background: var(--surface);
+            border-color: var(--line);
+        }
+        :root[data-theme="dark"] .admin-nav {
+            box-shadow: var(--shadow-sm);
+        }
+        :root[data-theme="dark"] .admin-nav__brand h1,
+        :root[data-theme="dark"] .order-modal__header h2,
+        :root[data-theme="dark"] .order-id {
+            color: var(--green-900);
+        }
+        :root[data-theme="dark"] .orders-toolbar input,
+        :root[data-theme="dark"] .orders-toolbar select,
+        :root[data-theme="dark"] .status-select,
+        :root[data-theme="dark"] .orders-actions button,
+        :root[data-theme="dark"] .orders-actions a {
+            background: var(--surface-soft);
+            color: var(--ink);
+            border-color: var(--line);
+        }
+        :root[data-theme="dark"] .orders-actions a {
+            color: var(--green-700);
+        }
+        :root[data-theme="dark"] .orders-actions .danger {
+            color: #fca5a5;
+            background: rgba(217, 67, 67, 0.12);
+        }
+        :root[data-theme="dark"] .orders-actions .success {
+            color: var(--green-700);
+            background: rgba(94, 234, 212, 0.10);
+        }
+        :root[data-theme="dark"] .detail-card,
+        :root[data-theme="dark"] .status-history li {
+            background: var(--surface-soft);
+            border-color: var(--line);
+        }
+        :root[data-theme="dark"] .orders-table th,
+        :root[data-theme="dark"] .orders-table td,
+        :root[data-theme="dark"] .order-product {
+            border-color: var(--line);
+        }
         @media (max-width: 760px) {
             .admin-nav__inner,
             .orders-toolbar { grid-template-columns: 1fr; align-items: stretch; }

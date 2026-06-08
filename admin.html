@@ -35,6 +35,15 @@
   <main class="main-content" id="pageContent" style="display:none;">
     <h1><i class="fas fa-tachometer-alt"></i> لوحة التحكم</h1>
 
+    <section class="admin-welcome" id="adminWelcome" aria-live="polite">
+      <div>
+        <span>Administration Tawfiq</span>
+        <h2 id="adminWelcomeName">Bienvenue, Admin / مرحباً</h2>
+        <p>Gérez le catalogue, les commandes et les statistiques avec une vue claire et professionnelle.</p>
+      </div>
+      <i class="fas fa-user-shield" aria-hidden="true"></i>
+    </section>
+
     <!-- Tabs -->
     <div class="admin-tabs">
       <button class="tab-btn active" data-tab="products">إضافة منتج عادي</button>
@@ -111,15 +120,15 @@
             <div class="form-group">
               <label>نوع البانر</label>
               <select name="packType">
-                <option value="عرض خاص">🔥 عرض خاص</option>
-                <option value="باك ترويجي">📦 باك ترويجي</option>
+                <option value="عرض خاص">عرض خاص</option>
+                <option value="باك ترويجي">باك ترويجي</option>
               </select>
             </div>
           </div>
           <div class="form-group" id="endTimeGroup">
-            <label>تاريخ ووقت انتهاء العرض (Flash Sale ⏱️)</label>
+            <label>تاريخ ووقت انتهاء العرض</label>
             <input type="datetime-local" name="endTime" id="endTimeInput" />
-            <small style="color: #757575;">خوي هاد الخانة يلا ما بغيتيش العرض يسالي.</small>
+            <small style="color: #757575;">اترك هذا الحقل فارغاً إذا لم يكن للعرض تاريخ انتهاء.</small>
           </div>
 
           <button type="submit" class="btn-submit"><i class="fas fa-save"></i> حفظ الباك / البانر</button>
@@ -215,19 +224,19 @@
 
         <div class="stats-grid" aria-live="polite">
           <article class="stat-card stat-card--revenue">
-            <span><i class="fas fa-coins"></i> Chhal dkhl lyoum</span>
+            <span><i class="fas fa-coins"></i> Revenu du Jour / مداخيل اليوم</span>
             <strong id="todayRevenue">...</strong>
-            <small>مداخيل اليوم</small>
+            <small>Chiffre d'affaires confirme aujourd'hui</small>
           </article>
           <article class="stat-card">
-            <span><i class="fas fa-receipt"></i> Commande jdida</span>
+            <span><i class="fas fa-receipt"></i> Nouvelles Commandes / طلبات جديدة</span>
             <strong id="newOrders">...</strong>
-            <small>طلبات جديدة</small>
+            <small>Commandes creees aujourd'hui</small>
           </article>
           <article class="stat-card">
-            <span><i class="fas fa-user-plus"></i> Client tsjel</span>
+            <span><i class="fas fa-user-plus"></i> Nouveaux Clients / زبناء جدد</span>
             <strong id="newClients">...</strong>
-            <small>زبناء جدد</small>
+            <small>Comptes clients ajoutes aujourd'hui</small>
           </article>
         </div>
       </div>
