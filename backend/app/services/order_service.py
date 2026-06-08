@@ -26,7 +26,7 @@ class OrderService:
         }
 
     def create_order(
-        self, *, user_id: str, items: list[dict], shipping_address: dict, payment_method: str
+        self, *, user_id: str | None, items: list[dict], shipping_address: dict, payment_method: str
     ):
         if not items:
             raise AppError("Order items cannot be empty", 422)
@@ -70,6 +70,12 @@ class OrderService:
         )
         return self._normalize(order)
 
+    def get_order(self, order_id: str):
+        order = self.orders.get_by_id(order_id)
+        if not order:
+            raise AppError("Order not found", 404)
+        return self._normalize(order)
+
     def my_orders(self, user_id: str, page: int, per_page: int):
         docs, total = self.orders.list_for_user(user_id=user_id, page=page, per_page=per_page)
         return [self._normalize(item) for item in docs], total
@@ -84,3 +90,10 @@ class OrderService:
             raise AppError("Order not found", 404)
         self.audit.log("order.status_updated", None, {"order_id": order_id, "status": status})
         return self._normalize(updated)
+
+    def delete_order(self, order_id: str):
+        deleted = self.orders.delete(order_id)
+        if not deleted:
+            raise AppError("Order not found", 404)
+        self.audit.log("order.deleted", None, {"order_id": order_id})
+        return {"deleted": True}

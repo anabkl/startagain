@@ -1,4 +1,4 @@
-import { isFirebaseEnabled } from './runtime-config.js';
+import { apiFetch } from './auth.js';
 import {
     LOCAL_PRODUCT_OVERRIDES_KEY,
     applyLocalProductOverrides,
@@ -22,7 +22,6 @@ const productEditStatus = document.getElementById('productEditStatus');
 const resetProductOverridesBtn = document.getElementById('resetProductOverrides');
 const cancelProductEditBtn = document.getElementById('cancelProductEdit');
 
-let firebaseContext = null;
 let editableProducts = [];
 
 function escapeHtml(value) {
@@ -42,44 +41,28 @@ function setPageVisible() {
     if (pageContent) pageContent.style.display = 'block';
 }
 
-async function loadFirebaseContext() {
-    if (firebaseContext) return firebaseContext;
+// 🛡️ حراسة صفحة الأدمن بالتوكن ديال MongoDB
+function initAdminGuard() {
+    const userString = localStorage.getItem('parapharmacie_user');
+    const token = localStorage.getItem('parapharmacie_access_token');
 
-    const [{ auth, db, storage }, firestore, storageApi, authApi] = await Promise.all([
-        import('./firebase.js'),
-        import('https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js'),
-        import('https://www.gstatic.com/firebasejs/10.8.1/firebase-storage.js'),
-        import('https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js')
-    ]);
-
-    firebaseContext = { auth, db, storage, firestore, storageApi, authApi };
-    return firebaseContext;
-}
-
-async function initAdminGuard() {
-    if (!isFirebaseEnabled()) {
-        if (backendMode) backendMode.textContent = 'Mode local/mock';
-        setPageVisible();
+    if (!token || !userString) {
+        window.location.href = 'login.html';
         return;
     }
 
-    if (backendMode) backendMode.textContent = 'Mode Firebase';
-    const { auth, db, firestore, authApi } = await loadFirebaseContext();
-
-    authApi.onAuthStateChanged(auth, async (user) => {
-        if (!user) {
-            window.location.href = 'login.html';
-            return;
-        }
-
-        const userDoc = await firestore.getDoc(firestore.doc(db, 'users', user.uid));
-        if (!userDoc.exists() || userDoc.data().role !== 'admin') {
+    try {
+        const user = JSON.parse(userString);
+        if (user.role !== 'admin') {
             window.location.href = 'index.html';
             return;
         }
 
+        if (backendMode) backendMode.textContent = 'Mode Render (MongoDB)';
         setPageVisible();
-    });
+    } catch (error) {
+        window.location.href = 'login.html';
+    }
 }
 
 function initTabs() {
@@ -96,73 +79,53 @@ function initTabs() {
     });
 }
 
-async function uploadImage(file, folder) {
-    const { storage, storageApi } = await loadFirebaseContext();
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const imagePath = `${folder}/${crypto.randomUUID()}_${safeName}`;
-    const imageRef = storageApi.ref(storage, imagePath);
-    await storageApi.uploadBytes(imageRef, file);
-    return { imageUrl: await storageApi.getDownloadURL(imageRef), imagePath };
-}
-
-function requireFirebaseForm(statusEl) {
-    showStatus(statusEl, 'Mode local: activez Firebase avec ?backend=firebase pour ajouter de nouveaux produits.', 'error');
-}
-
-async function saveFirebaseProduct(form, statusEl, button) {
-    const { auth, db, firestore } = await loadFirebaseContext();
+// 📦 إضافة منتج جديد لقاعدة بيانات MongoDB
+async function saveMongoProduct(form, statusEl, button) {
     const data = new FormData(form);
-    const imageFile = data.get('image');
-    if (!imageFile || imageFile.size === 0) throw new Error('المرجو اختيار صورة صالحة.');
-    const { imageUrl, imagePath } = await uploadImage(imageFile, 'products');
 
-    await firestore.addDoc(firestore.collection(db, 'products'), {
-        type: 'product',
+    const newProduct = {
         name: data.get('name').trim(),
-        description: data.get('description').trim(),
-        price: Number(data.get('price')),
-        priceMAD: Number(data.get('price')),
-        promoPrice: data.get('promoPrice') ? Number(data.get('promoPrice')) : null,
-        category: data.get('category').trim(),
         brand: data.get('brand').trim(),
-        imageUrl,
-        imagePath,
-        active: true,
-        createdAt: firestore.serverTimestamp(),
-        updatedAt: firestore.serverTimestamp(),
-        createdBy: auth.currentUser.uid
-    });
+        category: data.get('category').trim(),
+        price: Number(data.get('price')),
+        promoPrice: data.get('promoPrice') ? Number(data.get('promoPrice')) : null,
+        description: data.get('description').trim(),
+        stock: 100,
+        image_url: null,
+        sku: "PROD-" + Date.now()
+    };
 
-    showStatus(statusEl, 'تم حفظ المنتج بنجاح!', 'success');
+    await apiFetch('/products', {
+        method: 'POST',
+        body: JSON.stringify(newProduct)
+    }, { requiresAuth: true });
+
+    showStatus(statusEl, 'تم حفظ المنتج بنجاح فـ MongoDB!', 'success');
     form.reset();
     button.disabled = false;
 }
 
-async function saveFirebasePack(form, statusEl, button) {
-    const { auth, db, firestore } = await loadFirebaseContext();
+// 🎁 إضافة عرض (Pack) جديد لـ MongoDB
+async function saveMongoPack(form, statusEl, button) {
     const data = new FormData(form);
-    const imageFile = data.get('image');
-    if (!imageFile || imageFile.size === 0) throw new Error('المرجو اختيار صورة صالحة.');
-    const { imageUrl, imagePath } = await uploadImage(imageFile, 'packs');
-    const endTimeValue = data.get('endTime');
-    const parsedDate = endTimeValue ? new Date(endTimeValue) : null;
 
-    await firestore.addDoc(firestore.collection(db, 'products'), {
-        type: 'pack',
+    const newPack = {
         name: data.get('name').trim(),
         description: data.get('description').trim(),
-        promoPrice: Number(data.get('promoPrice')),
-        packType: data.get('packType'),
-        endTime: parsedDate && !Number.isNaN(parsedDate.getTime()) ? parsedDate.getTime() : null,
-        imageUrl,
-        imagePath,
-        active: true,
-        createdAt: firestore.serverTimestamp(),
-        updatedAt: firestore.serverTimestamp(),
-        createdBy: auth.currentUser.uid
-    });
+        price: Number(data.get('promoPrice')),
+        category: "Promotions",
+        brand: "Parapharmacie",
+        stock: 50,
+        image_url: null,
+        sku: "PACK-" + Date.now()
+    };
 
-    showStatus(statusEl, 'تم حفظ الباك / العرض بنجاح!', 'success');
+    await apiFetch('/products', {
+        method: 'POST',
+        body: JSON.stringify(newPack)
+    }, { requiresAuth: true });
+
+    showStatus(statusEl, 'تم حفظ العرض بنجاح فـ MongoDB!', 'success');
     form.reset();
     button.disabled = false;
 }
@@ -175,11 +138,7 @@ function initForms() {
         showStatus(productStatus, 'جارٍ الحفظ...', '');
 
         try {
-            if (!isFirebaseEnabled()) {
-                requireFirebaseForm(productStatus);
-                return;
-            }
-            await saveFirebaseProduct(productForm, productStatus, button);
+            await saveMongoProduct(productForm, productStatus, button);
         } catch (error) {
             console.error(error);
             showStatus(productStatus, `فشل الحفظ: ${error.message}`, 'error');
@@ -195,11 +154,7 @@ function initForms() {
         showStatus(packStatus, 'جارٍ الحفظ...', '');
 
         try {
-            if (!isFirebaseEnabled()) {
-                requireFirebaseForm(packStatus);
-                return;
-            }
-            await saveFirebasePack(packForm, packStatus, button);
+            await saveMongoPack(packForm, packStatus, button);
         } catch (error) {
             console.error(error);
             showStatus(packStatus, `فشل الحفظ: ${error.message}`, 'error');
@@ -340,13 +295,10 @@ function initProductManagement() {
     });
 }
 
-logoutBtn?.addEventListener('click', async () => {
-    if (!isFirebaseEnabled()) {
-        window.location.href = 'index.html';
-        return;
-    }
-    const { auth, authApi } = await loadFirebaseContext();
-    await authApi.signOut(auth);
+// 🚪 تسجيل الخروج
+logoutBtn?.addEventListener('click', () => {
+    localStorage.removeItem('parapharmacie_access_token');
+    localStorage.removeItem('parapharmacie_user');
     window.location.href = 'index.html';
 });
 

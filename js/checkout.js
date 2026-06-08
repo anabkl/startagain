@@ -1,14 +1,15 @@
 import { getCart, saveCart } from './main.js';
-import { showToast, formatCurrency } from './utils.js';
 import { getProductImage } from './catalog.js';
-import { saveOrder } from './order-service.js';
+import { buildWhatsAppOrderMessage, saveOrder } from './order-service.js';
+import { getCurrentUser } from './auth.js';
+import { showToast, formatCurrency } from './utils.js';
 
 const checkoutForm = document.getElementById('checkout-form');
 const orderTotalEl = document.getElementById('order-total-amount');
 const summaryList = document.getElementById('summary-items-list');
 const subtotalEl = document.getElementById('order-subtotal-amount');
 
-function escapeHtml(value) {
+function sanitizeHtml(value) {
     const div = document.createElement('div');
     div.textContent = value || '';
     return div.innerHTML;
@@ -38,9 +39,9 @@ function renderOrderSummary() {
             const price = getEffectivePrice(item);
             return `
                 <div class="summary-product">
-                    <img src="${escapeHtml(getProductImage(item))}" alt="${escapeHtml(item.name)}" loading="lazy" decoding="async" width="128" height="128">
+                    <img src="${sanitizeHtml(getProductImage(item))}" alt="${sanitizeHtml(item.name)}" loading="lazy" decoding="async" width="128" height="128">
                     <div>
-                        <strong>${escapeHtml(item.name)}</strong>
+                        <strong>${sanitizeHtml(item.name)}</strong>
                         <span>${formatCurrency(price)} x ${item.quantity || 1}</span>
                     </div>
                     <em>${formatCurrency(price * (item.quantity || 1))}</em>
@@ -51,6 +52,38 @@ function renderOrderSummary() {
 
     if (subtotalEl) subtotalEl.textContent = formatCurrency(total);
     if (orderTotalEl) orderTotalEl.textContent = formatCurrency(total);
+}
+
+function setFormValue(id, value) {
+    const el = document.getElementById(id);
+    if (!el || !value || String(el.value || '').trim()) return;
+    el.value = String(value).trim();
+}
+
+function splitName(name = '') {
+    const parts = String(name).trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return { firstName: '', lastName: '' };
+    return {
+        firstName: parts[0],
+        lastName: parts.slice(1).join(' ') || ''
+    };
+}
+
+function autofillCheckoutForm() {
+    const user = getCurrentUser();
+    if (!user || !checkoutForm) return;
+
+    const { firstName, lastName } = splitName(user.name || user.fullName || user.full_name);
+
+    setFormValue('firstName', user.first_name || user.firstName || firstName);
+    setFormValue('lastName', user.last_name || user.lastName || lastName);
+    setFormValue('email', user.email || '');
+    setFormValue('whatsapp', user.whatsapp || user.phone || user.phoneNumber || user.phone_number || '');
+    setFormValue('city', user.city || user.address?.city || user.shipping_address?.city || '');
+    const normalizedAddress = typeof user.address === 'string'
+        ? user.address
+        : (user.address?.line1 || user.shipping_address?.address || user.shipping_address?.line1 || '');
+    setFormValue('address', normalizedAddress);
 }
 
 function getFormValue(id) {
@@ -73,32 +106,6 @@ function normalizeMoroccanPhone(phone) {
     }
 
     return null;
-}
-
-function buildWhatsAppOrderMessage(orderData, orderId) {
-    const itemsList = (orderData.items || []).map((item, index) => {
-        const quantity = item.quantity || 1;
-        const price = item.unit_price || item.effectivePrice || 0;
-        return `${index + 1}. ${item.name || item.product_id} x ${quantity} = ${formatCurrency(price * quantity)}`;
-    }).join('\n');
-
-    return `Nouvelle commande - parapharmacie.me
-
-Client: ${orderData.firstName} ${orderData.lastName}
-WhatsApp: ${orderData.phoneNormalized}
-Email: ${orderData.email || 'Non renseigne'}
-Ville: ${orderData.city}
-Adresse: ${orderData.address}
-
-Produits:
-${itemsList}
-
-Sous-total: ${formatCurrency(orderData.subtotal || orderData.total || 0)}
-Livraison: ${orderData.deliveryLabel || 'A confirmer'}
-Total: ${formatCurrency(orderData.total || 0)}
-Paiement: Paiement a la livraison
-Commande: #${String(orderId).slice(0, 12)}
-Date: ${new Date().toLocaleString('fr-MA')}`;
 }
 
 async function processOrder(event) {
@@ -151,7 +158,6 @@ async function processOrder(event) {
     }));
 
     const total = getCartTotal(cart);
-
     const orderPayload = {
         firstName,
         lastName,
@@ -174,7 +180,7 @@ async function processOrder(event) {
         const orderId = savedOrder.id;
         const source = savedOrder.source || 'local';
         const normalizedOrder = savedOrder.order || orderPayload;
-        const waMessage = buildWhatsAppOrderMessage(normalizedOrder, orderId);
+        const waMessage = buildWhatsAppOrderMessage(normalizedOrder, orderId, formatCurrency);
         const waUrl = `https://wa.me/212675698351?text=${encodeURIComponent(waMessage)}`;
 
         localStorage.setItem('parapharmacie_last_whatsapp_url', waUrl);
@@ -195,4 +201,5 @@ async function processOrder(event) {
 }
 
 if (checkoutForm) checkoutForm.addEventListener('submit', processOrder);
+autofillCheckoutForm();
 renderOrderSummary();

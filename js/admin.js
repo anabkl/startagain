@@ -1,10 +1,10 @@
 import { apiFetch } from './auth.js';
 import { showToast } from './utils.js';
 
-// دالة إضافة منتج (خاصة بالعمال والأدمن - بدون Firebase)
+// دالة إضافة منتج (خاصة بالعمال والأدمن عبر API)
 export async function uploadProduct(productData, imageFile) {
     try {
-        // ملاحظة: حيت حيدنا Firebase، رفع الصور متوقف مؤقتاً حتى نزيدو API خاصة بالصور.
+        // ملاحظة: رفع الصور متوقف مؤقتاً حتى نزيدو API خاصة بالصور.
         // غنصيفطو غير البيانات دابا لـ MongoDB.
 
         const newProduct = {

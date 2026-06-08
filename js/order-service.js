@@ -1,4 +1,5 @@
-import { isFirebaseEnabled } from './runtime-config.js';
+import { apiFetch, getAccessToken } from './auth.js';
+import { isApiMode, isFirebaseEnabled } from './runtime-config.js';
 
 export const LOCAL_ORDERS_KEY = 'parapharmacie_orders';
 export const DEFAULT_ORDER_STATUS = 'في الانتظار';
@@ -16,6 +17,40 @@ function createLocalOrderId() {
     crypto.getRandomValues(bytes);
     const random = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
     return `PM-${Date.now().toString(36).toUpperCase()}-${random.slice(0, 8)}`;
+}
+
+function getNowIso() {
+    return new Date().toISOString();
+}
+
+function normalizeStatus(status) {
+    const value = String(status || '').trim();
+    if (!value) return DEFAULT_ORDER_STATUS;
+
+    const map = {
+        pending: 'في الانتظار',
+        confirmed: 'تم التأكيد',
+        preparing: 'قيد التحضير',
+        delivery: 'في التوصيل',
+        delivering: 'في التوصيل',
+        delivered: 'تم التسليم',
+        cancelled: 'ملغي',
+        canceled: 'ملغي'
+    };
+
+    const normalized = map[value.toLowerCase()] || value;
+    return ORDER_STATUSES.includes(normalized) ? normalized : DEFAULT_ORDER_STATUS;
+}
+
+function normalizePhone(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    const digits = raw.replace(/\D+/g, '');
+    if (!digits) return '';
+    if (digits.startsWith('212')) return `+${digits}`;
+    if (digits.startsWith('0')) return `+212${digits.slice(1)}`;
+    if (digits.length === 9) return `+212${digits}`;
+    return raw.startsWith('+') ? raw : `+${digits}`;
 }
 
 function maskPhone(value) {
@@ -37,54 +72,75 @@ function writeLocalOrders(orders) {
     localStorage.setItem(LOCAL_ORDERS_KEY, JSON.stringify(orders));
 }
 
-function getNowIso() {
-    return new Date().toISOString();
-}
-
-function normalizeStatus(status) {
-    if (!status || status === 'pending') return DEFAULT_ORDER_STATUS;
-    return ORDER_STATUSES.includes(status) ? status : DEFAULT_ORDER_STATUS;
-}
-
-function normalizeOrder(orderData, id, source = 'local') {
-    const now = getNowIso();
-    const subtotal = Number(orderData.subtotal ?? orderData.total ?? 0);
-    const deliveryFee = Number(orderData.deliveryFee || 0);
-    const deliveryLabel = orderData.deliveryLabel || 'A confirmer';
-    const total = Number(orderData.total ?? subtotal + deliveryFee);
-    const status = normalizeStatus(orderData.status);
-
-    return {
-        id,
-        firstName: orderData.firstName || '',
-        lastName: orderData.lastName || '',
-        email: orderData.email || '',
-        phoneOriginal: orderData.phoneOriginal || orderData.whatsapp || '',
-        phoneNormalized: orderData.phoneNormalized || orderData.whatsapp || '',
-        whatsappMasked: maskPhone(orderData.phoneNormalized || orderData.whatsapp || ''),
-        whatsapp: orderData.phoneNormalized || orderData.whatsapp || '',
-        city: orderData.city || '',
-        address: orderData.address || '',
-        paymentMethod: orderData.paymentMethod || 'COD',
-        items: Array.isArray(orderData.items) ? orderData.items : [],
-        subtotal,
-        deliveryFee,
-        deliveryLabel,
-        total,
-        status,
-        statusHistory: Array.isArray(orderData.statusHistory) && orderData.statusHistory.length
-            ? orderData.statusHistory
-            : [{ status, at: now, note: 'Commande creee' }],
-        createdAt: orderData.createdAt || now,
-        updatedAt: orderData.updatedAt || now,
-        source
-    };
+function pickArray(payload) {
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload?.orders)) return payload.orders;
+    if (Array.isArray(payload?.results)) return payload.results;
+    if (Array.isArray(payload?.items)) return payload.items;
+    return [];
 }
 
 function getOrderTimestamp(order) {
     const value = order.createdAt?.toDate ? order.createdAt.toDate() : order.createdAt;
     const date = value ? new Date(value) : new Date(0);
     return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+}
+
+function normalizeOrder(orderData = {}, id = null, source = orderData.source || 'api') {
+    const now = getNowIso();
+    const shipping = orderData.shipping_address || orderData.shippingAddress || {};
+    const fullName = String(orderData.customer_name || orderData.customerName || '').trim();
+    const [firstFromName = '', ...rest] = fullName.split(/\s+/);
+    const firstName = shipping.first_name || shipping.firstName || orderData.firstName || firstFromName;
+    const lastName = shipping.last_name || shipping.lastName || orderData.lastName || rest.join(' ');
+    const phoneOriginal = String(
+        orderData.phoneOriginal
+        || shipping.whatsapp
+        || shipping.phone
+        || orderData.whatsapp
+        || orderData.phone
+        || ''
+    ).trim();
+    const phoneNormalized = orderData.phoneNormalized || normalizePhone(phoneOriginal);
+    const subtotal = Number(orderData.subtotal ?? orderData.total ?? 0);
+    const deliveryFee = Number(orderData.deliveryFee || orderData.delivery_fee || 0);
+    const total = Number(orderData.total ?? subtotal + deliveryFee);
+    const status = normalizeStatus(orderData.status);
+
+    return {
+        id: String(id || orderData._id || orderData.id || ''),
+        firstName: firstName || '',
+        lastName: lastName || '',
+        email: shipping.email || orderData.email || '',
+        phoneOriginal,
+        phoneNormalized,
+        whatsappMasked: maskPhone(phoneNormalized || phoneOriginal),
+        whatsapp: phoneNormalized || phoneOriginal,
+        city: shipping.city || orderData.city || '',
+        address: shipping.address || orderData.address || '',
+        paymentMethod: String(orderData.payment_method || orderData.paymentMethod || 'COD').toUpperCase(),
+        items: Array.isArray(orderData.items) ? orderData.items.map((item) => ({
+            ...item,
+            id: item.id || item.product_id || item.productId,
+            product_id: item.product_id || item.productId || item.id,
+            name: item.name || item.product_name || item.product?.name || item.productName || item.product_id || item.productId || 'Produit',
+            effectivePrice: Number(item.unit_price ?? item.effectivePrice ?? item.priceMAD ?? item.price ?? 0),
+            priceMAD: Number(item.unit_price ?? item.priceMAD ?? item.price ?? 0),
+            quantity: Number(item.quantity || 1),
+            image: item.image || item.imageUrl || item.image_url || item.product?.image_url || ''
+        })) : [],
+        subtotal,
+        deliveryFee,
+        deliveryLabel: orderData.deliveryLabel || orderData.delivery_label || 'A confirmer',
+        total,
+        status,
+        statusHistory: Array.isArray(orderData.statusHistory) && orderData.statusHistory.length
+            ? orderData.statusHistory
+            : [{ status, at: orderData.updatedAt || orderData.createdAt || orderData.created_at || now, note: 'Commande creee' }],
+        createdAt: orderData.createdAt || orderData.created_at || now,
+        updatedAt: orderData.updatedAt || orderData.updated_at || orderData.createdAt || orderData.created_at || now,
+        source
+    };
 }
 
 function normalizeFirebaseOrder(id, data) {
@@ -101,6 +157,23 @@ async function getFirestoreApi() {
     return { db, firestore };
 }
 
+function saveOrderLocally(orderData) {
+    const order = normalizeOrder(orderData, createLocalOrderId(), 'local');
+    const orders = safeParseOrders();
+    orders.unshift(order);
+    writeLocalOrders(orders);
+    return order;
+}
+
+function cacheOrderLocally(orderData) {
+    const order = normalizeOrder(orderData, orderData.id, orderData.source || 'api');
+    if (!order.id) return order;
+    const orders = safeParseOrders().filter((item) => item.id !== order.id);
+    orders.unshift(order);
+    writeLocalOrders(orders);
+    return order;
+}
+
 async function saveOrderToFirebase(orderData) {
     const { db, firestore } = await getFirestoreApi();
     const docRef = firestore.doc(firestore.collection(db, 'orders'));
@@ -115,100 +188,208 @@ async function saveOrderToFirebase(orderData) {
     return order;
 }
 
-function saveOrderLocally(orderData) {
-    const order = normalizeOrder(orderData, createLocalOrderId(), 'local');
-    const orders = safeParseOrders();
-    orders.unshift(order);
-    writeLocalOrders(orders);
-    return order;
+function toApiOrderPayload(orderData) {
+    return {
+        items: (orderData.items || []).map((item) => ({
+            product_id: String(item.product_id || item.id),
+            quantity: Number(item.quantity || 1)
+        })),
+        shipping_address: {
+            first_name: orderData.firstName || '',
+            last_name: orderData.lastName || '',
+            email: orderData.email || '',
+            whatsapp: orderData.phoneNormalized || orderData.whatsapp || orderData.phoneOriginal || '',
+            city: orderData.city || '',
+            address: orderData.address || ''
+        },
+        payment_method: String(orderData.paymentMethod || 'cod').toLowerCase()
+    };
+}
+
+async function saveOrderToApi(orderData) {
+    const payload = await apiFetch('/orders', {
+        method: 'POST',
+        body: JSON.stringify(toApiOrderPayload(orderData))
+    }, { requiresAuth: Boolean(getAccessToken()) });
+
+    const normalized = normalizeOrder({
+        ...orderData,
+        ...(payload?.order || payload || {}),
+        items: payload?.items || payload?.order?.items || orderData.items,
+        total: payload?.total ?? payload?.order?.total ?? orderData.total
+    }, payload?._id || payload?.id || payload?.order?._id || payload?.order?.id, 'api');
+
+    return normalized;
 }
 
 export async function saveOrder(orderData) {
-    if (!isFirebaseEnabled()) {
-        const order = saveOrderLocally(orderData);
-        return { id: order.id, source: 'local', order };
+    if (isFirebaseEnabled()) {
+        try {
+            const order = await saveOrderToFirebase(orderData);
+            return { id: order.id, source: 'firebase', order };
+        } catch (error) {
+            console.info('Order saved locally for demo mode:', error?.message || error);
+        }
     }
 
-    try {
-        const order = await saveOrderToFirebase(orderData);
-        return { id: order.id, source: 'firebase', order };
-    } catch (error) {
-        console.info('Order saved locally for demo mode:', error?.message || error);
-        const order = saveOrderLocally(orderData);
-        return { id: order.id, source: 'local', order };
+    if (isApiMode()) {
+        try {
+            const order = await saveOrderToApi(orderData);
+            if (order.id) {
+                cacheOrderLocally(order);
+                return { id: order.id, source: 'api', order };
+            }
+        } catch (error) {
+            console.info('Order saved locally after API fallback:', error?.message || error);
+        }
     }
+
+    const order = saveOrderLocally(orderData);
+    return { id: order.id, source: 'local', order };
 }
 
 export async function listOrders() {
-    if (!isFirebaseEnabled()) {
-        return safeParseOrders()
-            .map((order) => normalizeOrder(order, order.id, order.source || 'local'))
-            .sort((a, b) => getOrderTimestamp(b) - getOrderTimestamp(a));
+    if (isFirebaseEnabled()) {
+        try {
+            const { db, firestore } = await getFirestoreApi();
+            const q = firestore.query(firestore.collection(db, 'orders'), firestore.orderBy('createdAt', 'desc'));
+            const snap = await firestore.getDocs(q);
+            return snap.docs.map((item) => normalizeFirebaseOrder(item.id, item.data()));
+        } catch (error) {
+            console.info('Using local orders for admin demo:', error?.message || error);
+        }
     }
 
-    try {
-        const { db, firestore } = await getFirestoreApi();
-        const q = firestore.query(firestore.collection(db, 'orders'), firestore.orderBy('createdAt', 'desc'));
-        const snap = await firestore.getDocs(q);
-        return snap.docs.map((item) => normalizeFirebaseOrder(item.id, item.data()));
-    } catch (error) {
-        console.info('Using local orders for admin demo:', error?.message || error);
-        return safeParseOrders()
-            .map((order) => normalizeOrder(order, order.id, order.source || 'local'))
-            .sort((a, b) => getOrderTimestamp(b) - getOrderTimestamp(a));
+    if (isApiMode()) {
+        try {
+            const payload = await apiFetch('/orders', {}, { requiresAuth: true });
+            return pickArray(payload)
+                .map((item) => normalizeOrder(item, item._id || item.id, 'api'))
+                .sort((a, b) => getOrderTimestamp(b) - getOrderTimestamp(a));
+        } catch (error) {
+            console.info('Using local orders after API fallback:', error?.message || error);
+        }
     }
+
+    return safeParseOrders()
+        .map((order) => normalizeOrder(order, order.id, order.source || 'local'))
+        .sort((a, b) => getOrderTimestamp(b) - getOrderTimestamp(a));
+}
+
+export async function listMyOrders() {
+    if (isApiMode() && getAccessToken()) {
+        try {
+            const payload = await apiFetch('/orders/me', {}, { requiresAuth: true });
+            return pickArray(payload)
+                .map((item) => normalizeOrder(item, item._id || item.id, 'api'))
+                .sort((a, b) => getOrderTimestamp(b) - getOrderTimestamp(a));
+        } catch {
+            try {
+                const payload = await apiFetch('/orders/my-orders', {}, { requiresAuth: true });
+                return pickArray(payload)
+                    .map((item) => normalizeOrder(item, item._id || item.id, 'api'))
+                    .sort((a, b) => getOrderTimestamp(b) - getOrderTimestamp(a));
+            } catch (error) {
+                console.info('Using local profile orders after API fallback:', error?.message || error);
+            }
+        }
+    }
+
+    return safeParseOrders()
+        .map((order) => normalizeOrder(order, order.id, order.source || 'local'))
+        .sort((a, b) => getOrderTimestamp(b) - getOrderTimestamp(a));
 }
 
 export async function getOrderById(orderId, source = null) {
     if (!orderId) return null;
 
-    if (source !== 'firebase' || !isFirebaseEnabled()) {
-        const order = safeParseOrders().find((item) => item.id === orderId);
-        return order ? normalizeOrder(order, order.id, order.source || 'local') : null;
+    const localOrder = safeParseOrders().find((item) => item.id === orderId);
+    if (source === 'local' || localOrder) {
+        return localOrder ? normalizeOrder(localOrder, localOrder.id, localOrder.source || 'local') : null;
     }
 
-    try {
-        const { db, firestore } = await getFirestoreApi();
-        const snap = await firestore.getDoc(firestore.doc(db, 'orders', orderId));
-        return snap.exists() ? normalizeFirebaseOrder(snap.id, snap.data()) : null;
-    } catch {
-        const order = safeParseOrders().find((item) => item.id === orderId);
-        return order ? normalizeOrder(order, order.id, order.source || 'local') : null;
+    if (source === 'firebase' && isFirebaseEnabled()) {
+        try {
+            const { db, firestore } = await getFirestoreApi();
+            const snap = await firestore.getDoc(firestore.doc(db, 'orders', orderId));
+            return snap.exists() ? normalizeFirebaseOrder(snap.id, snap.data()) : null;
+        } catch {
+            return null;
+        }
     }
+
+    if (isApiMode() && getAccessToken()) {
+        try {
+            const payload = await apiFetch(`/orders/${encodeURIComponent(orderId)}`, {}, { requiresAuth: true });
+            return normalizeOrder(payload?.order || payload, orderId, 'api');
+        } catch {
+            return null;
+        }
+    }
+
+    return null;
 }
 
 export async function updateOrderStatus(orderId, status, note = 'Status updated') {
+    if (!orderId) throw new Error('Order not found');
     const statusEntry = { status, at: getNowIso(), note };
 
-    if (!isFirebaseEnabled()) {
-        const orders = safeParseOrders();
-        const order = orders.find((item) => item.id === orderId);
-        if (!order) throw new Error('Order not found');
-        order.status = status;
-        order.updatedAt = statusEntry.at;
-        order.statusHistory = [...(order.statusHistory || []), statusEntry];
+    const orders = safeParseOrders();
+    const localOrder = orders.find((item) => item.id === orderId);
+    if (localOrder) {
+        localOrder.status = status;
+        localOrder.updatedAt = statusEntry.at;
+        localOrder.statusHistory = [...(localOrder.statusHistory || []), statusEntry];
         writeLocalOrders(orders);
-        return order;
+        return normalizeOrder(localOrder, localOrder.id, localOrder.source || 'local');
     }
 
-    const { db, firestore } = await getFirestoreApi();
-    const orderRef = firestore.doc(db, 'orders', orderId);
-    await firestore.updateDoc(orderRef, {
-        status,
-        updatedAt: firestore.serverTimestamp(),
-        statusHistory: firestore.arrayUnion(statusEntry)
-    });
-    return getOrderById(orderId, 'firebase');
+    if (isFirebaseEnabled()) {
+        const { db, firestore } = await getFirestoreApi();
+        const orderRef = firestore.doc(db, 'orders', orderId);
+        await firestore.updateDoc(orderRef, {
+            status,
+            updatedAt: firestore.serverTimestamp(),
+            statusHistory: firestore.arrayUnion(statusEntry)
+        });
+        return getOrderById(orderId, 'firebase');
+    }
+
+    const body = JSON.stringify({ status, note });
+    try {
+        const payload = await apiFetch(`/orders/${encodeURIComponent(orderId)}/status`, {
+            method: 'PATCH',
+            body
+        }, { requiresAuth: true });
+        return normalizeOrder(payload?.order || payload, orderId, 'api');
+    } catch {
+        const payload = await apiFetch(`/orders/${encodeURIComponent(orderId)}`, {
+            method: 'PATCH',
+            body
+        }, { requiresAuth: true });
+        return normalizeOrder(payload?.order || payload, orderId, 'api');
+    }
 }
 
 export async function deleteOrder(orderId) {
-    if (!isFirebaseEnabled()) {
-        writeLocalOrders(safeParseOrders().filter((order) => order.id !== orderId));
+    if (!orderId) throw new Error('Order not found');
+
+    const orders = safeParseOrders();
+    const hasLocal = orders.some((order) => order.id === orderId);
+    if (hasLocal) {
+        writeLocalOrders(orders.filter((order) => order.id !== orderId));
         return true;
     }
 
-    const { db, firestore } = await getFirestoreApi();
-    await firestore.deleteDoc(firestore.doc(db, 'orders', orderId));
+    if (isFirebaseEnabled()) {
+        const { db, firestore } = await getFirestoreApi();
+        await firestore.deleteDoc(firestore.doc(db, 'orders', orderId));
+        return true;
+    }
+
+    await apiFetch(`/orders/${encodeURIComponent(orderId)}`, {
+        method: 'DELETE'
+    }, { requiresAuth: true });
     return true;
 }
 

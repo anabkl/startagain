@@ -30,8 +30,8 @@
     <p class="subtitle">Parashop Tawfiq — استخدم هذه الصفحة مرة واحدة فقط ثم احذفها</p>
 
     <div class="warning">
-      ⚠️ <strong>تحذير:</strong> هذه الصفحة تنشئ حساب المدير في Firebase Auth وتضيف وثيقة <code>users/{uid}</code> بدور <code>admin</code>.<br>
-      احذف هذا الملف بعد الاستخدام لأسباب أمنية.
+      ⚠️ <strong>تنبيه:</strong> تم إيقاف هذه الأداة بعد الانتقال إلى API الجديد.
+      أنشئ/عدّل حساب المدير عبر الباك-إند (Render API) فقط.
     </div>
 
     <button class="btn" id="setupBtn">إنشاء حساب المدير</button>
@@ -39,21 +39,7 @@
   </div>
 
   <script type="module">
-    import { auth, db } from './js/firebase.js';
-    import {
-      createUserWithEmailAndPassword,
-      signInWithEmailAndPassword,
-    } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js';
-    import {
-      doc,
-      setDoc,
-      serverTimestamp,
-    } from 'https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js';
-
-    const ADMIN_EMAIL    = 'lhraouianas16@gmail.com';
-    const ADMIN_PASSWORD = 'Anas@123';
-
-    const btn      = document.getElementById('setupBtn');
+    const btn = document.getElementById('setupBtn');
     const statusEl = document.getElementById('status');
 
     function showStatus(msg, type) {
@@ -61,43 +47,8 @@
       statusEl.className = type;
     }
 
-    btn.addEventListener('click', async () => {
-      btn.disabled = true;
-      showStatus('جارٍ إنشاء الحساب...', 'info');
-
-      try {
-        let user;
-
-        // محاولة إنشاء الحساب، وإذا كان موجوداً نحاول تسجيل الدخول
-        try {
-          const cred = await createUserWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD);
-          user = cred.user;
-          showStatus('تم إنشاء حساب Firebase Auth ✅ جارٍ إضافة دور المدير...', 'info');
-        } catch (authErr) {
-          if (authErr.code === 'auth/email-already-in-use') {
-            showStatus('الحساب موجود مسبقاً، جارٍ تسجيل الدخول لتحديث الدور...', 'info');
-            const cred = await signInWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD);
-            user = cred.user;
-          } else {
-            throw authErr;
-          }
-        }
-
-        // إضافة / تحديث وثيقة المستخدم في Firestore بدور admin
-        await setDoc(doc(db, 'users', user.uid), {
-          uid:       user.uid,
-          email:     ADMIN_EMAIL,
-          name:      'Anas Lhraoui',
-          role:      'admin',
-          createdAt: serverTimestamp(),
-        }, { merge: true });
-
-        showStatus(`✅ تم بنجاح! حساب المدير جاهز.\nالبريد: ${ADMIN_EMAIL}\nUID: ${user.uid}\n\nاحذف هذا الملف الآن!`, 'success');
-      } catch (err) {
-        console.error(err);
-        showStatus(`❌ خطأ: ${err.message}`, 'error');
-        btn.disabled = false;
-      }
+    btn.addEventListener('click', () => {
+      showStatus('تم تعطيل هذه الصفحة. يرجى استخدام Render API لإدارة حسابات الأدمن بشكل آمن.', 'error');
     });
   </script>
 </body>

@@ -9,16 +9,29 @@ export function isLocalPreview() {
     return typeof window !== 'undefined' && LOCAL_HOSTS.includes(window.location.hostname);
 }
 
+export function getBackendMode() {
+    if (typeof window === 'undefined') return 'api';
+
+    const backend = getBackendParam();
+    if (backend === 'firebase' || backend === 'mock' || backend === 'api') return backend;
+
+    return window.localStorage.getItem('parapharmacie_backend') || 'api';
+}
+
+export function isApiMode() {
+    return getBackendMode() !== 'mock';
+}
+
 export function isFirebaseEnabled() {
     if (typeof window === 'undefined') return false;
 
     const backend = getBackendParam();
     if (backend === 'firebase') return true;
-    if (backend === 'mock') return false;
+    if (backend === 'mock' || backend === 'api') return false;
 
     const storedBackend = window.localStorage.getItem('parapharmacie_backend');
     if (storedBackend === 'firebase') return true;
-    if (storedBackend === 'mock') return false;
+    if (storedBackend === 'mock' || storedBackend === 'api') return false;
 
     return false;
 }

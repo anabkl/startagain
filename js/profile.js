@@ -1,11 +1,11 @@
 import {
     apiFetch,
     bindLogoutButton,
-    clearSession,
     getAccessToken,
     getCurrentUser,
     saveAuthSession
 } from './auth.js';
+import { listMyOrders } from './order-service.js';
 import { formatCurrency } from './utils.js';
 
 const FALLBACK_IMAGE = 'assets/products/product-placeholder.svg';
@@ -38,6 +38,34 @@ function setStatus(element, message, type = '') {
     element.hidden = !message;
 }
 
+function splitName(name = '') {
+    const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+    return {
+        firstName: parts[0] || '',
+        lastName: parts.slice(1).join(' ')
+    };
+}
+
+function getDisplayProfile(user = {}) {
+    const { firstName, lastName } = splitName(user.name || user.fullName || user.full_name);
+    const name = `${user.first_name || user.firstName || firstName} ${user.last_name || user.lastName || lastName}`.trim()
+        || user.name
+        || user.email
+        || '';
+    const address = typeof user.address === 'string'
+        ? user.address
+        : (user.address?.line1 || user.shipping_address?.address || user.shipping_address?.line1 || '');
+
+    return {
+        ...user,
+        name,
+        email: user.email || '',
+        whatsapp: user.whatsapp || user.phone || user.phoneNumber || user.phone_number || '',
+        city: user.city || user.address?.city || user.shipping_address?.city || '',
+        address
+    };
+}
+
 function normalizeStatus(status) {
     const value = String(status || '').toLowerCase();
     if (['delivered', 'تم التسليم', 'livre', 'livrée'].includes(value)) return 'delivered';
@@ -62,11 +90,11 @@ function itemImage(item) {
 }
 
 function itemName(item) {
-    return item.name || item.productName || item.product_name || 'Produit parapharmacie';
+    return item.name || item.productName || item.product_name || item.product_id || 'Produit parapharmacie';
 }
 
 function renderProfile(user) {
-    profile = user || {};
+    profile = getDisplayProfile(user || {});
     setText('profile-welcome', `مرحبا بك ${profile.name || 'عميلنا العزيز'}`);
     setText('profile-email', profile.email || 'Votre compte Parapharmacie Tawfiq');
     setText('profile-name', profile.name);
@@ -97,9 +125,8 @@ function renderOrders(orders = []) {
     ordersList.innerHTML = orders.map((order) => {
         const firstItem = order.items?.[0] || {};
         const remaining = Math.max((order.items?.length || 0) - 1, 0);
-        const date = order.created_at
-            ? new Date(order.created_at).toLocaleDateString('fr-MA')
-            : '---';
+        const rawDate = order.createdAt || order.created_at;
+        const date = rawDate ? new Date(rawDate).toLocaleDateString('fr-MA') : '---';
 
         return `
             <article class="profile-order-card">
@@ -128,23 +155,36 @@ function initTabs() {
     });
 }
 
+async function loadProfileOrders(fallbackOrders = []) {
+    try {
+        const orders = fallbackOrders.length ? fallbackOrders : await listMyOrders();
+        renderOrders(orders);
+    } catch (error) {
+        console.error('Orders error:', error);
+        renderOrders(fallbackOrders);
+    }
+}
+
 async function loadDashboard() {
     if (!getAccessToken()) {
         window.location.href = 'login.html';
         return;
     }
 
+    renderProfile(profile);
+
     try {
         const dashboard = await apiFetch('/users/me/dashboard', {}, { requiresAuth: true });
-        renderProfile(dashboard.user);
-        renderOrders(dashboard.orders);
+        const user = dashboard.user || dashboard.profile || profile;
+        renderProfile(user);
+        await loadProfileOrders(dashboard.orders || []);
         saveAuthSession({
             access_token: getAccessToken(),
-            user: dashboard.user
+            user
         }, Boolean(localStorage.getItem('parapharmacie_access_token')));
     } catch (error) {
-        clearSession();
-        window.location.href = `login.html?message=${encodeURIComponent(error.message)}`;
+        console.info('Using cached profile after dashboard fallback:', error?.message || error);
+        await loadProfileOrders();
     }
 }
 
