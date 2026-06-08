@@ -1,4 +1,10 @@
-import { apiFetch } from './auth.js';
+import './ui-preferences.js';
+import {
+    apiFetch,
+    bindLogoutButton,
+    getAccessToken,
+    getCurrentUser
+} from './auth.js';
 import {
     LOCAL_PRODUCT_OVERRIDES_KEY,
     applyLocalProductOverrides,
@@ -9,7 +15,6 @@ import {
 import { categories } from './catalog-data.js';
 
 const pageContent = document.getElementById('pageContent');
-const logoutBtn = document.getElementById('logoutBtn');
 const productForm = document.getElementById('productForm');
 const packForm = document.getElementById('packForm');
 const productStatus = document.getElementById('productStatus');
@@ -21,6 +26,10 @@ const productEditor = document.getElementById('adminProductEditor');
 const productEditStatus = document.getElementById('productEditStatus');
 const resetProductOverridesBtn = document.getElementById('resetProductOverrides');
 const cancelProductEditBtn = document.getElementById('cancelProductEdit');
+const todayRevenueEl = document.getElementById('todayRevenue');
+const newOrdersEl = document.getElementById('newOrders');
+const newClientsEl = document.getElementById('newClients');
+const refreshStatsBtn = document.getElementById('refreshStats');
 
 let editableProducts = [];
 
@@ -43,26 +52,21 @@ function setPageVisible() {
 
 // 🛡️ حراسة صفحة الأدمن بالتوكن ديال MongoDB
 function initAdminGuard() {
-    const userString = localStorage.getItem('parapharmacie_user');
-    const token = localStorage.getItem('parapharmacie_access_token');
+    const user = getCurrentUser();
+    const token = getAccessToken();
 
-    if (!token || !userString) {
+    if (!token || !user) {
         window.location.href = 'login.html';
         return;
     }
 
-    try {
-        const user = JSON.parse(userString);
-        if (user.role !== 'admin') {
-            window.location.href = 'index.html';
-            return;
-        }
-
-        if (backendMode) backendMode.textContent = 'Mode Render (MongoDB)';
-        setPageVisible();
-    } catch (error) {
-        window.location.href = 'login.html';
+    if (user.role !== 'admin') {
+        window.location.href = 'index.html';
+        return;
     }
+
+    if (backendMode) backendMode.textContent = 'Mode Render (MongoDB)';
+    setPageVisible();
 }
 
 function initTabs() {
@@ -75,8 +79,40 @@ function initTabs() {
             document.querySelectorAll('.sidebar__nav a[data-tab]').forEach((link) => link.classList.remove('active'));
             document.querySelectorAll(`[data-tab="${tab}"]`).forEach((target) => target.classList.add('active'));
             document.getElementById(`tab-${tab}`)?.classList.add('active');
+            if (tab === 'statistics') loadStatistics();
         });
     });
+}
+
+function formatMAD(value) {
+    return `${Number(value || 0).toLocaleString('fr-MA', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    })} DH`;
+}
+
+function setMetric(element, value) {
+    if (element) element.textContent = value;
+}
+
+async function loadStatistics() {
+    if (!todayRevenueEl || !newOrdersEl || !newClientsEl) return;
+
+    setMetric(todayRevenueEl, '...');
+    setMetric(newOrdersEl, '...');
+    setMetric(newClientsEl, '...');
+
+    try {
+        const stats = await apiFetch('/admin/statistics/today', {}, { requiresAuth: true });
+        setMetric(todayRevenueEl, formatMAD(stats.todayRevenue || stats.sales_today || 0));
+        setMetric(newOrdersEl, Number(stats.newOrders || 0).toLocaleString('fr-MA'));
+        setMetric(newClientsEl, Number(stats.newClients || 0).toLocaleString('fr-MA'));
+    } catch (error) {
+        console.error(error);
+        setMetric(todayRevenueEl, 'تعذر التحميل');
+        setMetric(newOrdersEl, '---');
+        setMetric(newClientsEl, '---');
+    }
 }
 
 // 📦 إضافة منتج جديد لقاعدة بيانات MongoDB
@@ -296,13 +332,11 @@ function initProductManagement() {
 }
 
 // 🚪 تسجيل الخروج
-logoutBtn?.addEventListener('click', () => {
-    localStorage.removeItem('parapharmacie_access_token');
-    localStorage.removeItem('parapharmacie_user');
-    window.location.href = 'index.html';
-});
+bindLogoutButton('#logoutBtn');
+refreshStatsBtn?.addEventListener('click', loadStatistics);
 
 initTabs();
 initForms();
 initProductManagement();
 initAdminGuard();
+loadStatistics();

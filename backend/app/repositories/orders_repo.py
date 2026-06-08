@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from bson import ObjectId
+from bson.errors import InvalidId
 
 from app.config.db import get_db
 
@@ -20,7 +21,10 @@ class OrdersRepository:
         return self.get_by_id(str(result.inserted_id))
 
     def get_by_id(self, order_id: str) -> dict[str, Any] | None:
-        return self.col.find_one({"_id": ObjectId(order_id)})
+        try:
+            return self.col.find_one({"_id": ObjectId(order_id)})
+        except (InvalidId, TypeError):
+            return None
 
     def list_for_user(self, user_id: str, page: int, per_page: int):
         query = {"user_id": user_id}
@@ -39,8 +43,16 @@ class OrdersRepository:
         return list(cursor), total
 
     def update_status(self, order_id: str, status: str):
-        self.col.update_one(
-            {"_id": ObjectId(order_id)},
-            {"$set": {"status": status, "updated_at": datetime.now(timezone.utc)}},
-        )
+        try:
+            query = {"_id": ObjectId(order_id)}
+        except (InvalidId, TypeError):
+            return None
+        self.col.update_one(query, {"$set": {"status": status, "updated_at": datetime.now(timezone.utc)}})
         return self.get_by_id(order_id)
+
+    def delete(self, order_id: str) -> bool:
+        try:
+            result = self.col.delete_one({"_id": ObjectId(order_id)})
+        except (InvalidId, TypeError):
+            return False
+        return result.deleted_count > 0

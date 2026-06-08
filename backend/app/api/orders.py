@@ -17,7 +17,7 @@ def get_order_service() -> OrderService:
 
 
 @orders_bp.post("")
-@jwt_required()
+@jwt_required(optional=True)
 def create_order():
     payload = validate_json(CreateOrderInput, request)
     order = get_order_service().create_order(
@@ -46,6 +46,12 @@ def list_my_orders():
     return success_response(data=orders, meta=meta)
 
 
+@orders_bp.get("/my-orders")
+@jwt_required()
+def list_my_orders_alias():
+    return list_my_orders()
+
+
 @orders_bp.get("")
 @admin_required
 def list_all_orders():
@@ -62,9 +68,21 @@ def list_all_orders():
     return success_response(data=orders, meta=meta)
 
 
+@orders_bp.get("/<order_id>")
+@admin_required
+def get_order(order_id: str):
+    return success_response(data=get_order_service().get_order(order_id))
+
+
 @orders_bp.patch("/<order_id>/status")
 @admin_required
 def update_order_status(order_id: str):
     status = (request.get_json(silent=True) or {}).get("status", "pending")
     order = get_order_service().update_status(order_id, status)
     return success_response(data=order, message="Order status updated")
+
+
+@orders_bp.delete("/<order_id>")
+@admin_required
+def delete_order(order_id: str):
+    return success_response(data=get_order_service().delete_order(order_id), message="Order deleted")

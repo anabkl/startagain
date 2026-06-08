@@ -18,12 +18,25 @@ def get_auth_service() -> AuthService:
 @auth_bp.post("/register")
 def register():
     payload = validate_json(RegisterInput, request)
-    user = get_auth_service().register(payload.name, payload.email, payload.password, payload.role)
+    user = get_auth_service().register(
+        payload.name,
+        payload.email,
+        payload.password,
+        payload.role,
+        payload.whatsapp,
+        payload.city,
+        payload.address,
+    )
     data = {
         "id": str(user["_id"]),
         "name": user["name"],
         "email": user["email"],
         "role": user.get("role", "client"),
+        "whatsapp": user.get("whatsapp") or "",
+        "phone": user.get("phone") or "",
+        "city": user.get("city") or "",
+        "address": user.get("address") or "",
+        "preferences": user.get("preferences") or {"lang": "ar", "theme": "light"},
         "created_at": user.get("created_at"),
     }
     return success_response(data=data, message="User registered", status=201)
@@ -33,6 +46,7 @@ def register():
 def login():
     payload = validate_json(LoginInput, request)
     data = get_auth_service().login(payload.email, payload.password)
+    remember_regular_user = payload.rememberMe and data["user"].get("role") != "admin"
 
     response, status = success_response(data=data, message="Login successful")
     response.set_cookie(
@@ -41,7 +55,7 @@ def login():
         httponly=True,
         secure=current_app.config.get("FLASK_ENV") == "production",
         samesite="Lax",
-        max_age=14 * 24 * 3600,
+        max_age=14 * 24 * 3600 if remember_regular_user else None,
     )
     return response, status
 

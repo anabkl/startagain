@@ -20,7 +20,16 @@ class AuthService:
         self.users = UsersRepository()
         self.audit = AuditRepository()
 
-    def register(self, name: str, email: str, password: str, role: str = "client"):
+    def register(
+        self,
+        name: str,
+        email: str,
+        password: str,
+        role: str = "client",
+        whatsapp: str | None = None,
+        city: str | None = None,
+        address: str | None = None,
+    ):
         normalized_email = email.lower().strip()
         if self.users.get_by_email(normalized_email):
             raise AppError("Email already exists", 409)
@@ -31,6 +40,11 @@ class AuthService:
                 "email": normalized_email,
                 "password_hash": ph.hash(password),
                 "role": role if role == "admin" else "client",
+                "whatsapp": (whatsapp or "").strip(),
+                "phone": (whatsapp or "").strip(),
+                "city": (city or "").strip(),
+                "address": (address or "").strip(),
+                "preferences": {"lang": "ar", "theme": "light"},
                 "failed_logins": 0,
                 "locked_until": None,
                 "token_version": 0,
@@ -49,6 +63,11 @@ class AuthService:
             "name": user["name"],
             "email": user["email"],
             "role": user.get("role", "client"),
+            "whatsapp": user.get("whatsapp") or user.get("phone") or "",
+            "phone": user.get("phone") or user.get("whatsapp") or "",
+            "city": user.get("city") or "",
+            "address": user.get("address") or "",
+            "preferences": user.get("preferences") or {"lang": "ar", "theme": "light"},
             "created_at": user.get("created_at"),
         }
 

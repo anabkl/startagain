@@ -1,3 +1,5 @@
+import './ui-preferences.js';
+
 export const CART_KEY = 'parashop_cart';
 
 export function getCart() {

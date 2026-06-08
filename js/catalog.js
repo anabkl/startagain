@@ -4,6 +4,47 @@ import { apiFetch } from './auth.js';
 const FALLBACK_IMAGE = 'assets/products/product-placeholder.svg';
 export const LOCAL_PRODUCT_OVERRIDES_KEY = 'parapharmacie_product_overrides';
 const CATEGORY_ALIASES = {
+    visage: 'visage',
+    الوجه: 'visage',
+    'العنايه بالوجه': 'visage',
+    peau: 'visage',
+    skin: 'visage',
+    corps: 'corps',
+    الجسم: 'corps',
+    'العنايه بالجسم': 'corps',
+    body: 'corps',
+    cheveux: 'cheveux',
+    الشعر: 'cheveux',
+    'العنايه بالشعر': 'cheveux',
+    hair: 'cheveux',
+    'bebe-maman': 'bebe-maman',
+    bebe: 'bebe-maman',
+    maman: 'bebe-maman',
+    baby: 'bebe-maman',
+    'الام والطفل': 'bebe-maman',
+    solaire: 'solaire',
+    الشمس: 'solaire',
+    'واقي الشمس': 'solaire',
+    sun: 'solaire',
+    hygiene: 'hygiene',
+    النظافه: 'hygiene',
+    sante: 'sante',
+    الصحه: 'sante',
+    health: 'sante',
+    supplements: 'complements-alimentaires',
+    'complements-alimentaires': 'complements-alimentaires',
+    'مكملات غذائيه': 'complements-alimentaires',
+    homme: 'homme',
+    الرجل: 'homme',
+    'العنايه بالرجل': 'homme',
+    bio: 'bio',
+    طبيعي: 'bio',
+    paramedical: 'para-medical',
+    'para-medical': 'para-medical',
+    'شبه طبي': 'para-medical',
+    promotions: 'promotions',
+    promo: 'promotions',
+    عروض: 'promotions',
     'soins-visage': 'visage',
     'produits-cosmetiques': 'visage',
     'hygiene-bien-etre': 'hygiene',
@@ -15,7 +56,22 @@ const CATEGORY_ALIASES = {
 export { categories, localCityKeywords };
 export const mockProducts = catalogProducts;
 
-const categorySlugByName = Object.fromEntries(categories.map((category) => [category.name, category.slug]));
+const categorySlugByName = Object.fromEntries(categories.flatMap((category) => [
+    [category.name, category.slug],
+    [category.arabicName, category.slug],
+    [category.slug, category.slug]
+]));
+
+function getCategorySlug(category) {
+    const raw = String(category || '').trim();
+    const normalized = normalizeSearchText(raw)
+        .replace(/&/g, ' ')
+        .replace(/\s+/g, '-');
+    return categorySlugByName[raw]
+        || CATEGORY_ALIASES[raw]
+        || CATEGORY_ALIASES[normalized]
+        || normalized;
+}
 
 export const trustBadges = [
     { icon: 'fa-truck-fast', title: 'Livraison au Maroc', text: 'Khouribga, Oued Zem, Boujniba, Boulanouare et villes marocaines sur confirmation.' },
@@ -98,7 +154,7 @@ function coerceOptionalNumber(value, fallback = null) {
 
 function applyProductOverride(product, override = {}) {
     const next = { ...product, ...override };
-    const categorySlug = categorySlugByName[next.category] || next.categorySlug;
+    const categorySlug = getCategorySlug(next.categorySlug || next.category);
     const priceMAD = coerceOptionalNumber(next.priceMAD ?? next.promoPrice ?? next.price, product.priceMAD);
     const oldPriceMAD = coerceOptionalNumber(next.oldPriceMAD, null);
     const hasPromo = oldPriceMAD && priceMAD && oldPriceMAD > priceMAD;
@@ -202,11 +258,12 @@ export function matchesProduct(product, query) {
 
 export function matchesCategory(product, categorySlug) {
     const normalizedCategory = CATEGORY_ALIASES[categorySlug] || categorySlug;
-    return normalizedCategory === 'all' || product.categorySlug === normalizedCategory || product.category === normalizedCategory;
+    return normalizedCategory === 'all'
+        || getCategorySlug(product.categorySlug || product.category) === normalizedCategory;
 }
 
 function normalizeApiProduct(product) {
-    const categorySlug = categorySlugByName[product.category] || String(product.category || 'all').toLowerCase();
+    const categorySlug = getCategorySlug(product.categorySlug || product.category || 'all');
     const priceMAD = Number(product.priceMAD || product.price || 0);
     const oldPriceMAD = Number(product.oldPriceMAD || 0);
     const image = product.image || product.image_url || product.imageUrl || productImageFallbacks[categorySlug] || FALLBACK_IMAGE;
@@ -230,23 +287,24 @@ function normalizeApiProduct(product) {
     };
 }
 
-async function loadApiProducts() {
-    const data = await apiFetch('/products?per_page=100&page=1', { method: 'GET' });
-    return Array.isArray(data) ? data.map(normalizeApiProduct) : [];
+async function apiFetchWithTimeout(path, timeoutMs = 4000) {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        return await apiFetch(path, { method: 'GET', signal: controller.signal });
+    } finally {
+        window.clearTimeout(timeout);
+    }
 }
 
-function withTimeout(promise, timeoutMs = 4000) {
-    return Promise.race([
-        promise,
-        new Promise((_, reject) => {
-            window.setTimeout(() => reject(new Error('Catalog API timeout')), timeoutMs);
-        })
-    ]);
+async function loadApiProducts() {
+    const data = await apiFetchWithTimeout('/products?per_page=100&page=1');
+    return Array.isArray(data) ? data.map(normalizeApiProduct) : [];
 }
 
 export async function getCatalogProducts() {
     try {
-        const apiProducts = await withTimeout(loadApiProducts());
+        const apiProducts = await loadApiProducts();
         const publicProducts = apiProducts.filter((product) => product.type !== 'pack' && product.active !== false);
 
         if (publicProducts.length > 0) {
@@ -261,7 +319,7 @@ export async function getCatalogProducts() {
 
 export async function getCatalogProduct(id) {
     try {
-        const product = await withTimeout(apiFetch(`/products/${encodeURIComponent(id)}`, { method: 'GET' }), 4000);
+        const product = await apiFetchWithTimeout(`/products/${encodeURIComponent(id)}`, 4000);
         if (product?.id) {
             const normalized = normalizeApiProduct(product);
             return {

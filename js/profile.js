@@ -1,11 +1,41 @@
-import { apiFetch, getCurrentUser, logoutUser } from './auth.js';
-import { formatCurrency } from './utils.js';
+import {
+    apiFetch,
+    bindLogoutButton,
+    getAccessToken,
+    getCurrentUser,
+    saveAuthSession
+} from './auth.js';
 import { listMyOrders } from './order-service.js';
+import { formatCurrency } from './utils.js';
+
+const FALLBACK_IMAGE = 'assets/products/product-placeholder.svg';
+const menuButtons = document.querySelectorAll('[data-profile-tab]');
+const panels = document.querySelectorAll('.profile-panel');
+const editToggle = document.getElementById('toggle-profile-edit');
+const editForm = document.getElementById('edit-profile-form');
+const passwordForm = document.getElementById('password-form');
+const profileStatus = document.getElementById('profile-status');
+const passwordStatus = document.getElementById('password-status');
+const ordersList = document.getElementById('orders-list');
+
+let profile = getCurrentUser() || {};
 
 function escapeHtml(value) {
     const div = document.createElement('div');
     div.textContent = value || '';
     return div.innerHTML;
+}
+
+function setText(id, value) {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value || '---';
+}
+
+function setStatus(element, message, type = '') {
+    if (!element) return;
+    element.textContent = message;
+    element.dataset.type = type;
+    element.hidden = !message;
 }
 
 function splitName(name = '') {
@@ -16,123 +46,198 @@ function splitName(name = '') {
     };
 }
 
-function getUserProfile(user) {
-    const { firstName, lastName } = splitName(user?.name || user?.fullName || user?.full_name);
-    const displayName = `${user?.first_name || user?.firstName || firstName} ${user?.last_name || user?.lastName || lastName}`.trim() || user?.email || 'Client';
+function getDisplayProfile(user = {}) {
+    const { firstName, lastName } = splitName(user.name || user.fullName || user.full_name);
+    const name = `${user.first_name || user.firstName || firstName} ${user.last_name || user.lastName || lastName}`.trim()
+        || user.name
+        || user.email
+        || '';
+    const address = typeof user.address === 'string'
+        ? user.address
+        : (user.address?.line1 || user.shipping_address?.address || user.shipping_address?.line1 || '');
+
     return {
-        displayName,
-        email: user?.email || '—',
-        whatsapp: user?.whatsapp || user?.phone || user?.phoneNumber || user?.phone_number || '—',
-        city: user?.city || user?.address?.city || user?.shipping_address?.city || '—',
-        address: (typeof user?.address === 'string' ? user.address : user?.address?.line1) || user?.shipping_address?.address || user?.shipping_address?.line1 || '—'
+        ...user,
+        name,
+        email: user.email || '',
+        whatsapp: user.whatsapp || user.phone || user.phoneNumber || user.phone_number || '',
+        city: user.city || user.address?.city || user.shipping_address?.city || '',
+        address
     };
-}
-
-function setText(id, value) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = value;
-}
-
-function renderUser(user) {
-    const profile = getUserProfile(user);
-    setText('userName', profile.displayName);
-    setText('sideUserName', profile.displayName);
-    setText('sideUserEmail', profile.email);
-    setText('userEmail', profile.email);
-    setText('userWa', profile.whatsapp);
-    setText('userCity', profile.city);
-    setText('userAddr', profile.address);
 }
 
 function normalizeStatus(status) {
     const value = String(status || '').toLowerCase();
-    if (value.includes('deliver') || status === 'تم التسليم') return { cls: 'status-delivered', text: 'تم التسليم' };
-    if (value.includes('cancel') || status === 'ملغي') return { cls: 'status-pending', text: 'ملغي' };
-    if (status) return { cls: 'status-pending', text: String(status) };
-    return { cls: 'status-pending', text: 'في الانتظار' };
+    if (['delivered', 'تم التسليم', 'livre', 'livrée'].includes(value)) return 'delivered';
+    if (['shipped', 'في التوصيل', 'تم الإرسال', 'قيد التحضير'].includes(value)) return 'shipped';
+    if (['cancelled', 'canceled', 'ملغي'].includes(value)) return 'cancelled';
+    return 'pending';
 }
 
-function formatDate(value) {
-    const date = new Date(value || Date.now());
-    return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('ar-MA');
+function getStatusLabel(status) {
+    const normalized = normalizeStatus(status);
+    const labels = {
+        pending: 'في الانتظار / Pending',
+        shipped: 'تم الإرسال / Shipped',
+        delivered: 'تم التسليم / Delivered',
+        cancelled: 'ملغي / Annulée'
+    };
+    return labels[normalized];
 }
 
-function normalizeOrdersPayload(payload) {
-    if (Array.isArray(payload)) return payload;
-    if (Array.isArray(payload?.orders)) return payload.orders;
-    if (Array.isArray(payload?.results)) return payload.results;
-    if (Array.isArray(payload?.items)) return payload.items;
-    return [];
+function itemImage(item) {
+    return item.image || item.imageUrl || item.image_url || item.product_image || FALLBACK_IMAGE;
 }
 
-function renderOrders(orders) {
-    const container = document.getElementById('orders-container');
-    if (!container) return;
+function itemName(item) {
+    return item.name || item.productName || item.product_name || item.product_id || 'Produit parapharmacie';
+}
 
+function renderProfile(user) {
+    profile = getDisplayProfile(user || {});
+    setText('profile-welcome', `مرحبا بك ${profile.name || 'عميلنا العزيز'}`);
+    setText('profile-email', profile.email || 'Votre compte Parapharmacie Tawfiq');
+    setText('profile-name', profile.name);
+    setText('profile-phone', profile.whatsapp || profile.phone);
+    setText('profile-city', profile.city);
+    setText('profile-address', profile.address);
+
+    document.getElementById('edit-name').value = profile.name || '';
+    document.getElementById('edit-phone').value = profile.whatsapp || profile.phone || '';
+    document.getElementById('edit-city').value = profile.city || '';
+    document.getElementById('edit-address').value = profile.address || '';
+}
+
+function renderOrders(orders = []) {
+    if (!ordersList) return;
     if (!orders.length) {
-        container.innerHTML = '<div style="text-align:center; padding:40px; color:#757575;"><i class="fas fa-box-open" style="font-size:3rem; margin-bottom:15px; display:block; color:#bdbdbd;"></i><p>لا توجد طلبيات سابقة بعد.</p><a href="shop.html" style="color:#0d7c3e; font-weight:bold;">ابدأ التسوق الآن</a></div>';
+        ordersList.innerHTML = `
+            <div class="empty-state">
+                <i class="fa-solid fa-box-open"></i>
+                <h3>لا توجد طلبيات بعد</h3>
+                <p>عندما تقوم بطلب منتج من Parapharmacie Tawfiq سيظهر هنا.</p>
+                <a class="btn btn--primary" href="shop.html">ابدأ التسوق</a>
+            </div>
+        `;
         return;
     }
 
-    container.innerHTML = orders.map((order) => {
-        const status = normalizeStatus(order.status);
-        const itemsList = Array.isArray(order.items)
-            ? order.items.map((item) => `${item.name || item.product?.name || item.product_name || item.product_id || 'Produit'} × ${item.quantity || 1}`).join('، ')
-            : '';
+    ordersList.innerHTML = orders.map((order) => {
+        const firstItem = order.items?.[0] || {};
+        const remaining = Math.max((order.items?.length || 0) - 1, 0);
+        const rawDate = order.createdAt || order.created_at;
+        const date = rawDate ? new Date(rawDate).toLocaleDateString('fr-MA') : '---';
 
         return `
-            <div class="order-item">
-                <div class="order-header">
-                    <span class="order-id">#${escapeHtml(String(order.id || order._id || '').slice(0, 8))}</span>
-                    <span class="order-status ${status.cls}">${escapeHtml(status.text)}</span>
+            <article class="profile-order-card">
+                <img src="${escapeHtml(itemImage(firstItem))}" alt="${escapeHtml(itemName(firstItem))}" loading="lazy" width="72" height="72">
+                <div class="profile-order-card__body">
+                    <strong>#${escapeHtml(String(order.id || '').slice(0, 8))}</strong>
+                    <span>${escapeHtml(itemName(firstItem))}${remaining ? ` +${remaining}` : ''}</span>
+                    <small>${escapeHtml(date)}</small>
                 </div>
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <span style="color:#757575; font-size:0.9rem;"><i class="fas fa-calendar-alt"></i> ${escapeHtml(formatDate(order.createdAt))}</span>
-                    <span class="order-total">${formatCurrency(Number(order.total || 0))}</span>
+                <div class="profile-order-card__meta">
+                    <b>${formatCurrency(order.total || 0)}</b>
+                    <em class="order-status-pill status-${normalizeStatus(order.status)}">${getStatusLabel(order.status)}</em>
                 </div>
-                ${itemsList ? `<div class="order-products"><i class="fas fa-box" style="margin-left:5px;"></i>${escapeHtml(itemsList)}</div>` : ''}
-            </div>
+            </article>
         `;
     }).join('');
 }
 
-async function loadOrders() {
-    const container = document.getElementById('orders-container');
-    if (!container) return;
+function initTabs() {
+    menuButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const tab = button.dataset.profileTab;
+            menuButtons.forEach((item) => item.classList.toggle('active', item === button));
+            panels.forEach((panel) => panel.classList.toggle('active', panel.id === `profile-tab-${tab}`));
+        });
+    });
+}
 
+async function loadProfileOrders(fallbackOrders = []) {
     try {
-        let orders = await listMyOrders();
-        if (!Array.isArray(orders) || orders.length === 0) {
-            const fallback = await apiFetch('/orders/my-orders', {}, { requiresAuth: true });
-            orders = normalizeOrdersPayload(fallback);
-        }
+        const orders = fallbackOrders.length ? fallbackOrders : await listMyOrders();
         renderOrders(orders);
     } catch (error) {
         console.error('Orders error:', error);
-        container.innerHTML = '<p style="color:#757575; text-align:center;">تعذّر تحميل الطلبات.</p>';
+        renderOrders(fallbackOrders);
     }
 }
 
-window.showSection = function showSection(name, el) {
-    document.querySelectorAll('.profile-section').forEach((section) => section.classList.remove('active'));
-    document.querySelectorAll('.side-menu li').forEach((item) => item.classList.remove('active'));
-    document.getElementById(`section-${name}`)?.classList.add('active');
-    el?.classList.add('active');
-};
-
-async function initProfile() {
-    const user = getCurrentUser();
-    if (!user) {
+async function loadDashboard() {
+    if (!getAccessToken()) {
         window.location.href = 'login.html';
         return;
     }
 
-    renderUser(user);
-    await loadOrders();
+    renderProfile(profile);
 
-    document.getElementById('logoutBtn')?.addEventListener('click', async () => {
-        await logoutUser();
-    });
+    try {
+        const dashboard = await apiFetch('/users/me/dashboard', {}, { requiresAuth: true });
+        const user = dashboard.user || dashboard.profile || profile;
+        renderProfile(user);
+        await loadProfileOrders(dashboard.orders || []);
+        saveAuthSession({
+            access_token: getAccessToken(),
+            user
+        }, Boolean(localStorage.getItem('parapharmacie_access_token')));
+    } catch (error) {
+        console.info('Using cached profile after dashboard fallback:', error?.message || error);
+        await loadProfileOrders();
+    }
 }
 
-initProfile();
+editToggle?.addEventListener('click', () => {
+    editForm.hidden = !editForm.hidden;
+    if (!editForm.hidden) editForm.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+});
+
+editForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    setStatus(profileStatus, '');
+
+    try {
+        const updated = await apiFetch('/users/me', {
+            method: 'PATCH',
+            body: JSON.stringify({
+                name: document.getElementById('edit-name').value,
+                whatsapp: document.getElementById('edit-phone').value,
+                city: document.getElementById('edit-city').value,
+                address: document.getElementById('edit-address').value
+            })
+        }, { requiresAuth: true });
+
+        renderProfile(updated);
+        saveAuthSession({
+            access_token: getAccessToken(),
+            user: updated
+        }, Boolean(localStorage.getItem('parapharmacie_access_token')));
+        setStatus(profileStatus, 'تم تحديث معلومات التوصيل بنجاح.', 'success');
+    } catch (error) {
+        setStatus(profileStatus, error.message, 'error');
+    }
+});
+
+passwordForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    setStatus(passwordStatus, '');
+
+    try {
+        await apiFetch('/users/me/password', {
+            method: 'POST',
+            body: JSON.stringify({
+                oldPassword: document.getElementById('old-password').value,
+                newPassword: document.getElementById('new-password').value
+            })
+        }, { requiresAuth: true });
+        passwordForm.reset();
+        setStatus(passwordStatus, 'تم تحديث كلمة المرور بنجاح.', 'success');
+    } catch (error) {
+        setStatus(passwordStatus, error.message, 'error');
+    }
+});
+
+bindLogoutButton();
+initTabs();
+loadDashboard();

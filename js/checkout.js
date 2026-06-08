@@ -1,7 +1,8 @@
 import { getCart, saveCart } from './main.js';
-import { showToast, formatCurrency } from './utils.js';
 import { getProductImage } from './catalog.js';
-import { apiFetch, getCurrentUser } from './auth.js';
+import { buildWhatsAppOrderMessage, saveOrder } from './order-service.js';
+import { getCurrentUser } from './auth.js';
+import { showToast, formatCurrency } from './utils.js';
 
 const checkoutForm = document.getElementById('checkout-form');
 const orderTotalEl = document.getElementById('order-total-amount');
@@ -79,7 +80,9 @@ function autofillCheckoutForm() {
     setFormValue('email', user.email || '');
     setFormValue('whatsapp', user.whatsapp || user.phone || user.phoneNumber || user.phone_number || '');
     setFormValue('city', user.city || user.address?.city || user.shipping_address?.city || '');
-    const normalizedAddress = typeof user.address === 'string' ? user.address : (user.address?.line1 || user.shipping_address?.address || user.shipping_address?.line1 || '');
+    const normalizedAddress = typeof user.address === 'string'
+        ? user.address
+        : (user.address?.line1 || user.shipping_address?.address || user.shipping_address?.line1 || '');
     setFormValue('address', normalizedAddress);
 }
 
@@ -87,56 +90,22 @@ function getFormValue(id) {
     return document.getElementById(id)?.value.trim() || '';
 }
 
-function validatePhone(phone) {
-    return /^(05|06|07)\d{8}$/.test(phone.replace(/\s+/g, ''));
-}
-
 function normalizeMoroccanPhone(phone) {
-    const digits = String(phone || '').replace(/\D+/g, '');
-    if (!digits) return '';
-    if (digits.startsWith('212')) return digits;
-    if (digits.startsWith('0')) return `212${digits.slice(1)}`;
-    if (digits.length === 9) return `212${digits}`;
-    return digits;
-}
+    const compact = String(phone || '').replace(/[\s.-]/g, '');
 
-function buildWhatsAppOrderMessage(orderData, orderId) {
-    const itemsList = (orderData.items || []).map((item, index) => {
-        const quantity = item.quantity || 1;
-        const price = item.unit_price || item.effectivePrice || 0;
-        return `${index + 1}. ${item.name || item.product_id} x ${quantity} = ${formatCurrency(price * quantity)}`;
-    }).join('\n');
+    if (/^0[67]\d{8}$/.test(compact)) {
+        return `+212${compact.slice(1)}`;
+    }
 
-    return `Nouvelle commande - parapharmacie.me\n\nClient: ${orderData.shipping_address.first_name} ${orderData.shipping_address.last_name}\nWhatsApp: ${orderData.shipping_address.whatsapp}\nEmail: ${orderData.shipping_address.email || 'Non renseigne'}\nVille: ${orderData.shipping_address.city}\nAdresse: ${orderData.shipping_address.address}\n\nProduits:\n${itemsList}\n\nTotal: ${formatCurrency(orderData.total || 0)}\nPaiement: Paiement a la livraison\nCommande: #${String(orderId).slice(0, 12)}\nDate: ${new Date().toLocaleString('fr-MA')}`;
-}
+    if (/^\+212[67]\d{8}$/.test(compact)) {
+        return compact;
+    }
 
-function showOrderSuccessModal(orderId, waUrl) {
-    const existing = document.getElementById('checkout-success-modal');
-    if (existing) existing.remove();
+    if (/^212[67]\d{8}$/.test(compact)) {
+        return `+${compact}`;
+    }
 
-    const modal = document.createElement('div');
-    modal.id = 'checkout-success-modal';
-    modal.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);z-index:9999;padding:16px;';
-
-    modal.innerHTML = `
-        <div style="background:#fff;border-radius:16px;max-width:520px;width:100%;padding:22px;box-shadow:0 8px 32px rgba(0,0,0,.2);text-align:center;">
-            <div style="font-size:40px;color:#1ba94c;margin-bottom:10px;"><i class="fa-solid fa-circle-check"></i></div>
-            <h2 style="margin:0 0 8px;">Commande créée avec succès</h2>
-            <p style="margin:0 0 18px;color:#555;">Votre commande #${sanitizeHtml(String(orderId).slice(0, 12))} a été enregistrée dans notre système.</p>
-            <div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;">
-                <a href="${sanitizeHtml(waUrl)}" target="_blank" rel="noopener noreferrer" class="btn btn--whatsapp"><i class="fa-brands fa-whatsapp"></i> Envoyer sur WhatsApp (optionnel)</a>
-                <a href="success.html?order=${encodeURIComponent(orderId)}&source=api" class="btn btn--primary">Voir la confirmation</a>
-            </div>
-            <button type="button" id="checkout-success-close" class="btn btn--secondary" style="margin-top:12px;">Fermer</button>
-        </div>
-    `;
-
-    document.body.appendChild(modal);
-    const closeBtn = document.getElementById('checkout-success-close');
-    closeBtn?.addEventListener('click', () => modal.remove());
-    modal.addEventListener('click', (event) => {
-        if (event.target === modal) modal.remove();
-    });
+    return null;
 }
 
 async function processOrder(event) {
@@ -158,19 +127,20 @@ async function processOrder(event) {
     const firstName = getFormValue('firstName');
     const lastName = getFormValue('lastName');
     const email = getFormValue('email');
-    const whatsapp = getFormValue('whatsapp').replace(/\s+/g, '');
+    const phoneOriginal = getFormValue('whatsapp');
+    const phoneNormalized = normalizeMoroccanPhone(phoneOriginal);
     const city = getFormValue('city');
     const address = getFormValue('address');
 
-    if (!firstName || !lastName || !whatsapp || !city || !address) {
+    if (!firstName || !lastName || !phoneOriginal || !city || !address) {
         showToast('Veuillez remplir les champs obligatoires.', 'error');
         btn.disabled = false;
         btn.innerHTML = originalText;
         return;
     }
 
-    if (!validatePhone(whatsapp)) {
-        showToast('Numero WhatsApp invalide. Exemple: 0675698351', 'error');
+    if (!phoneNormalized) {
+        showToast('Numero WhatsApp invalide. Exemples: 0675698351, +212675698351 ou 212675698351.', 'error');
         btn.disabled = false;
         btn.innerHTML = originalText;
         return;
@@ -178,55 +148,53 @@ async function processOrder(event) {
 
     const items = cart.map((item) => ({
         product_id: String(item.id),
+        id: String(item.id),
         quantity: Number(item.quantity || 1),
         unit_price: getEffectivePrice(item),
-        name: item.name
+        effectivePrice: getEffectivePrice(item),
+        priceMAD: getEffectivePrice(item),
+        name: item.name,
+        image: getProductImage(item)
     }));
 
     const total = getCartTotal(cart);
-
     const orderPayload = {
-        items: items.map((item) => ({ product_id: item.product_id, quantity: item.quantity })),
-        shipping_address: {
-            first_name: firstName,
-            last_name: lastName,
-            email,
-            whatsapp,
-            city,
-            address
-        },
-        payment_method: 'cod'
+        firstName,
+        lastName,
+        email,
+        phoneOriginal,
+        phoneNormalized,
+        whatsapp: phoneNormalized,
+        city,
+        address,
+        paymentMethod: 'COD',
+        items,
+        subtotal: total,
+        deliveryFee: 0,
+        deliveryLabel: 'A confirmer',
+        total
     };
 
     try {
-        const user = getCurrentUser();
-        const savedOrder = await apiFetch('/orders', {
-            method: 'POST',
-            body: JSON.stringify(orderPayload)
-        }, { requiresAuth: Boolean(user) });
-
-        const savedOrderId = savedOrder?.id || savedOrder?._id || savedOrder?.order?.id || savedOrder?.order?._id;
-        if (!savedOrderId) throw new Error('Order created but response is invalid.');
-
-        const normalizedOrder = {
-            ...orderPayload,
-            items,
-            total: Number(savedOrder?.total ?? savedOrder?.order?.total ?? total)
-        };
-
-        const waMessage = buildWhatsAppOrderMessage(normalizedOrder, savedOrderId);
-        const waPhone = normalizeMoroccanPhone('0675698351');
-        const waUrl = `https://wa.me/${waPhone}?text=${encodeURIComponent(waMessage)}`;
+        const savedOrder = await saveOrder(orderPayload);
+        const orderId = savedOrder.id;
+        const source = savedOrder.source || 'local';
+        const normalizedOrder = savedOrder.order || orderPayload;
+        const waMessage = buildWhatsAppOrderMessage(normalizedOrder, orderId, formatCurrency);
+        const waUrl = `https://wa.me/212675698351?text=${encodeURIComponent(waMessage)}`;
 
         localStorage.setItem('parapharmacie_last_whatsapp_url', waUrl);
+        localStorage.setItem('parapharmacie_last_order_id', orderId);
+        localStorage.setItem('parapharmacie_last_order_source', source);
         saveCart([]);
         showToast('Commande enregistree avec succes.', 'success');
-        checkoutForm.reset();
-        showOrderSuccessModal(savedOrderId, waUrl);
+
+        setTimeout(() => {
+            window.location.href = `success.html?order=${encodeURIComponent(orderId)}&source=${encodeURIComponent(source)}`;
+        }, 900);
     } catch (error) {
         console.error('Order error:', error);
         showToast(error.message || 'Impossible de confirmer la commande pour le moment.', 'error');
-    } finally {
         btn.disabled = false;
         btn.innerHTML = originalText;
     }
