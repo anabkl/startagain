@@ -46,9 +46,7 @@ def update_me():
 @jwt_required()
 def update_preferences():
     payload = request.get_json(silent=True) or {}
-    return success_response(
-        data=get_user_service().update_preferences(get_jwt_identity(), payload)
-    )
+    return success_response(data=get_user_service().update_preferences(get_jwt_identity(), payload))
 
 
 @users_bp.post("/me/password")
