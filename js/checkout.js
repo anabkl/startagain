@@ -28,7 +28,7 @@ function renderOrderSummary() {
 
     if (cart.length === 0) {
         showToast('Votre panier est vide. Redirection vers la boutique.', 'error');
-        setTimeout(() => { window.location.href = 'shop.html'; }, 1200);
+        setTimeout(() => { window.location.href = '/boutique/'; }, 1200);
         return;
     }
 
@@ -147,8 +147,9 @@ async function processOrder(event) {
     }
 
     const items = cart.map((item) => ({
-        product_id: String(item.id),
+        product_id: String(item.apiId || item.product_id || item.id),
         id: String(item.id),
+        apiId: item.apiId || item.product_id || null,
         quantity: Number(item.quantity || 1),
         unit_price: getEffectivePrice(item),
         effectivePrice: getEffectivePrice(item),

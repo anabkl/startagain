@@ -78,7 +78,7 @@ export async function logoutUser() {
         // Session cleanup should still happen if Render is asleep.
     } finally {
         clearSession();
-        window.location.href = 'index.html';
+        window.location.href = '/';
     }
 }
 

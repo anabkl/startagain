@@ -2,19 +2,18 @@ import { cp, mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { generateSeoPages } from './generate-seo-pages.mjs';
+import { generateSitemap } from './generate-sitemap.mjs';
+
 const root = process.cwd();
 const dist = path.join(root, 'dist');
 const copyTargets = [
   'assets',
   'css',
   'js',
-  'netlify',
   'admin.css',
   'favicon.svg',
-  'netlify.toml',
-  'robots.txt',
   'site.webmanifest',
-  'sitemap.xml',
   'firestore.rules',
   'storage.rules'
 ];
@@ -44,5 +43,8 @@ await mkdir(dist, { recursive: true });
 for (const target of [...copyTargets, ...htmlFiles]) {
   await cp(path.join(root, target), path.join(dist, target), { recursive: true });
 }
+
+await generateSeoPages({ outputDir: dist });
+await generateSitemap({ outputDir: dist });
 
 console.log(`Built static site to ${path.relative(root, dist)}/`);

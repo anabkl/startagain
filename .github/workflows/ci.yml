@@ -19,7 +19,10 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npm run lint
+      - run: npm run validate:catalog
       - run: npm run build
+      - run: npm run validate:seo
+      - run: npm run validate:commerce
 
   backend:
     runs-on: ubuntu-latest

@@ -1,7 +1,10 @@
 import { catalogProducts, categories, localCityKeywords, productImageFallbacks } from './catalog-data.js';
+import { catalogApiIdBySlug } from './catalog-api-id-map.js';
 import { apiFetch } from './auth.js';
 
 const FALLBACK_IMAGE = 'assets/products/product-placeholder.svg';
+const UNVERIFIED_AVAILABILITY = 'Disponibilité à confirmer';
+const CATEGORY_FALLBACK_IMAGES = new Set(Object.values(productImageFallbacks));
 export const LOCAL_PRODUCT_OVERRIDES_KEY = 'parapharmacie_product_overrides';
 const CATEGORY_ALIASES = {
     visage: 'visage',
@@ -61,6 +64,11 @@ const categorySlugByName = Object.fromEntries(categories.flatMap((category) => [
     [category.arabicName, category.slug],
     [category.slug, category.slug]
 ]));
+const catalogProductBySlug = new Map(catalogProducts.map((product) => [product.slug, product]));
+const catalogProductByName = new Map(catalogProducts.map((product) => [normalizeCatalogName(product.name), product]));
+const catalogSlugByApiId = Object.fromEntries(
+    Object.entries(catalogApiIdBySlug).map(([slug, apiId]) => [apiId, slug])
+);
 
 function getCategorySlug(category) {
     const raw = String(category || '').trim();
@@ -73,52 +81,83 @@ function getCategorySlug(category) {
         || normalized;
 }
 
-export const trustBadges = [
-    { icon: 'fa-truck-fast', title: 'Livraison au Maroc', text: 'Khouribga, Oued Zem, Boujniba, Boulanouare et villes marocaines sur confirmation.' },
-    { icon: 'fa-certificate', title: 'Catalogue source', text: 'Produits, prix et disponibilites references depuis des pages publiques marocaines.' },
-    { icon: 'fa-hand-holding-dollar', title: 'Paiement a la livraison', text: 'Cash on Delivery disponible pour commander plus sereinement.' },
-    { icon: 'fa-headset', title: 'Conseil WhatsApp', text: 'Support humain par Pharmacie Tawfiq pour confirmer stock, livraison et alternatives.' }
-];
+function normalizeCatalogName(name) {
+    return normalizeSearchText(name)
+        .replace(/[^a-z0-9\u0600-\u06ff]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
 
-export const testimonials = [
-    {
-        name: 'Salma A.',
-        location: 'Khouribga',
-        text: 'J ai retrouve des marques connues avec des prix clairs et la commande WhatsApp m a rassuree.'
-    },
-    {
-        name: 'Youssef B.',
-        location: 'Oued Zem',
-        text: 'Le panier est simple, le paiement a la livraison est visible et la selection fait tres professionnelle.'
-    },
-    {
-        name: 'Nadia R.',
-        location: 'Boujniba',
-        text: 'Bonne selection bebe et maman, avec des descriptions prudentes et faciles a comprendre.'
+function isCategoryFallbackImage(image) {
+    return !image || image === FALLBACK_IMAGE || CATEGORY_FALLBACK_IMAGES.has(image);
+}
+
+function hasVerifiedInventory(product) {
+    return product?.stockVerified === true
+        || product?.inventoryVerified === true
+        || product?.stock_status_verified === true;
+}
+
+function getPositiveNumber(...values) {
+    for (const value of values) {
+        const number = Number(value);
+        if (Number.isFinite(number) && number > 0) return number;
     }
+    return null;
+}
+
+function getLocalCatalogMatch(product) {
+    const normalizedName = normalizeCatalogName(product?.name);
+    return normalizedName ? catalogProductByName.get(normalizedName) || null : null;
+}
+
+export const trustBadges = [
+    { icon: 'fa-list-check', title: '93 références', text: 'Le catalogue affiche le nom, la marque et la catégorie de chaque référence.' },
+    { icon: 'fa-tag', title: 'Prix en MAD', text: 'Les prix catalogue sont indicatifs et confirmés avant la finalisation.' },
+    { icon: 'fa-image', title: 'Visuels transparents', text: 'Les illustrations génériques sont clairement signalées comme telles.' },
+    { icon: 'fa-circle-check', title: 'Confirmation préalable', text: 'Disponibilité, prix final et modalités sont vérifiés avant expédition.' }
 ];
 
 export const faqs = [
     {
-        question: 'Est-ce que parapharmacie.me livre a Khouribga et dans les villes proches ?',
-        answer: 'Oui. La boutique met en avant Pharmacie Tawfiq a Khouribga avec livraison a confirmer vers Oued Zem, Boujniba, Boulanouare et le reste du Maroc.'
+        question: 'Les prix affichés sont-ils définitifs ?',
+        answer: 'Non. Ils servent de repère catalogue en MAD. Le prix final est confirmé avec la disponibilité avant la finalisation de la commande.'
     },
     {
-        question: 'Puis-je payer a la livraison ?',
-        answer: 'Oui. Le paiement a la livraison est indique sur le panier et le checkout, puis confirme par WhatsApp.'
+        question: 'Comment connaître la disponibilité réelle ?',
+        answer: 'La disponibilité n’est pas inventée à partir d’un stock par défaut. Elle doit être confirmée pour la référence choisie avant expédition.'
     },
     {
-        question: 'Les prix sont-ils definitifs ?',
-        answer: 'Les prix du catalogue sont sources depuis des pages publiques marocaines. La disponibilite et le prix final doivent etre confirmes avant expedition.'
+        question: 'Pourquoi certains visuels sont-ils génériques ?',
+        answer: 'Les images de concurrents ne sont pas réutilisées sans droit. Une illustration de catégorie reste affichée jusqu’à la disponibilité d’un packshot autorisé.'
     },
     {
-        question: 'Pourquoi certains visuels sont-ils des placeholders ?',
-        answer: 'Les images concurrentes ne sont pas reutilisees sans verification. Les photos produit seront remplacees par des visuels autorises ou realises pour parapharmacie.me.'
+        question: 'Les fiches remplacent-elles un avis médical ?',
+        answer: 'Non. Elles identifient les références du catalogue. Consultez l’emballage et la notice, puis demandez un avis professionnel adapté si nécessaire.'
     }
 ];
 
 export function getProductImage(product) {
     return product?.image || product?.image_url || product?.imageUrl || productImageFallbacks[product?.categorySlug] || FALLBACK_IMAGE;
+}
+
+export function getProductImageAlt(product) {
+    const image = getProductImage(product);
+    if (product?.imageNeedsReview || isCategoryFallbackImage(image)) {
+        const category = product?.category || 'parapharmacie';
+        const name = product?.name ? ` pour la référence ${product.name}` : '';
+        return `Illustration générique de la catégorie ${category}${name}`;
+    }
+    return product?.name || 'Produit de parapharmacie';
+}
+
+export function getProductAvailabilityLabel(product) {
+    if (product?.stock === 0 || normalizeSearchText(product?.stockStatus).includes('rupture')) {
+        return 'Rupture de stock';
+    }
+
+    if (!hasVerifiedInventory(product)) return UNVERIFIED_AVAILABILITY;
+    return String(product?.stockStatus || 'En stock').trim() || 'En stock';
 }
 
 export function getLocalProductOverrides() {
@@ -154,14 +193,25 @@ function coerceOptionalNumber(value, fallback = null) {
 
 function applyProductOverride(product, override = {}) {
     const next = { ...product, ...override };
+    const publicSlug = next.slug || next.id;
     const categorySlug = getCategorySlug(next.categorySlug || next.category);
     const priceMAD = coerceOptionalNumber(next.priceMAD ?? next.promoPrice ?? next.price, product.priceMAD);
     const oldPriceMAD = coerceOptionalNumber(next.oldPriceMAD, null);
     const hasPromo = oldPriceMAD && priceMAD && oldPriceMAD > priceMAD;
     const image = next.image || next.image_url || next.imageUrl || productImageFallbacks[categorySlug] || FALLBACK_IMAGE;
+    const usesCategoryFallback = isCategoryFallbackImage(image);
+    const stockVerified = hasVerifiedInventory(next);
+    const candidateStock = coerceOptionalNumber(next.stock, null);
+    const stock = stockVerified && candidateStock !== null && candidateStock >= 0 ? candidateStock : null;
+    const stockStatus = stockVerified
+        ? (next.stockStatus && next.stockStatus !== UNVERIFIED_AVAILABILITY
+            ? next.stockStatus
+            : (stock === 0 ? 'Rupture de stock' : 'En stock'))
+        : UNVERIFIED_AVAILABILITY;
 
     return {
         ...next,
+        apiId: next.apiId || catalogApiIdBySlug[publicSlug] || null,
         categorySlug,
         priceMAD,
         oldPriceMAD: hasPromo ? oldPriceMAD : null,
@@ -169,9 +219,14 @@ function applyProductOverride(product, override = {}) {
         promoPrice: hasPromo ? priceMAD : null,
         image,
         imageUrl: image,
+        imageNeedsReview: usesCategoryFallback ? true : next.imageNeedsReview !== false,
+        imageRightsStatus: usesCategoryFallback
+            ? (next.imageRightsStatus || 'owned-fallback-needs-approved-product-packshot')
+            : (next.imageRightsStatus || 'needs-rights-review'),
         active: next.active !== false,
-        stockStatus: next.stockStatus || product.stockStatus || 'En stock',
-        stock: next.stockStatus === 'Rupture de stock' ? 0 : (next.stock ?? product.stock ?? 24)
+        stockStatus,
+        stock,
+        stockVerified
     };
 }
 
@@ -179,7 +234,10 @@ export function applyLocalProductOverrides(products, { includeInactive = false }
     const overrides = getLocalProductOverrides();
 
     return products
-        .map((product) => applyProductOverride(product, overrides[product.id]))
+        .map((product) => applyProductOverride(
+            product,
+            overrides[product.id] || overrides[product.apiId] || {}
+        ))
         .filter((product) => includeInactive || product.active !== false);
 }
 
@@ -263,27 +321,91 @@ export function matchesCategory(product, categorySlug) {
 }
 
 function normalizeApiProduct(product) {
-    const categorySlug = getCategorySlug(product.categorySlug || product.category || 'all');
-    const priceMAD = Number(product.priceMAD || product.price || 0);
-    const oldPriceMAD = Number(product.oldPriceMAD || 0);
-    const image = product.image || product.image_url || product.imageUrl || productImageFallbacks[categorySlug] || FALLBACK_IMAGE;
+    const localProduct = getLocalCatalogMatch(product);
+    const publicId = localProduct?.slug || String(product.slug || product.id || '');
+    const apiId = String(product.apiId || product.id || catalogApiIdBySlug[publicId] || '');
+    const apiSlug = String(product.apiSlug || product.slug || apiId);
+    const category = localProduct?.category || product.category || '';
+    const categorySlug = localProduct?.categorySlug || getCategorySlug(product.categorySlug || category || 'all');
+
+    const apiBasePrice = getPositiveNumber(product.priceMAD, product.price);
+    const apiPromoPrice = getPositiveNumber(product.promoPrice, product.promo_price);
+    const apiOldPrice = getPositiveNumber(product.oldPriceMAD, product.old_price_mad);
+    let priceMAD = getPositiveNumber(localProduct?.priceMAD) || 0;
+    let oldPriceMAD = getPositiveNumber(localProduct?.oldPriceMAD);
+
+    if (apiBasePrice) {
+        if (apiPromoPrice && apiPromoPrice < apiBasePrice) {
+            priceMAD = apiPromoPrice;
+            oldPriceMAD = apiBasePrice;
+        } else {
+            priceMAD = apiBasePrice;
+            oldPriceMAD = apiOldPrice && apiOldPrice > apiBasePrice ? apiOldPrice : null;
+        }
+    }
+
+    const hasPromo = Boolean(oldPriceMAD && oldPriceMAD > priceMAD);
+    const apiImage = product.image || product.image_url || product.imageUrl || '';
+    const image = apiImage || localProduct?.image || productImageFallbacks[categorySlug] || FALLBACK_IMAGE;
+    const usesCategoryFallback = isCategoryFallbackImage(image);
+    const imageMetadata = apiImage ? product : (localProduct || product);
+    const imageRightsStatus = usesCategoryFallback
+        ? (localProduct?.imageRightsStatus || 'owned-fallback-needs-approved-product-packshot')
+        : (imageMetadata.imageRightsStatus || 'needs-rights-review');
+    const hasApprovedImageRights = /approved|owned|licensed|authorized/i.test(imageRightsStatus);
+    const imageNeedsReview = usesCategoryFallback
+        || imageMetadata.imageNeedsReview !== false
+        || !hasApprovedImageRights;
+
+    const inventorySource = hasVerifiedInventory(product)
+        ? product
+        : (hasVerifiedInventory(localProduct) ? localProduct : null);
+    const inventoryValue = inventorySource ? Number(inventorySource.stock) : null;
+    const stock = Number.isFinite(inventoryValue) && inventoryValue >= 0 ? inventoryValue : null;
+    const stockVerified = Boolean(inventorySource && stock !== null);
+    const stockStatus = stockVerified
+        ? (inventorySource.stockStatus || (stock === 0 ? 'Rupture de stock' : 'En stock'))
+        : UNVERIFIED_AVAILABILITY;
 
     return {
         ...product,
-        id: String(product.id),
-        slug: product.slug || String(product.id),
+        ...(localProduct || {}),
+        id: publicId,
+        slug: publicId,
+        apiId,
+        apiSlug,
+        name: localProduct?.name || product.name || '',
+        brand: localProduct?.brand || product.brand || '',
+        category,
         categorySlug,
         priceMAD,
-        oldPriceMAD: oldPriceMAD > priceMAD ? oldPriceMAD : null,
-        shortDescription: product.shortDescription || product.description || 'Produit de parapharmacie a confirmer avant expedition.',
+        oldPriceMAD: hasPromo ? oldPriceMAD : null,
+        price: hasPromo ? oldPriceMAD : priceMAD,
+        promoPrice: hasPromo ? priceMAD : null,
+        promoBadge: hasPromo ? (product.promoBadge || localProduct?.promoBadge || 'Promo') : null,
+        badge: hasPromo
+            ? (product.promoBadge || localProduct?.promoBadge || 'Promo')
+            : (localProduct?.featured ? 'Selection Tawfiq' : null),
+        shortDescription: localProduct?.shortDescription
+            || product.shortDescription
+            || product.description
+            || 'Produit de parapharmacie à confirmer avant expédition.',
+        description: localProduct?.description
+            || product.description
+            || 'Produit de parapharmacie à confirmer avant expédition.',
         image,
         imageUrl: image,
-        imageNeedsReview: product.imageNeedsReview ?? false,
-        imageSource: product.imageSource || 'Backend API',
-        imageRightsStatus: product.imageRightsStatus || 'owned-or-approved',
-        imageReplacementNote: product.imageReplacementNote || '',
-        active: product.active !== false,
-        stockStatus: product.stockStatus || (Number(product.stock || 0) > 0 ? 'En stock' : 'Rupture de stock')
+        imageNeedsReview,
+        imageSource: usesCategoryFallback
+            ? (localProduct?.imageSource || 'Illustration de catégorie générée localement')
+            : (imageMetadata.imageSource || 'Source du visuel à documenter'),
+        imageRightsStatus,
+        imageReplacementNote: imageMetadata.imageReplacementNote
+            || 'Remplacer par un packshot autorisé avant de présenter ce visuel comme une photo produit.',
+        active: product.active !== false && product.isPublished !== false,
+        stockStatus,
+        stock,
+        stockVerified
     };
 }
 
@@ -318,23 +440,50 @@ export async function getCatalogProducts() {
 }
 
 export async function getCatalogProduct(id) {
+    const requestedId = String(id || '');
+    const requestedLocalSlug = catalogProductBySlug.has(requestedId)
+        ? requestedId
+        : catalogSlugByApiId[requestedId] || null;
+    const apiLookupId = requestedLocalSlug
+        ? (catalogApiIdBySlug[requestedLocalSlug] || requestedId)
+        : requestedId;
+
     try {
-        const product = await apiFetchWithTimeout(`/products/${encodeURIComponent(id)}`, 4000);
+        const product = await apiFetchWithTimeout(`/products/${encodeURIComponent(apiLookupId)}`, 4000);
         if (product?.id) {
             const normalized = normalizeApiProduct(product);
-            return {
-                product: applyLocalProductOverrides([normalized], { includeInactive: true })[0] || normalized,
-                products: [normalized],
-                source: 'api'
-            };
+            if (!requestedLocalSlug || normalized.slug === requestedLocalSlug) {
+                return {
+                    product: applyLocalProductOverrides([normalized], { includeInactive: true })[0] || normalized,
+                    products: [normalized],
+                    source: 'api'
+                };
+            }
         }
     } catch {
         // fallback below
     }
 
     const { products, source } = await getCatalogProducts();
+    const matchedProduct = products.find((item) => (
+        item.id === requestedId
+        || item.slug === requestedId
+        || item.apiId === requestedId
+        || (requestedLocalSlug && item.slug === requestedLocalSlug)
+    ));
+
+    if (matchedProduct) {
+        return { product: matchedProduct, products, source };
+    }
+
+    if (requestedLocalSlug) {
+        const localFallback = catalogProductBySlug.get(requestedLocalSlug);
+        const product = applyLocalProductOverrides([localFallback], { includeInactive: true })[0] || localFallback;
+        return { product, products: [product], source: 'local-catalog' };
+    }
+
     return {
-        product: products.find((item) => item.id === id || item.slug === id) || null,
+        product: null,
         products,
         source
     };

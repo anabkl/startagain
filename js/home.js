@@ -3,14 +3,13 @@ import {
     faqs,
     getCatalogProducts,
     getEffectivePrice,
-    getOldPrice,
+    getProductAvailabilityLabel,
     getProductImage,
-    getProductImageReviewLabel,
-    getProductInitials,
+    getProductImageAlt,
     isProductUnavailable,
-    testimonials,
     trustBadges
 } from './catalog.js';
+import { categoryRoute, productRoute } from './seo-routes.js';
 import { formatCurrency, showToast } from './utils.js';
 import { getCart, saveCart } from './main.js';
 
@@ -39,11 +38,11 @@ function renderCategories() {
     if (!grid) return;
 
     grid.innerHTML = categories.map((category) => `
-        <a href="shop.html?category=${category.slug}" class="category-card" style="--category-bg: ${category.color}" data-reveal>
+        <a href="${categoryRoute(category)}" class="category-card" style="--category-bg: ${category.color}" data-reveal>
             <i class="fa-solid ${category.icon}"></i>
             <span>${escapeHtml(category.name)}</span>
             <strong>${escapeHtml(category.arabicName)}</strong>
-            <p>${escapeHtml(category.description)}</p>
+            <p>Voir les références classées ${escapeHtml(category.name)} dans le catalogue.</p>
         </a>
     `).join('');
 }
@@ -65,27 +64,28 @@ function renderProducts(products) {
     const grid = document.getElementById('featured-products');
     if (!grid) return;
 
-    const featured = products.filter((product) => product.featured || product.bestseller).slice(0, 6);
+    const featuredProducts = products.filter((product) => product.featured);
+    const featured = (featuredProducts.length ? featuredProducts : products).slice(0, 6);
 
     grid.innerHTML = featured.map((product) => `
         <article class="product-card" data-reveal>
-            <a href="product.html?id=${encodeURIComponent(product.id)}" class="product-card__media product-image-frame" data-image-review="${product.imageNeedsReview ? 'true' : 'false'}">
-                <span class="product-card__badge">${escapeHtml(product.badge || 'Best seller')}</span>
-                <img src="${escapeHtml(getProductImage(product))}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" width="720" height="720">
-                ${product.imageNeedsReview ? `<span class="product-image-frame__initials" title="${escapeHtml(getProductImageReviewLabel(product))}" aria-hidden="true">${escapeHtml(getProductInitials(product))}</span>` : ''}
+            <a href="${productRoute(product)}" class="product-card__media product-image-frame" data-image-review="${product.imageNeedsReview ? 'true' : 'false'}">
+                <span class="product-card__badge">${escapeHtml(product.category || 'Catalogue')}</span>
+                <img src="${escapeHtml(getProductImage(product))}" alt="${escapeHtml(getProductImageAlt(product))}" loading="lazy" decoding="async" width="720" height="720">
+                ${product.imageNeedsReview ? '<span class="product-image-frame__notice">Visuel générique</span>' : ''}
             </a>
             <div class="product-card__body">
                 <div class="product-card__meta">
                     <span>${escapeHtml(product.category)}</span>
-                    <span class="product-card__stock ${isProductUnavailable(product) ? 'out' : ''}">${escapeHtml(product.stockStatus || 'En stock')}</span>
+                    <span class="product-card__stock ${isProductUnavailable(product) ? 'out' : ''}">${escapeHtml(getProductAvailabilityLabel(product))}</span>
                 </div>
-                <a href="product.html?id=${encodeURIComponent(product.id)}" class="product-card__title">${escapeHtml(product.name)}</a>
+                <a href="${productRoute(product)}" class="product-card__title">${escapeHtml(product.name)}</a>
                 <p class="product-card__brand">${escapeHtml(product.brand)}</p>
-                <p class="product-card__description">${escapeHtml(product.shortDescription || product.description || '')}</p>
+                <p class="product-card__description">Prix catalogue indicatif ; disponibilité à confirmer avant commande.</p>
                 <div class="product-card__footer">
                     <div class="product-card__price">
                         <strong>${formatCurrency(getEffectivePrice(product))}</strong>
-                        ${getOldPrice(product) ? `<span class="product-card__old-price">${formatCurrency(getOldPrice(product))}</span>` : ''}
+                        <small>prix indicatif</small>
                     </div>
                     <button class="icon-btn" type="button" data-home-product="${escapeHtml(product.id)}" ${isProductUnavailable(product) ? 'disabled' : ''} aria-label="Ajouter ${escapeHtml(product.name)} au panier">
                         <i class="fa-solid fa-cart-plus"></i>
@@ -99,26 +99,6 @@ function renderProducts(products) {
         const product = products.find((item) => item.id === button.dataset.homeProduct);
         button.addEventListener('click', () => addToCart(product));
     });
-}
-
-function renderTestimonials() {
-    const grid = document.getElementById('testimonials-grid');
-    if (!grid) return;
-
-    grid.innerHTML = testimonials.map((testimonial) => `
-        <article class="testimonial-card" data-reveal>
-            <div class="testimonial-card__stars" aria-label="5 etoiles">
-                <i class="fa-solid fa-star"></i>
-                <i class="fa-solid fa-star"></i>
-                <i class="fa-solid fa-star"></i>
-                <i class="fa-solid fa-star"></i>
-                <i class="fa-solid fa-star"></i>
-            </div>
-            <p>${escapeHtml(testimonial.text)}</p>
-            <strong>${escapeHtml(testimonial.name)}</strong>
-            <span>${escapeHtml(testimonial.location)}</span>
-        </article>
-    `).join('');
 }
 
 function renderFaqs() {
@@ -139,7 +119,6 @@ function renderFaqs() {
 async function initHome() {
     renderCategories();
     renderTrustBadges();
-    renderTestimonials();
     renderFaqs();
 
     const { products } = await getCatalogProducts();

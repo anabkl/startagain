@@ -45,13 +45,21 @@ function initMobileNavigation() {
 function initHeaderSearch() {
     const searchInput = document.querySelector('.header__search-input');
     const searchBtn = document.querySelector('.header__search-btn');
+    const searchForm = searchInput?.closest('form');
 
     function doSearch() {
         const term = searchInput ? searchInput.value.trim() : '';
-        window.location.href = term ? `shop.html?q=${encodeURIComponent(term)}` : 'shop.html';
+        window.location.href = term ? `/boutique/?q=${encodeURIComponent(term)}` : '/boutique/';
     }
 
-    if (searchBtn) searchBtn.addEventListener('click', doSearch);
+    if (searchForm) {
+        searchForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            doSearch();
+        });
+    } else if (searchBtn) {
+        searchBtn.addEventListener('click', doSearch);
+    }
     if (searchInput) {
         searchInput.addEventListener('keydown', (event) => {
             if (event.key === 'Enter') doSearch();

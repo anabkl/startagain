@@ -1,7 +1,7 @@
 {
   "name": "parapharmacie.me",
-  "short_name": "Para Tawfiq",
-  "description": "Parapharmacie Tawfiq a Khouribga avec livraison au Maroc et paiement a la livraison.",
+  "short_name": "Para.me",
+  "description": "Catalogue Parapharmacie.me au Maroc avec prix indicatifs en MAD.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#fbfdfc",

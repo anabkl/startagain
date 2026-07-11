@@ -1,63 +1,102 @@
-import { writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { mkdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const root = process.cwd();
-const baseUrl = 'https://parapharmacie.me';
+import { catalogProducts, categories } from '../js/catalog-data.js';
+import {
+    absoluteSiteUrl,
+    categoryRoute,
+    productRoute,
+    TRUST_PAGE_ROUTES
+} from '../js/seo-routes.js';
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const today = new Date().toISOString().slice(0, 10);
-const catalogModuleUrl = pathToFileURL(path.join(root, 'js/catalog-data.js')).href;
-const { catalogProducts, categories } = await import(catalogModuleUrl);
-
-function absolute(pathname) {
-  return `${baseUrl}/${pathname.replace(/^\/+/, '')}`;
-}
 
 function escapeXml(value) {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
 }
 
-const urls = [
-  { loc: absolute(''), priority: '1.0', changefreq: 'weekly' },
-  { loc: absolute('shop.html'), priority: '0.9', changefreq: 'daily' },
-  { loc: absolute('cart.html'), priority: '0.4', changefreq: 'monthly' },
-  { loc: absolute('checkout.html'), priority: '0.4', changefreq: 'monthly' },
-  { loc: absolute('success.html'), priority: '0.2', changefreq: 'yearly' },
-  ...categories.map((category) => ({
-    loc: absolute(`shop.html?category=${encodeURIComponent(category.slug)}`),
-    priority: '0.8',
-    changefreq: 'weekly'
-  })),
-  ...catalogProducts.map((product) => ({
-    loc: absolute(`product.html?id=${encodeURIComponent(product.id)}`),
-    priority: product.featured || product.bestseller ? '0.8' : '0.7',
-    changefreq: 'weekly'
-  }))
-];
+async function latestFileDate(relativeFiles) {
+    const dirty = spawnSync('git', ['diff', '--quiet', '--', ...relativeFiles], { cwd: root });
+    const hasUntracked = relativeFiles.some((file) => {
+        if (!existsSync(path.join(root, file))) return false;
+        const tracked = spawnSync('git', ['ls-files', '--error-unmatch', file], { cwd: root });
+        return tracked.status !== 0;
+    });
+    if (dirty.status !== 0 || hasUntracked) return today;
 
-const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+    try {
+        const date = execFileSync('git', ['log', '-1', '--format=%cs', '--', ...relativeFiles], {
+            cwd: root,
+            encoding: 'utf8'
+        }).trim();
+        if (/^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
+    } catch {
+        // Fall back to the source-file modification time outside a Git checkout.
+    }
+
+    const dates = [];
+    for (const file of relativeFiles) {
+        try {
+            dates.push((await stat(path.join(root, file))).mtime.toISOString().slice(0, 10));
+        } catch {
+            // Ignore missing optional sources.
+        }
+    }
+    return dates.sort().at(-1) || today;
+}
+
+export async function generateSitemap({ outputDir = root } = {}) {
+    const homepageLastmod = await latestFileDate(['index.html', 'js/home.js']);
+    const catalogLastmod = await latestFileDate([
+        'js/catalog-data.js',
+        'scripts/generate-seo-pages.mjs',
+        'js/static-storefront.js'
+    ]);
+    const trustLastmod = await latestFileDate(['scripts/generate-seo-pages.mjs']);
+
+    const urls = [
+        { path: '/', lastmod: homepageLastmod },
+        { path: '/boutique/', lastmod: catalogLastmod },
+        ...categories.map((category) => ({ path: categoryRoute(category), lastmod: catalogLastmod })),
+        ...catalogProducts.map((product) => ({ path: productRoute(product), lastmod: catalogLastmod })),
+        ...TRUST_PAGE_ROUTES.map((route) => ({ path: route, lastmod: trustLastmod }))
+    ];
+
+    const uniqueUrls = [...new Map(urls.map((entry) => [entry.path, entry])).values()];
+    const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map((url) => `  <url>
-    <loc>${escapeXml(url.loc)}</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>${url.changefreq}</changefreq>
-    <priority>${url.priority}</priority>
+${uniqueUrls.map((entry) => `  <url>
+    <loc>${escapeXml(absoluteSiteUrl(entry.path))}</loc>
+    <lastmod>${entry.lastmod}</lastmod>
   </url>`).join('\n')}
 </urlset>
 `;
-
-const robots = `User-agent: *
+    const robots = `User-agent: *
 Allow: /
 
-Sitemap: ${baseUrl}/sitemap.xml
+Sitemap: ${absoluteSiteUrl('/sitemap.xml')}
 `;
 
-await writeFile(path.join(root, 'sitemap.xml'), sitemap);
-await writeFile(path.join(root, 'robots.txt'), robots);
+    await mkdir(outputDir, { recursive: true });
+    await writeFile(path.join(outputDir, 'sitemap.xml'), sitemap);
+    await writeFile(path.join(outputDir, 'robots.txt'), robots);
+    console.log(`Generated sitemap.xml with ${uniqueUrls.length} canonical, indexable URLs.`);
+    console.log('Generated robots.txt with the canonical sitemap location.');
+    return uniqueUrls;
+}
 
-console.log(`Generated sitemap.xml with ${urls.length} URLs.`);
-console.log('Generated robots.txt.');
+const invokedPath = process.argv[1] ? pathToFileURL(path.resolve(process.argv[1])).href : '';
+if (import.meta.url === invokedPath) {
+    const outputArg = process.argv.find((argument) => argument.startsWith('--output='));
+    const outputDir = outputArg ? path.resolve(outputArg.slice('--output='.length)) : root;
+    await generateSitemap({ outputDir });
+}

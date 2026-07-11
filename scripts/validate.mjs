@@ -1,6 +1,9 @@
 import { access, readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { categories, catalogProducts } from '../js/catalog-data.js';
+import { categoryRoute, productRoute, TRUST_PAGE_ROUTES } from '../js/seo-routes.js';
+
 const root = process.cwd();
 const requiredFiles = [
   'index.html',
@@ -35,13 +38,21 @@ const ignoredPrefixes = [
   'data:',
   '#'
 ];
+const generatedRoutes = new Set([
+  '/',
+  '/boutique/',
+  ...categories.map(categoryRoute),
+  ...catalogProducts.map(productRoute),
+  ...TRUST_PAGE_ROUTES
+]);
 
 function isLocalReference(value) {
   return !ignoredPrefixes.some((prefix) => value.startsWith(prefix));
 }
 
 async function exists(relativePath) {
-  await access(path.join(root, relativePath.split('?')[0]));
+  const pathname = relativePath.split('?')[0].replace(/^\/+/, '');
+  await access(path.join(root, pathname));
 }
 
 for (const file of requiredFiles) {
@@ -55,6 +66,8 @@ for (const htmlFile of htmlFiles) {
   for (const match of matches) {
     const reference = match[1];
     if (!isLocalReference(reference)) continue;
+    const pathname = new URL(reference, 'https://parapharmacie.me').pathname;
+    if (generatedRoutes.has(pathname)) continue;
     if (reference.endsWith('.html') || reference.includes('/')) {
       await exists(reference);
     }

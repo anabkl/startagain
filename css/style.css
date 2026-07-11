@@ -802,6 +802,26 @@ img {
     font-weight: 900;
 }
 
+.product-image-frame__notice {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    z-index: 3;
+    padding: 6px 9px;
+    border: 1px solid rgba(255,255,255,0.78);
+    border-radius: var(--pill);
+    background: rgba(15, 23, 42, 0.82);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 900;
+}
+
+.product-image-frame__notice--large {
+    right: 24px;
+    bottom: 24px;
+    font-size: 0.82rem;
+}
+
 .product-card__badge {
     position: absolute;
     top: 12px;
@@ -913,6 +933,69 @@ img {
     color: #9aa5b5;
     text-decoration: line-through;
     font-size: 0.88rem;
+}
+
+.product-card__price small {
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.seo-catalog-tools {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) minmax(260px, 1.5fr) auto;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: white;
+}
+
+.seo-catalog-tools label {
+    color: var(--ink);
+    font-weight: 900;
+}
+
+.seo-catalog-tools input {
+    width: 100%;
+    min-height: 46px;
+    padding: 10px 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--pill);
+    background: var(--surface-soft);
+    color: var(--ink);
+    font: inherit;
+}
+
+.seo-catalog-tools input:focus {
+    outline: 3px solid rgba(35, 169, 129, 0.16);
+    border-color: var(--green-500);
+}
+
+.seo-catalog-tools p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.88rem;
+    font-weight: 800;
+}
+
+.seo-medical-note {
+    margin-top: 32px;
+    padding: 18px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface-warm);
+    color: #5d5142;
+}
+
+.seo-medical-note p {
+    margin: 6px 0 0;
+}
+
+[data-product-card][hidden] {
+    display: none !important;
 }
 
 .page-hero {
@@ -1104,6 +1187,12 @@ img {
     font-weight: 800;
 }
 
+.product-detail__brand a {
+    color: var(--green-700);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
 .product-detail__rating {
     display: inline-flex;
     align-items: center;
@@ -1229,6 +1318,72 @@ img {
     background: var(--surface-warm);
     color: #5d5142;
     font-size: 0.9rem;
+}
+
+.seo-product-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin: 22px 0;
+}
+
+.seo-product-facts div {
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--surface-soft);
+}
+
+.seo-product-facts dt {
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.seo-product-facts dd {
+    margin: 4px 0 0;
+    color: var(--ink);
+    font-weight: 900;
+}
+
+.seo-product-facts a,
+.seo-prose a {
+    color: var(--green-700);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.seo-prose {
+    max-width: 900px;
+}
+
+.seo-prose h2 {
+    margin: 34px 0 10px;
+    color: var(--ink);
+    font-size: clamp(1.35rem, 3vw, 2rem);
+}
+
+.seo-prose p,
+.seo-prose li {
+    color: #475569;
+    line-height: 1.75;
+}
+
+.seo-contact-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin: 26px 0;
+}
+
+.seo-contact-grid .trust-card {
+    display: block;
+    color: inherit;
+}
+
+.seo-contact-grid h2 {
+    margin: 12px 0 6px;
+    font-size: 1.1rem;
 }
 
 .related-section {
@@ -1766,6 +1921,7 @@ img {
     color: #aebbd0;
 }
 
+.footer h2,
 .footer h3 {
     margin: 0 0 14px;
     color: white;
@@ -2628,7 +2784,8 @@ img {
 
     .trust-strip__grid,
     .categories__grid,
-    .related-grid {
+    .related-grid,
+    .seo-contact-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
@@ -2712,6 +2869,10 @@ img {
         grid-template-columns: 1fr;
     }
 
+    .seo-catalog-tools {
+        grid-template-columns: 1fr;
+    }
+
     .product-page {
         padding-top: 24px;
     }
@@ -2781,7 +2942,9 @@ img {
     .trust-strip__grid,
     .categories__grid,
     .related-grid,
-    .form-grid {
+    .form-grid,
+    .seo-contact-grid,
+    .seo-product-facts {
         grid-template-columns: 1fr;
     }
 

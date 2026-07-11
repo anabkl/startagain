@@ -1,24 +1,23 @@
 # parapharmacie.me
 
-Modern Moroccan parapharmacy e-commerce demo for **parapharmacie.me**, built as a portfolio-ready static storefront for Pharmacie Tawfiq with Firebase support for production data.
+Moroccan parapharmacy storefront for **parapharmacie.me**, built as a static-first catalogue with a Render API for accounts, catalogue reconciliation, and orders.
 
 ## Project Overview
 
-parapharmacie.me is designed for a Moroccan parapharmacy brand based in Khouribga. The storefront focuses on trusted wellness commerce: pharmacie Tawfiq, parapharmacie Tawfiq, parapharmacie Khouribga, parapharmacie Oued Zem, parapharmacie Boujniba, parapharmacie Boulanouare, produits cosmetiques, soins visage, complements alimentaires, bebe et maman, livraison au Maroc, paiement a la livraison, and WhatsApp-assisted ordering.
-
-The public demo works locally without a backend by using a sourced Moroccan catalog. Firebase remains available for deployed environments and admin/order workflows.
+The public catalogue uses descriptive local slugs as its canonical product identity. API records are reconciled to those slugs by exact normalized product name, while the API identifier is retained for order submission. If the API is unavailable, the same 93-reference local catalogue keeps the storefront usable.
 
 ## Features
 
-- Premium responsive homepage with hero, categories, promotions, trust badges, testimonials, FAQ, and footer.
-- Searchable/filterable shop catalog with 93 real Moroccan market product references.
-- Product detail page with quantity controls, trust signals, add-to-cart, source URL, and WhatsApp CTA.
+- Responsive homepage with crawlable categories, factual catalogue signals, FAQ, and trust links.
+- Searchable/filterable shop catalogue with 93 references.
+- Pre-rendered product detail pages with factual product fields, quantity controls, add-to-cart, and WhatsApp confirmation CTA.
 - Persistent localStorage cart with quantity increase/decrease, remove item, order summary, and empty state.
 - Checkout page optimized for Cash on Delivery.
 - WhatsApp order message with customer info, product names, quantities, totals, order id, and city.
-- Local sourced catalog by default on localhost to keep the browser console clean.
-- Firebase catalog/order support for production or explicit local backend testing.
-- SEO metadata for Pharmacie Tawfiq, parapharmacie Tawfiq, Parapharmacie Maroc, Parapharmacie Khouribga, Oued Zem, Boujniba, Boulanouare, Livraison au Maroc, and Paiement a la livraison.
+- Render API catalogue with a local fallback and stable public-slug reconciliation.
+- Unique titles, descriptions, H1s, canonicals, social metadata, breadcrumbs, Product/Offer data, and clean URLs.
+- Generated sitemap containing only canonical, indexable commercial and informational pages.
+- Netlify 301 redirects from legacy category and product query URLs.
 - Catalog validation script for required fields, prices, categories, source URLs, duplicate IDs, image fallback, and sample product routes.
 - Image rights workflow that avoids competitor photos until commercial usage rights are verified.
 
@@ -28,7 +27,7 @@ The public demo works locally without a backend by using a sourced Moroccan cata
 - Vanilla JavaScript ES modules
 - CSS custom properties and responsive CSS
 - Vite local dev server
-- Firebase client SDK for production/admin data
+- Render-hosted Flask API for catalogue/account/order data
 - Netlify Functions scaffold for Stripe checkout extension
 
 ## Local Setup
@@ -38,10 +37,11 @@ npm install --cache ./.npm-cache
 npm run dev
 ```
 
-Open:
+The source templates are available through `npm run dev`. To exercise the generated clean routes, build and preview:
 
-```text
-http://127.0.0.1:5173/
+```bash
+npm run build
+npm run preview
 ```
 
 ## npm Scripts
@@ -52,53 +52,36 @@ npm run generate:images
 npm run generate:sitemap
 npm run lint
 npm run validate:catalog
+npm run validate:seo
 npm run build
 npm run preview
 ```
 
 - `dev`: starts the local Vite server.
 - `generate:images`: regenerates the owned `.webp` category fallback visuals.
-- `generate:sitemap`: regenerates `sitemap.xml` and `robots.txt` for `parapharmacie.me`.
+- `generate:sitemap`: regenerates the checked-in root `sitemap.xml` and `robots.txt`.
 - `lint`: validates core files, local asset references, and guards against the old broken CSS reset.
-- `validate:catalog`: validates production catalog data and sample product detail URLs.
-- `build`: validates and copies the static site to `dist/`.
+- `validate:catalog`: validates catalogue facts, image-rights flags, neutral availability, and clean sample routes.
+- `validate:seo`: checks every sitemap URL for unique metadata/H1, canonical consistency, JSON-LD, indexation controls, and legacy redirects.
+- `build`: validates, copies assets, pre-renders product/category/trust pages, generates redirects, and writes the production sitemap to `dist/`.
 - `preview`: previews the built static site with Vite.
 
-## Firebase and Local Catalog
+## API and Local Catalog
 
-Local preview uses the sourced local catalog by default on:
-
-- `localhost`
-- `127.0.0.1`
-- `::1`
-
-This avoids Firestore connection noise during demos and keeps the storefront usable offline.
-
-To explicitly test Firebase locally:
-
-```text
-http://127.0.0.1:5173/shop.html?backend=firebase
-```
-
-Or set:
-
-```js
-localStorage.setItem('parapharmacie_backend', 'firebase')
-```
-
-Use `backend=mock` or `localStorage.setItem('parapharmacie_backend', 'mock')` to force local catalog mode.
-
-Production deployments use Firebase by default unless `backend=mock` is passed.
+The storefront requests the Render API first and falls back to the local catalogue. Use `backend=mock` or `localStorage.setItem('parapharmacie_backend', 'mock')` to force the local catalogue during development.
 
 ## Catalog Data
 
 - Main data file: `js/catalog-data.js`
 - Catalog logic: `js/catalog.js`
-- Current product count: 93 sourced products.
+- Current product count: 93 catalogue references.
+- API identifier bridge: `js/catalog-api-id-map.js`.
+- Canonical route helpers: `js/seo-routes.js`.
 - Core sources: public Moroccan parapharmacy pages, mainly `parapharma.ma`, plus Citymall Para for the exact Mustela 2en1 200ml example.
 - Every product includes `sourceUrl`, `priceMAD`, `stockStatus`, `tags`, `searchKeywords`, and `cityKeywords`.
-- Product descriptions are rewritten for this project and avoid medical claims.
-- Prices are indicative and should be reconfirmed before shipment.
+- Generated product copy is limited to catalogue fields and avoids medical claims.
+- Prices and availability are explicitly presented as requiring confirmation.
+- Ratings, reviews, numeric fallback stock, unsupported availability, and review schema are not generated.
 
 ## Image Rights
 
@@ -111,9 +94,9 @@ Production deployments use Firebase by default unless `backend=mock` is passed.
 ## Deployment Notes for parapharmacie.me
 
 - Deploy the static files and `netlify/functions` folder to Netlify or another static host with functions support.
-- Configure Firebase rules, allowed domains, and production project credentials before launch.
+- Keep the Render API CORS origin aligned with `https://parapharmacie.me`.
 - Replace placeholder images with approved `.webp` assets owned by Pharmacie Tawfiq, supplied by brands/distributors, or licensed for commercial e-commerce use.
-- Connect live inventory and price confirmation from the pharmacy backend or Firestore.
+- Connect live inventory and price confirmation from a business-backed source.
 - Configure domain DNS for `parapharmacie.me`.
 - Add analytics, conversion tracking, and a production WhatsApp/business number.
 - Keep medical copy conservative: no unsupported treatment claims, and route sensitive questions to a professional.

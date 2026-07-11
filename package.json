@@ -1,6 +1,7 @@
 {
   "name": "parapharmacie-me",
   "version": "1.0.0",
+  "type": "module",
   "description": "parapharmacie.me - parapharmacie e-commerce moderne au Maroc",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
@@ -8,7 +9,10 @@
     "lint": "node scripts/validate.mjs",
     "generate:images": "node scripts/generate-product-fallbacks.mjs",
     "generate:sitemap": "NODE_NO_WARNINGS=1 node scripts/generate-sitemap.mjs",
+    "generate:seo": "node scripts/generate-seo-pages.mjs",
     "validate:catalog": "NODE_NO_WARNINGS=1 node scripts/validate-catalog.mjs",
+    "validate:commerce": "node scripts/validate-commerce.mjs",
+    "validate:seo": "node scripts/validate-seo.mjs",
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {

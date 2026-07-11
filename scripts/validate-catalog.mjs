@@ -1,9 +1,10 @@
 import { access } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { productRoute as cleanProductRoute } from '../js/seo-routes.js';
 
 const root = process.cwd();
-const productRoute = path.join(root, 'product.html');
+const productTemplate = path.join(root, 'product.html');
 const catalogModuleUrl = pathToFileURL(path.join(root, 'js/catalog-data.js')).href;
 
 const { catalogProducts, categories, productImageFallbacks } = await import(catalogModuleUrl);
@@ -12,7 +13,6 @@ const validCategories = new Set(categories.map((category) => category.name));
 const validFallbackImages = new Set(Object.values(productImageFallbacks));
 const ids = new Set();
 const errors = [];
-const warnings = [];
 
 function fail(product, message) {
     errors.push(`${product?.id || 'unknown'}: ${message}`);
@@ -26,7 +26,7 @@ async function localFileExists(relativePath) {
     await access(path.join(root, relativePath));
 }
 
-await access(productRoute);
+await access(productTemplate);
 
 for (const product of catalogProducts) {
     if (!product.id) fail(product, 'missing id');
@@ -89,6 +89,18 @@ for (const product of catalogProducts) {
     if (product.oldPriceMAD && Number(product.oldPriceMAD) <= Number(product.priceMAD)) {
         fail(product, 'oldPriceMAD must be greater than priceMAD when present');
     }
+
+    if ('rating' in product || 'reviews' in product || 'reviewsCount' in product) {
+        fail(product, 'unverified ratings or review counts must not be generated');
+    }
+
+    if (product.stockVerified !== true && product.stock !== null) {
+        fail(product, 'unverified inventory must not have a numeric stock value');
+    }
+
+    if (product.stockVerified !== true && product.stockStatus !== 'Disponibilité à confirmer') {
+        fail(product, 'unverified inventory needs a neutral availability label');
+    }
 }
 
 const sampleIds = [
@@ -105,16 +117,11 @@ for (const sampleId of sampleIds) {
     }
 }
 
-if (catalogProducts.length < 100) {
-    warnings.push(`Catalog contains ${catalogProducts.length} verified products; target is 100, but product count was capped to sourced items.`);
-}
-
 if (errors.length) {
     console.error(`Catalog validation failed with ${errors.length} issue(s):`);
     for (const error of errors) console.error(`- ${error}`);
     process.exit(1);
 }
 
-for (const warning of warnings) console.warn(`Warning: ${warning}`);
 console.log(`Validated ${catalogProducts.length} catalog products across ${validCategories.size} categories.`);
-console.log(`Sample product route format OK: product.html?id=${sampleIds[0]}`);
+console.log(`Sample canonical product route OK: ${cleanProductRoute(sampleIds[0])}`);

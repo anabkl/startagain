@@ -116,7 +116,7 @@ function renderOrders(orders = []) {
                 <i class="fa-solid fa-box-open"></i>
                 <h3>لا توجد طلبيات بعد</h3>
                 <p>عندما تقوم بطلب منتج من Parapharmacie Tawfiq سيظهر هنا.</p>
-                <a class="btn btn--primary" href="shop.html">ابدأ التسوق</a>
+                <a class="btn btn--primary" href="/boutique/">ابدأ التسوق</a>
             </div>
         `;
         return;

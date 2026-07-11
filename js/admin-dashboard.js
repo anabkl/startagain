@@ -69,7 +69,7 @@ function initAdminGuard() {
     }
 
     if (user.role !== 'admin') {
-        window.location.href = 'index.html';
+        window.location.href = '/';
         return;
     }
 

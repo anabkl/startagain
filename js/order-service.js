@@ -122,7 +122,8 @@ function normalizeOrder(orderData = {}, id = null, source = orderData.source || 
         items: Array.isArray(orderData.items) ? orderData.items.map((item) => ({
             ...item,
             id: item.id || item.product_id || item.productId,
-            product_id: item.product_id || item.productId || item.id,
+            apiId: item.apiId || item.product_id || item.productId || null,
+            product_id: item.apiId || item.product_id || item.productId || item.id,
             name: item.name || item.product_name || item.product?.name || item.productName || item.product_id || item.productId || 'Produit',
             effectivePrice: Number(item.unit_price ?? item.effectivePrice ?? item.priceMAD ?? item.price ?? 0),
             priceMAD: Number(item.unit_price ?? item.priceMAD ?? item.price ?? 0),
@@ -188,10 +189,10 @@ async function saveOrderToFirebase(orderData) {
     return order;
 }
 
-function toApiOrderPayload(orderData) {
+export function toApiOrderPayload(orderData) {
     return {
         items: (orderData.items || []).map((item) => ({
-            product_id: String(item.product_id || item.id),
+            product_id: String(item.apiId || item.product_id || item.id),
             quantity: Number(item.quantity || 1)
         })),
         shipping_address: {

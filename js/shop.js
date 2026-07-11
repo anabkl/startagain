@@ -2,14 +2,14 @@ import {
     categories,
     getCatalogProducts,
     getEffectivePrice,
-    getOldPrice,
+    getProductAvailabilityLabel,
     getProductImage,
-    getProductImageReviewLabel,
-    getProductInitials,
+    getProductImageAlt,
     isProductUnavailable,
     matchesCategory,
     matchesProduct
 } from './catalog.js';
+import { categoryRoute, productRoute } from './seo-routes.js';
 import { showToast, formatCurrency } from './utils.js';
 import { getCart, saveCart } from './main.js';
 
@@ -25,13 +25,6 @@ function escapeHtml(value) {
     const div = document.createElement('div');
     div.textContent = value || '';
     return div.innerHTML;
-}
-
-function getDiscount(product) {
-    const oldPrice = getOldPrice(product);
-    const price = getEffectivePrice(product);
-    if (!oldPrice) return null;
-    return Math.round(((oldPrice - price) / oldPrice) * 100);
 }
 
 function addToCart(productId, quantity = 1) {
@@ -64,19 +57,20 @@ function buildCategoryButtons() {
     if (!categoryButtons) return;
 
     const buttons = [
-        `<button class="category-pill active" data-category="all" type="button">Tous</button>`,
+        `<a class="category-pill active" data-category="all" href="/boutique/">Tous</a>`,
         ...categories.map((category) => `
-            <button class="category-pill" data-category="${category.slug}" type="button">
+            <a class="category-pill" data-category="${category.slug}" href="${categoryRoute(category)}">
                 <i class="fa-solid ${category.icon}"></i>
                 ${category.name}
-            </button>
+            </a>
         `)
     ];
 
     categoryButtons.innerHTML = buttons.join('');
 
     categoryButtons.querySelectorAll('[data-category]').forEach((button) => {
-        button.addEventListener('click', () => {
+        button.addEventListener('click', (event) => {
+            event.preventDefault();
             activeCategory = button.dataset.category;
             if (searchBar) searchBar.value = '';
             categoryButtons.querySelectorAll('.category-pill').forEach((pill) => pill.classList.remove('active'));
@@ -88,39 +82,29 @@ function buildCategoryButtons() {
 
 function renderProductCard(product) {
     const price = getEffectivePrice(product);
-    const discount = getDiscount(product);
-    const oldPriceValue = getOldPrice(product);
-    const oldPrice = oldPriceValue ? `<span class="product-card__old-price">${formatCurrency(oldPriceValue)}</span>` : '';
     const unavailable = isProductUnavailable(product);
-    const stockLabel = unavailable
-        ? '<span class="product-card__stock out">Rupture</span>'
-        : `<span class="product-card__stock">${escapeHtml(product.stockStatus || 'En stock')}</span>`;
-    const badge = product.promoBadge || (discount ? `-${discount}%` : product.badge || product.category || 'Parapharmacie');
-    const imageReviewLabel = getProductImageReviewLabel(product);
+    const stockLabel = `<span class="product-card__stock ${unavailable ? 'out' : ''}">${escapeHtml(getProductAvailabilityLabel(product))}</span>`;
+    const badge = product.category || 'Catalogue';
 
     return `
         <article class="product-card" data-reveal>
-            <a href="product.html?id=${encodeURIComponent(product.id)}" class="product-card__media product-image-frame" data-image-review="${product.imageNeedsReview ? 'true' : 'false'}" aria-label="Voir ${escapeHtml(product.name)}">
+            <a href="${productRoute(product)}" class="product-card__media product-image-frame" data-image-review="${product.imageNeedsReview ? 'true' : 'false'}" aria-label="Voir ${escapeHtml(product.name)}">
                 <span class="product-card__badge">${escapeHtml(badge)}</span>
-                <img src="${escapeHtml(getProductImage(product))}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" width="720" height="720">
-                ${product.imageNeedsReview ? `<span class="product-image-frame__initials" title="${escapeHtml(imageReviewLabel)}" aria-hidden="true">${escapeHtml(getProductInitials(product))}</span>` : ''}
+                <img src="${escapeHtml(getProductImage(product))}" alt="${escapeHtml(getProductImageAlt(product))}" loading="lazy" decoding="async" width="720" height="720">
+                ${product.imageNeedsReview ? '<span class="product-image-frame__notice">Visuel générique</span>' : ''}
             </a>
             <div class="product-card__body">
                 <div class="product-card__meta">
                     <span>${escapeHtml(product.category)}</span>
                     ${stockLabel}
                 </div>
-                <a href="product.html?id=${encodeURIComponent(product.id)}" class="product-card__title">${escapeHtml(product.name)}</a>
+                <a href="${productRoute(product)}" class="product-card__title">${escapeHtml(product.name)}</a>
                 <p class="product-card__brand">${escapeHtml(product.brand || 'parapharmacie.me')}</p>
-                <p class="product-card__description">${escapeHtml(product.shortDescription || product.description || '')}</p>
-                <div class="product-card__rating" aria-label="Note ${product.rating || 4.7} sur 5">
-                    <i class="fa-solid fa-star"></i>
-                    <span>${product.rating || '4.7'} (${product.reviews || 12})</span>
-                </div>
+                <p class="product-card__description">Prix catalogue indicatif ; disponibilité à confirmer avant commande.</p>
                 <div class="product-card__footer">
                     <div class="product-card__price">
                         <strong>${formatCurrency(price)}</strong>
-                        ${oldPrice}
+                        <small>prix indicatif</small>
                     </div>
                     <button class="icon-btn add-to-cart-btn" type="button" data-product-id="${escapeHtml(product.id)}" ${unavailable ? 'disabled' : ''} aria-label="Ajouter ${escapeHtml(product.name)} au panier">
                         <i class="fa-solid fa-cart-plus"></i>
@@ -144,7 +128,7 @@ function renderProducts(products) {
                 <i class="fa-solid fa-magnifying-glass"></i>
                 <h2>Aucun produit trouve</h2>
                 <p>Essayez une autre categorie ou recherchez un soin, une marque, bebe et maman, ou complements alimentaires.</p>
-                <a href="shop.html" class="btn btn--secondary">Reinitialiser</a>
+                <a href="/boutique/" class="btn btn--secondary">Réinitialiser</a>
             </div>
         `;
         return;
@@ -194,7 +178,7 @@ async function initShop() {
 
     const sourceNote = document.getElementById('catalog-source-note');
     if (sourceNote && source === 'api') {
-        sourceNote.textContent = 'Stock synchronise';
+        sourceNote.textContent = 'Catalogue synchronisé ; disponibilité à confirmer';
     }
 
     applyFilters();

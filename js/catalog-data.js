@@ -1039,14 +1039,16 @@ const rawProducts = [
     }
 ];
 
-function createProduct(product, index) {
+function createProduct(product) {
     const categorySlug = categorySlugByName[product.category];
-    const ratingSeed = (index % 4) / 10;
-    const reviews = 18 + ((index * 7) % 84);
     const hasPromo = Boolean(product.oldPriceMAD && product.oldPriceMAD > product.priceMAD);
     const fallbackImage = productImageFallbacks[categorySlug] || PRODUCT_PLACEHOLDER;
     const image = product.image || fallbackImage;
     const usesGeneratedFallback = !product.image;
+    const hasVerifiedStock = Number.isFinite(product.stock) && product.stock >= 0;
+    const stock = hasVerifiedStock ? product.stock : null;
+    const stockStatus = product.stockStatus
+        || (stock === 0 ? 'Rupture de stock' : 'Disponibilité à confirmer');
 
     return {
         ...product,
@@ -1054,8 +1056,9 @@ function createProduct(product, index) {
         categorySlug,
         oldPriceMAD: product.oldPriceMAD || null,
         promoBadge: product.promoBadge || (hasPromo ? 'Promo' : null),
-        stockStatus: product.stockStatus || 'En stock',
-        stock: product.stockStatus === 'Rupture de stock' ? 0 : 24,
+        stockStatus,
+        stock,
+        stockVerified: hasVerifiedStock,
         image,
         imageUrl: image,
         imageNeedsReview: product.imageNeedsReview ?? true,
@@ -1079,9 +1082,7 @@ function createProduct(product, index) {
         cityKeywords: [...localCityKeywords],
         price: product.oldPriceMAD || product.priceMAD,
         promoPrice: hasPromo ? product.priceMAD : null,
-        badge: product.promoBadge || (hasPromo ? 'Promo' : product.featured ? 'Selection Tawfiq' : null),
-        rating: Number((4.6 + ratingSeed).toFixed(1)),
-        reviews
+        badge: product.promoBadge || (hasPromo ? 'Promo' : product.featured ? 'Selection Tawfiq' : null)
     };
 }
 

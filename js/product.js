@@ -1,12 +1,12 @@
 import {
     getCatalogProduct,
     getEffectivePrice,
-    getOldPrice,
+    getProductAvailabilityLabel,
     getProductImage,
-    getProductImageReviewLabel,
-    getProductInitials,
+    getProductImageAlt,
     isProductUnavailable
 } from './catalog.js';
+import { absoluteSiteUrl, categoryRoute, productRoute } from './seo-routes.js';
 import { formatCurrency, showToast } from './utils.js';
 import { getCart, saveCart } from './main.js';
 
@@ -77,10 +77,6 @@ function setCanonical(url) {
     canonical.href = url;
 }
 
-function getAbsoluteUrl(path) {
-    return new URL(path, window.location.href).href;
-}
-
 function upsertJsonLd(id, data) {
     let script = document.getElementById(id);
     if (!script) {
@@ -94,27 +90,15 @@ function upsertJsonLd(id, data) {
 }
 
 function updateProductSeo(product, price) {
-    const description = `${product.name} par ${product.brand}, prix indicatif ${formatCurrency(price)} chez Parapharmacie Tawfiq Khouribga. Livraison parapharmacie Maroc, produits cosmetiques, soins visage, solaire, paiement a la livraison.`;
-    const title = `${product.name} au Maroc | Parapharmacie Tawfiq Khouribga`;
-    const productUrl = getAbsoluteUrl(`product.html?id=${encodeURIComponent(product.id)}`);
-    const imageUrl = getAbsoluteUrl(getProductImage(product));
-    const availability = isProductUnavailable(product)
-        ? 'https://schema.org/OutOfStock'
-        : 'https://schema.org/InStock';
-    const rating = Number(product.rating || 0);
-    const reviewsCount = Number(product.reviewsCount || product.reviews || 0);
+    const description = `${product.name} par ${product.brand}, référence ${product.category} à ${formatCurrency(price)} à titre indicatif. Disponibilité et prix final à confirmer.`;
+    const title = `${product.name} | Parapharmacie.me`;
+    const productUrl = absoluteSiteUrl(productRoute(product));
+    const imageUrl = product.imageNeedsReview
+        ? absoluteSiteUrl('/.netlify/images?url=/assets/images/photopharamcie.png&w=1200&h=630&fit=cover&fm=webp&q=80')
+        : absoluteSiteUrl(`/${getProductImage(product).replace(/^\/+/, '')}`);
 
     document.title = title;
     setMeta('meta[name="description"]', 'content', description);
-    setMeta('meta[name="keywords"]', 'content', [
-        product.name,
-        product.brand,
-        product.category,
-        'Parapharmacie Khouribga',
-        'Produits cosmetiques Maroc',
-        'Acheter ecran solaire Maroc',
-        'Livraison paiement a la livraison'
-    ].filter(Boolean).join(', '));
     setMeta('meta[property="og:title"]', 'content', title);
     setMeta('meta[property="og:description"]', 'content', description);
     setMeta('meta[property="og:image"]', 'content', imageUrl);
@@ -134,36 +118,21 @@ function updateProductSeo(product, price) {
             name: product.brand
         },
         category: product.category,
-        image: [imageUrl],
         url: productUrl,
-        seller: {
-            '@type': 'Pharmacy',
-            name: 'Parapharmacie Tawfiq',
-            url: 'https://parapharmacie.me',
-            address: {
-                '@type': 'PostalAddress',
-                addressLocality: 'Khouribga',
-                addressCountry: 'MA'
-            }
-        },
         offers: {
             '@type': 'Offer',
             price: Number(price).toFixed(2),
             priceCurrency: 'MAD',
-            availability,
-            itemCondition: 'https://schema.org/NewCondition',
             url: productUrl,
-            priceValidUntil: `${new Date().getFullYear() + 1}-12-31`
+            seller: {
+                '@type': 'Organization',
+                name: 'Parapharmacie.me',
+                url: 'https://parapharmacie.me/'
+            }
         }
     };
 
-    if (rating > 0 && reviewsCount > 0) {
-        productSchema.aggregateRating = {
-            '@type': 'AggregateRating',
-            ratingValue: rating.toFixed(1),
-            reviewCount: reviewsCount
-        };
-    }
+    if (!product.imageNeedsReview) productSchema.image = [imageUrl];
 
     upsertJsonLd('product-jsonld', productSchema);
     upsertJsonLd('breadcrumb-jsonld', {
@@ -174,19 +143,19 @@ function updateProductSeo(product, price) {
                 '@type': 'ListItem',
                 position: 1,
                 name: 'Accueil',
-                item: getAbsoluteUrl('index.html')
+                item: absoluteSiteUrl('/')
             },
             {
                 '@type': 'ListItem',
                 position: 2,
                 name: 'Boutique',
-                item: getAbsoluteUrl('shop.html')
+                item: absoluteSiteUrl('/boutique/')
             },
             {
                 '@type': 'ListItem',
                 position: 3,
                 name: product.category || 'Parapharmacie Maroc',
-                item: getAbsoluteUrl(`shop.html?category=${encodeURIComponent(product.categorySlug || product.category || '')}`)
+                item: absoluteSiteUrl(categoryRoute(product.categorySlug))
             },
             {
                 '@type': 'ListItem',
@@ -202,34 +171,27 @@ function renderProduct(product) {
     currentProduct = product;
     quantity = 1;
     const price = getEffectivePrice(product);
-    const oldPrice = getOldPrice(product);
-    const discount = oldPrice ? Math.round(((oldPrice - price) / oldPrice) * 100) : null;
     const unavailable = isProductUnavailable(product);
-    const imageReviewLabel = getProductImageReviewLabel(product);
     updateProductSeo(product, price);
 
     detail.innerHTML = `
         <div class="product-detail__info" data-reveal>
             <nav class="breadcrumb" aria-label="Fil d'Ariane">
-                <a href="index.html">Accueil</a>
+                <a href="/">Accueil</a>
                 <span>/</span>
-                <a href="shop.html">Boutique</a>
+                <a href="/boutique/">Boutique</a>
                 <span>/</span>
-                <span>${escapeHtml(product.brand || product.category)}</span>
+                <a href="${categoryRoute(product.categorySlug)}">${escapeHtml(product.category)}</a>
+                <span>/</span>
+                <span>${escapeHtml(product.name)}</span>
             </nav>
             <p class="eyebrow">Parapharmacie Maroc</p>
             <h1>${escapeHtml(product.name)}</h1>
-            <p class="product-detail__brand">${escapeHtml(product.brand || 'Selection parapharmacie.me')}</p>
-            <div class="product-detail__rating">
-                <i class="fa-solid fa-star"></i>
-                <span>${product.rating || '4.7'} / 5</span>
-                <small>${product.reviews || 12} avis clients</small>
-            </div>
+            <p class="product-detail__brand">Marque : <a href="/boutique/?q=${encodeURIComponent(product.brand || '')}">${escapeHtml(product.brand || 'Non renseignée')}</a></p>
             <div class="product-detail__price">
                 <strong>${formatCurrency(price)}</strong>
-                ${oldPrice ? `<span>${formatCurrency(oldPrice)}</span><em>${escapeHtml(product.promoBadge || `-${discount}%`)}</em>` : ''}
             </div>
-            <p class="product-detail__stock ${unavailable ? 'out' : ''}">${escapeHtml(product.stockStatus || 'En stock')} • Prix indicatif Maroc</p>
+            <p class="product-detail__stock ${unavailable ? 'out' : ''}">Prix catalogue indicatif · ${escapeHtml(getProductAvailabilityLabel(product))}</p>
             <div class="product-detail__purchase">
                 <div class="qty-control product-detail__qty" aria-label="Quantite">
                     <button class="qty-control__btn" type="button" data-qty="-1" aria-label="Diminuer la quantite">-</button>
@@ -242,27 +204,23 @@ function renderProduct(product) {
                 </button>
                 <a class="btn btn--whatsapp" href="${getWhatsAppUrl()}" target="_blank" rel="noreferrer" data-product-action="whatsapp">
                     <i class="fa-brands fa-whatsapp"></i>
-                    Commander sur WhatsApp
+                    Confirmer par WhatsApp
                 </a>
             </div>
-            <p class="product-detail__description">${escapeHtml(product.shortDescription || product.description)}</p>
+            <p class="product-detail__description">${escapeHtml(product.name)} est une référence ${escapeHtml(product.category)} de la marque ${escapeHtml(product.brand)}. Le prix final et la disponibilité sont confirmés avant commande.</p>
             <div class="product-detail__trust">
-                <span><i class="fa-solid fa-check"></i> Produit authentique</span>
-                <span><i class="fa-solid fa-truck-fast"></i> Livraison au Maroc</span>
-                <span><i class="fa-solid fa-hand-holding-dollar"></i> Paiement a la livraison</span>
+                <span><i class="fa-solid fa-tag"></i> Prix indicatif en MAD</span>
+                <span><i class="fa-solid fa-circle-check"></i> Disponibilité à confirmer</span>
+                <span><i class="fa-solid fa-notes-medical"></i> Information non médicale</span>
             </div>
-            <a class="product-detail__source" href="${escapeHtml(product.sourceUrl)}" target="_blank" rel="noreferrer">
-                Source catalogue publique
-                <i class="fa-solid fa-up-right-from-square"></i>
-            </a>
             <div class="product-detail__note">
-                <strong>Conseil responsable:</strong> les descriptions sont informatives et ne remplacent pas l’avis d’un professionnel de sante.
+                <strong>Information responsable :</strong> aucune composition, indication ou promesse médicale n’est ajoutée sans donnée fabricant vérifiée. Consultez l’emballage et la notice.
             </div>
         </div>
         <div class="product-detail__media product-image-frame" data-image-review="${product.imageNeedsReview ? 'true' : 'false'}" data-reveal>
-            <span class="product-detail__badge">${escapeHtml(product.promoBadge || product.category)}</span>
-            <img src="${escapeHtml(getProductImage(product))}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" width="720" height="720">
-            ${product.imageNeedsReview ? `<span class="product-image-frame__initials product-image-frame__initials--large" title="${escapeHtml(imageReviewLabel)}" aria-hidden="true">${escapeHtml(getProductInitials(product))}</span>` : ''}
+            <span class="product-detail__badge">${escapeHtml(product.category)}</span>
+            <img src="${escapeHtml(getProductImage(product))}" alt="${escapeHtml(getProductImageAlt(product))}" loading="eager" fetchpriority="high" decoding="async" width="720" height="720">
+            ${product.imageNeedsReview ? '<span class="product-image-frame__notice product-image-frame__notice--large">Visuel générique de catégorie</span>' : ''}
         </div>
     `;
 
@@ -283,8 +241,8 @@ function renderRelated(products) {
     if (related.length === 0) return;
 
     relatedGrid.innerHTML = related.map((product) => `
-        <a href="product.html?id=${encodeURIComponent(product.id)}" class="related-card">
-            <img src="${escapeHtml(getProductImage(product))}" alt="${escapeHtml(product.name)}" loading="lazy" decoding="async" width="320" height="320">
+        <a href="${productRoute(product)}" class="related-card">
+            <img src="${escapeHtml(getProductImage(product))}" alt="${escapeHtml(getProductImageAlt(product))}" loading="lazy" decoding="async" width="320" height="320">
             <span>${escapeHtml(product.category)}</span>
             <strong>${escapeHtml(product.name)}</strong>
             <em>${formatCurrency(getEffectivePrice(product))}</em>
@@ -299,7 +257,7 @@ async function initProduct() {
     const productId = new URLSearchParams(window.location.search).get('id');
 
     if (!productId) {
-        window.location.href = 'shop.html';
+        window.location.href = '/boutique/';
         return;
     }
 
@@ -310,7 +268,7 @@ async function initProduct() {
                 <i class="fa-solid fa-box-open"></i>
                 <h1>Produit introuvable</h1>
                 <p>Ce produit n'est plus disponible. Continuez vers la boutique pour decouvrir la selection actuelle.</p>
-                <a class="btn btn--primary" href="shop.html">Voir la boutique</a>
+                <a class="btn btn--primary" href="/boutique/">Voir la boutique</a>
             </div>
         `;
         return;
