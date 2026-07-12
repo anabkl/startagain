@@ -1,0 +1,423 @@
+// Source of truth for the /conseils/ content hub. Each entry is prerendered
+// into a standalone article page by scripts/generate-seo-pages.mjs.
+//
+// Content rules (do not violate when adding articles):
+// - Cosmetic/hygiene education only — no diagnosis, no prescription, no
+//   promised outcomes, no invented ingredients/certifications/benefits.
+// - `sources` must be real, generic, authoritative organizations (homepage
+//   or topic-level links only — never a fabricated deep citation).
+// - `categorySlug` must match a real js/catalog-data.js category slug so
+//   related-products/related-category links resolve to real pages.
+
+const DISCLAIMER = 'Cet article a un objectif d’information générale et cosmétique. Il ne constitue ni un diagnostic médical, ni une prescription, ni une promesse de résultat. Pour toute question de santé, de réaction cutanée ou de traitement en cours, demandez conseil à un pharmacien ou à un professionnel de santé.';
+
+const AUTHOR = 'Équipe Parapharmacie.me';
+
+const OMS_SOURCE = { label: 'Organisation mondiale de la santé (OMS)', url: 'https://www.who.int' };
+const SANTE_MA_SOURCE = { label: 'Ministère de la Santé et de la Protection Sociale (Maroc)', url: 'https://www.sante.gov.ma' };
+const AMELI_SOURCE = { label: 'Assurance Maladie — ameli.fr, information santé grand public', url: 'https://www.ameli.fr' };
+
+export const articles = [
+    {
+        slug: 'comment-choisir-creme-solaire-maroc',
+        title: 'Comment choisir sa crème solaire au Maroc : le guide complet',
+        description: 'Indice SPF, texture, résistance à l’eau : les critères pratiques pour choisir une protection solaire adaptée au climat marocain.',
+        category: 'Protection solaire',
+        categorySlug: 'solaire',
+        heroImage: '/assets/products/category-fallback-solaire.webp',
+        publishedDate: '2026-07-12',
+        updatedDate: '2026-07-12',
+        readingTimeMinutes: 6,
+        author: AUTHOR,
+        sections: [
+            {
+                heading: 'Pourquoi la protection solaire compte particulièrement au Maroc',
+                body: 'Le Maroc bénéficie d’un fort ensoleillement une grande partie de l’année, sur le littoral comme à l’intérieur des terres. Une exposition répétée et non protégée aux rayons ultraviolets (UV) est un facteur reconnu de vieillissement cutané prématuré et d’autres risques pour la peau, quel que soit le phototype. Une protection solaire adaptée est donc un geste utile au quotidien, pas seulement en vacances.'
+            },
+            {
+                heading: 'Comprendre l’indice de protection (SPF)',
+                body: 'Le SPF (Sun Protection Factor) indique la capacité d’un produit à filtrer les rayons UVB responsables des coups de soleil. Plus le chiffre est élevé, plus la part de rayons filtrée augmente, mais la progression n’est pas proportionnelle au chiffre affiché. Un SPF adapté se choisit selon le phototype, la durée d’exposition et l’intensité du soleil au moment de la journée.'
+            },
+            {
+                heading: 'UVA, UVB : deux types de rayons à filtrer',
+                body: 'Les UVB affectent surtout la surface de la peau, tandis que les UVA pénètrent plus profondément. Un produit efficace doit filtrer les deux catégories : la mention « large spectre » ou un symbole UVA encerclé sur l’emballage signale généralement cette double protection. Vérifiez cette information directement sur l’étiquette du produit choisi.'
+            },
+            {
+                heading: 'Choisir une texture adaptée à sa peau et à son usage',
+                body: 'Une texture fluide ou un gel conviennent souvent aux peaux mixtes à grasses et au visage ; une formule plus riche peut être préférée pour les peaux sèches ou pour un usage hivernal. Pour le sport ou la baignade, les formats spray ou stick facilitent l’application sur le corps. Le meilleur choix reste celui que l’on est prêt à appliquer généreusement et régulièrement.'
+            },
+            {
+                heading: 'Quantité et fréquence d’application',
+                body: 'La majorité des utilisateurs appliquent une quantité insuffisante de produit, ce qui réduit fortement la protection réelle. Les autorités de santé recommandent une application généreuse avant l’exposition, renouvelée toutes les deux heures environ, et systématiquement après une baignade, une transpiration importante ou un séchage à la serviette.'
+            }
+        ],
+        faq: [
+            {
+                q: 'Faut-il une crème solaire même quand le ciel est nuageux ?',
+                a: 'Oui. Une part significative des rayons UV traverse la couverture nuageuse, donc le risque d’exposition reste présent par temps couvert.'
+            },
+            {
+                q: 'Une crème solaire « résistante à l’eau » dispense-t-elle de réappliquer après la baignade ?',
+                a: 'Non. La résistance à l’eau limite la perte de protection pendant une durée définie sur l’emballage, mais une nouvelle application après la baignade ou le séchage reste recommandée.'
+            }
+        ],
+        sources: [OMS_SOURCE, SANTE_MA_SOURCE],
+        relatedArticleSlugs: ['difference-spf-30-spf-50', 'choisir-produit-selon-type-de-peau']
+    },
+    {
+        slug: 'difference-spf-30-spf-50',
+        title: 'SPF 30 ou SPF 50 : quelle est vraiment la différence ?',
+        description: 'Le chiffre SPF n’évolue pas de façon proportionnelle : comprendre ce que change réellement le passage d’un SPF 30 à un SPF 50.',
+        category: 'Protection solaire',
+        categorySlug: 'solaire',
+        heroImage: '/assets/products/category-fallback-solaire.webp',
+        publishedDate: '2026-07-12',
+        updatedDate: '2026-07-12',
+        readingTimeMinutes: 5,
+        author: AUTHOR,
+        sections: [
+            {
+                heading: 'Que mesure réellement le chiffre SPF',
+                body: 'Le SPF est un indicateur de laboratoire qui compare le temps théorique nécessaire pour qu’un coup de soleil apparaisse, avec et sans protection, dans des conditions de test standardisées. Il ne correspond pas à un « temps d’exposition sans risque » dans la vraie vie, car de nombreux facteurs (quantité appliquée, transpiration, baignade) modifient son efficacité réelle.'
+            },
+            {
+                heading: 'SPF 30 contre SPF 50 : la différence en pratique',
+                body: 'En théorie, un SPF 30 filtre environ 97 % des rayons UVB et un SPF 50 environ 98 %. L’écart entre les deux indices est donc plus faible qu’il n’y paraît au premier regard sur les chiffres. Aucun indice, même élevé, ne filtre 100 % des rayons UV.'
+            },
+            {
+                heading: 'Quand privilégier un indice plus élevé',
+                body: 'Un indice plus élevé peut être pertinent en cas de phototype clair, d’exposition prolongée en altitude ou en milieu réverbérant (sable, eau, neige), ou pour les zones du corps particulièrement exposées. Il reste toutefois un complément, pas un substitut, aux autres mesures de protection (ombre, vêtements, horaires).'
+            },
+            {
+                heading: 'Les limites du SPF : ce qu’il ne mesure pas',
+                body: 'Le SPF seul ne renseigne pas sur la protection contre les UVA. Il convient de vérifier séparément la mention « large spectre » ou un symbole UVA sur l’emballage pour s’assurer d’une protection plus complète.'
+            },
+            {
+                heading: 'Le geste d’application compte autant que le chiffre choisi',
+                body: 'Une application trop fine, quel que soit l’indice affiché, réduit fortement la protection réelle obtenue. Appliquer une quantité généreuse et renouveler l’application reste le facteur qui influence le plus la protection au quotidien.'
+            }
+        ],
+        faq: [
+            {
+                q: 'Un SPF 100 protège-t-il deux fois plus qu’un SPF 50 ?',
+                a: 'Non. La différence de filtration entre ces deux indices est marginale en pourcentage ; aucun produit ne filtre la totalité des rayons UV.'
+            }
+        ],
+        sources: [OMS_SOURCE],
+        relatedArticleSlugs: ['comment-choisir-creme-solaire-maroc', 'choisir-produit-selon-type-de-peau']
+    },
+    {
+        slug: 'routine-peau-grasse',
+        title: 'Routine de soin pour peau grasse : les bons réflexes',
+        description: 'Nettoyage, hydratation, protection solaire : comment construire une routine simple et adaptée à une peau grasse ou à tendance brillante.',
+        category: 'Visage',
+        categorySlug: 'visage',
+        heroImage: '/assets/products/category-fallback-visage.webp',
+        publishedDate: '2026-07-12',
+        updatedDate: '2026-07-12',
+        readingTimeMinutes: 5,
+        author: AUTHOR,
+        sections: [
+            {
+                heading: 'Reconnaître une peau grasse',
+                body: 'Une peau grasse se caractérise généralement par un aspect brillant, des pores visibles et une production de sébum plus importante, en particulier sur la zone T (front, nez, menton). Elle peut être plus sujette aux imperfections, sans que cela concerne toutes les personnes de la même façon.'
+            },
+            {
+                heading: 'Les erreurs fréquentes qui aggravent la brillance',
+                body: 'Un nettoyage trop fréquent ou trop agressif peut déséquilibrer la peau et, par réaction, stimuler davantage la production de sébum. De même, l’usage répété de produits asséchants ou à base d’alcool n’est pas toujours la meilleure option sur la durée.'
+            },
+            {
+                heading: 'Les étapes d’une routine simple',
+                body: 'Un nettoyant doux adapté aux peaux grasses, suivi d’un soin hydratant à texture légère et non comédogène, puis d’une protection solaire non grasse en journée, forment une base raisonnable. L’hydratation reste utile même pour une peau grasse : elle ne s’oppose pas à l’objectif de matifier l’aspect de la peau.'
+            },
+            {
+                heading: 'Fréquence et constance',
+                body: 'Deux nettoyages quotidiens (matin et soir) suffisent en général. Les résultats d’une routine s’observent surtout dans la durée : mieux vaut une routine simple suivie régulièrement qu’une accumulation de produits changés trop souvent.'
+            },
+            {
+                heading: 'Quand demander un avis professionnel',
+                body: 'En cas d’imperfections persistantes, douloureuses ou inflammatoires, ou si la routine habituelle ne suffit plus, l’avis d’un pharmacien ou d’un dermatologue permet d’orienter vers une prise en charge adaptée à la situation.'
+            }
+        ],
+        faq: [],
+        sources: [AMELI_SOURCE],
+        relatedArticleSlugs: ['comment-choisir-nettoyant-visage', 'choisir-produit-selon-type-de-peau']
+    },
+    {
+        slug: 'soins-peau-sensible',
+        title: 'Peau sensible : comment adapter sa routine de soin',
+        description: 'Facteurs déclenchants, choix des produits, test avant utilisation : les bases pour prendre soin d’une peau sensible au quotidien.',
+        category: 'Visage',
+        categorySlug: 'visage',
+        heroImage: '/assets/products/category-fallback-visage.webp',
+        publishedDate: '2026-07-12',
+        updatedDate: '2026-07-12',
+        readingTimeMinutes: 5,
+        author: AUTHOR,
+        sections: [
+            {
+                heading: 'Qu’est-ce qu’une peau sensible',
+                body: 'Une peau sensible réagit plus facilement par des rougeurs, des tiraillements ou des picotements face à certains produits, au changement de température ou à des frottements. Cette sensibilité peut être permanente ou apparaître ponctuellement selon les périodes.'
+            },
+            {
+                heading: 'Identifier les facteurs déclenchants',
+                body: 'Le vent, le soleil, l’eau très chaude, certains textiles ou parfums, ainsi que des changements de produits trop fréquents peuvent accentuer l’inconfort. Tenir un repère simple des produits utilisés aide à mieux identifier ce qui convient ou non à sa peau.'
+            },
+            {
+                heading: 'Choisir des produits formulés pour peaux sensibles',
+                body: 'Des formules à la liste d’ingrédients courte, sans parfum ajouté, sont souvent mieux tolérées. La mention « peau sensible » ou « hypoallergénique » sur un emballage indique une formulation pensée pour limiter les risques d’inconfort, sans garantir une tolérance individuelle absolue.'
+            },
+            {
+                heading: 'Tester avant d’adopter un nouveau produit',
+                body: 'Un test sur une petite zone de peau (par exemple l’intérieur du poignet ou derrière l’oreille), maintenu 24 à 48 heures avant application sur le visage, permet de repérer une éventuelle réaction avant une utilisation complète.'
+            },
+            {
+                heading: 'Construire une routine minimaliste',
+                body: 'Limiter le nombre de produits utilisés, introduire les nouveautés une par une, et espacer les changements de routine aide à mieux comprendre les réactions de sa peau et à réduire les sources d’irritation.'
+            }
+        ],
+        faq: [
+            {
+                q: 'Une peau sensible est-elle la même chose qu’une peau allergique ?',
+                a: 'Non, ce sont deux notions différentes. Une véritable allergie cutanée nécessite un avis médical pour être identifiée ; la sensibilité cutanée décrit une réactivité plus générale de la peau.'
+            }
+        ],
+        sources: [AMELI_SOURCE],
+        relatedArticleSlugs: ['comment-choisir-nettoyant-visage', 'comment-lire-etiquette-cosmetique']
+    },
+    {
+        slug: 'comment-choisir-nettoyant-visage',
+        title: 'Comment choisir son nettoyant visage selon son type de peau',
+        description: 'Gel, mousse, huile ou lait démaquillant : les critères pour choisir un nettoyant visage adapté et respectueux de la peau.',
+        category: 'Visage',
+        categorySlug: 'visage',
+        heroImage: '/assets/products/category-fallback-visage.webp',
+        publishedDate: '2026-07-12',
+        updatedDate: '2026-07-12',
+        readingTimeMinutes: 5,
+        author: AUTHOR,
+        sections: [
+            {
+                heading: 'Le rôle du nettoyant dans une routine',
+                body: 'Le nettoyant retire les impuretés, l’excès de sébum et les résidus de la journée (pollution, protection solaire, maquillage) sans nécessairement décaper la peau. C’est la première étape, et souvent la plus déterminante, d’une routine de soin.'
+            },
+            {
+                heading: 'Gel, mousse, huile, lait : quelle texture pour quel type de peau',
+                body: 'Un gel moussant convient souvent aux peaux mixtes à grasses. Un lait ou une huile démaquillante est généralement mieux toléré par les peaux sèches ou sensibles. Les eaux micellaires offrent une option douce pour un nettoyage rapide, notamment le matin.'
+            },
+            {
+                heading: 'pH et douceur : ce qu’il faut regarder',
+                body: 'La peau a naturellement un pH légèrement acide. Un nettoyant trop alcalin peut fragiliser cette barrière protectrice. Les mentions « pH physiologique » ou « surgras » signalent des formules pensées pour respecter cet équilibre.'
+            },
+            {
+                heading: 'Fréquence de nettoyage recommandée',
+                body: 'Un nettoyage matin et soir suffit dans la majorité des cas. Un nettoyage trop fréquent peut au contraire fragiliser la peau et accentuer les tiraillements ou, à l’inverse, la production de sébum.'
+            },
+            {
+                heading: 'Les erreurs à éviter',
+                body: 'Frotter énergiquement, utiliser une eau très chaude, ou superposer plusieurs nettoyants différents la même routine sont des habitudes qui fragilisent inutilement la peau. Un geste doux, suivi d’un rinçage à l’eau tiède, reste la base la plus sûre.'
+            }
+        ],
+        faq: [],
+        sources: [AMELI_SOURCE],
+        relatedArticleSlugs: ['routine-peau-grasse', 'hydratation-peau-seche', 'choisir-produit-selon-type-de-peau']
+    },
+    {
+        slug: 'hydratation-peau-seche',
+        title: 'Peau sèche : comment construire une routine hydratante efficace',
+        description: 'Ingrédients hydratants, étapes clés, adaptation saisonnière : les bases pour prendre soin d’une peau sèche ou déshydratée.',
+        category: 'Visage',
+        categorySlug: 'visage',
+        heroImage: '/assets/products/category-fallback-visage.webp',
+        publishedDate: '2026-07-12',
+        updatedDate: '2026-07-12',
+        readingTimeMinutes: 6,
+        author: AUTHOR,
+        sections: [
+            {
+                heading: 'Pourquoi la peau sèche a besoin d’une attention particulière',
+                body: 'Une peau sèche produit moins de sébum, ce qui réduit sa capacité naturelle à retenir l’eau et à se protéger des agressions extérieures. Elle peut alors tirailler, peler légèrement ou paraître terne, en particulier lors des changements de saison.'
+            },
+            {
+                heading: 'Les catégories d’ingrédients hydratants à connaître',
+                body: 'Les ingrédients dits « humectants » (comme la glycérine ou l’acide hyaluronique) attirent l’eau vers la peau, tandis que les ingrédients « occlusifs » (beurres et huiles végétales, par exemple) aident à limiter la perte en eau. Une routine efficace combine souvent les deux familles.'
+            },
+            {
+                heading: 'Construire une routine hydratante en trois étapes',
+                body: 'Un nettoyant doux et non asséchant, un soin hydratant appliqué quotidiennement, puis une protection solaire adaptée en journée forment une base simple. Pour les zones très sèches, un soin plus riche peut être réservé au soir.'
+            },
+            {
+                heading: 'Adapter sa routine selon la saison',
+                body: 'Le vent, le froid ou l’air conditionné accentuent souvent la sécheresse cutanée. Une texture plus riche en hiver et plus légère en été permet d’ajuster le confort de la peau tout au long de l’année.'
+            },
+            {
+                heading: 'Signes qui nécessitent un avis professionnel',
+                body: 'Des rougeurs marquées, des fissures, des démangeaisons intenses ou persistantes ne relèvent pas d’une simple sécheresse cosmétique et justifient l’avis d’un pharmacien ou d’un dermatologue.'
+            }
+        ],
+        faq: [],
+        sources: [AMELI_SOURCE],
+        relatedArticleSlugs: ['comment-choisir-nettoyant-visage', 'choisir-produit-selon-type-de-peau']
+    },
+    {
+        slug: 'routine-cheveux-secs',
+        title: 'Cheveux secs : la routine à adopter au quotidien',
+        description: 'Lavage, après-shampooing, protection solaire et effets du chlore ou du sel : comment prendre soin de cheveux secs ou abîmés.',
+        category: 'Cheveux',
+        categorySlug: 'cheveux',
+        heroImage: '/assets/products/category-fallback-cheveux.webp',
+        publishedDate: '2026-07-12',
+        updatedDate: '2026-07-12',
+        readingTimeMinutes: 5,
+        author: AUTHOR,
+        sections: [
+            {
+                heading: 'Pourquoi les cheveux deviennent secs',
+                body: 'La sécheresse capillaire peut venir de facteurs extérieurs (soleil, chlore, eau de mer, chaleur des appareils coiffants) ou de la nature même du cheveu, plus poreux ou fragilisé par des colorations et décolorations répétées.'
+            },
+            {
+                heading: 'Adapter le lavage : fréquence et température de l’eau',
+                body: 'Un lavage trop fréquent ou à l’eau très chaude peut accentuer la sécheresse. Espacer les shampooings lorsque cela est possible et privilégier une eau tiède aide à préserver le film protecteur naturel du cheveu et du cuir chevelu.'
+            },
+            {
+                heading: 'Le rôle de l’après-shampooing et du soin sans rinçage',
+                body: 'Un après-shampooing démêlant et un soin sans rinçage appliqué sur longueurs et pointes apportent une couche de confort supplémentaire, en particulier pour les cheveux longs ou fréquemment coiffés à la chaleur.'
+            },
+            {
+                heading: 'Protection face au soleil, au sel et au chlore',
+                body: 'Au Maroc, l’exposition estivale au soleil, à l’eau de mer ou aux piscines chlorées peut assécher davantage les cheveux. Rincer les cheveux à l’eau claire après la baignade et couvrir les longueurs (foulard, chapeau) limite cette agression répétée.'
+            },
+            {
+                heading: 'Habitudes du quotidien qui font la différence',
+                body: 'Réduire la fréquence d’utilisation des appareils chauffants, utiliser un protecteur thermique avant coiffage, et démêler les cheveux mouillés avec un peigne à dents larges plutôt qu’une brosse limitent la casse et la sécheresse au fil du temps.'
+            }
+        ],
+        faq: [],
+        sources: [AMELI_SOURCE],
+        relatedArticleSlugs: ['choisir-produit-selon-type-de-peau']
+    },
+    {
+        slug: 'hygiene-bebe-conseils',
+        title: 'Hygiène du bébé : les bases à connaître au quotidien',
+        description: 'Bain, change, choix de produits doux : les repères généraux pour l’hygiène quotidienne du bébé, sans se substituer à un avis médical.',
+        category: 'Bébé et maman',
+        categorySlug: 'bebe-maman',
+        heroImage: '/assets/products/category-fallback-bebe-maman.webp',
+        publishedDate: '2026-07-12',
+        updatedDate: '2026-07-12',
+        readingTimeMinutes: 5,
+        author: AUTHOR,
+        sections: [
+            {
+                heading: 'Les bases de l’hygiène quotidienne du bébé',
+                body: 'La peau du bébé est plus fine et plus sensible que celle d’un adulte. Une hygiène simple, avec des gestes doux et des produits adaptés, suffit dans la majorité des cas : il n’est pas nécessaire de multiplier les produits.'
+            },
+            {
+                heading: 'Choisir des produits doux et adaptés',
+                body: 'Des produits spécifiquement formulés pour les nourrissons, sans parfum ajouté et au pH adapté, sont généralement recommandés pour limiter le risque d’irritation. La mention « dès la naissance » ou « nourrisson » sur l’emballage aide à identifier ces formules.'
+            },
+            {
+                heading: 'La routine du change et la prévention de l’irritation',
+                body: 'Changer régulièrement la couche, nettoyer en douceur puis bien sécher la peau avant de la recouvrir sont des gestes simples qui limitent les inconforts liés à l’humidité prolongée.'
+            },
+            {
+                heading: 'Le bain : fréquence et précautions',
+                body: 'Un bain n’a pas besoin d’être quotidien pour assurer une bonne hygiène. Une eau tiède, un temps de bain court et un séchage soigneux, notamment dans les plis, sont des repères généraux utiles.'
+            },
+            {
+                heading: 'Quand consulter un professionnel de santé',
+                body: 'Une rougeur qui persiste, s’étend ou s’accompagne de fièvre, de pleurs inhabituels ou d’autres signes inquiétants doit être évaluée par un pédiatre, un médecin ou un pharmacien plutôt que traitée uniquement par des produits cosmétiques.'
+            }
+        ],
+        faq: [],
+        sources: [SANTE_MA_SOURCE, AMELI_SOURCE],
+        relatedArticleSlugs: ['comment-lire-etiquette-cosmetique']
+    },
+    {
+        slug: 'comment-lire-etiquette-cosmetique',
+        title: 'Comment lire une étiquette de produit cosmétique',
+        description: 'Liste INCI, date de péremption, précautions d’emploi : apprendre à décoder une étiquette cosmétique avant l’achat.',
+        category: 'Hygiène',
+        categorySlug: 'hygiene',
+        heroImage: '/assets/products/category-fallback-hygiene.webp',
+        publishedDate: '2026-07-12',
+        updatedDate: '2026-07-12',
+        readingTimeMinutes: 6,
+        author: AUTHOR,
+        sections: [
+            {
+                heading: 'Pourquoi lire l’étiquette avant d’acheter',
+                body: 'L’étiquette d’un produit cosmétique contient des informations réglementées qui permettent de vérifier sa composition, ses précautions d’emploi et sa durée de conservation. La lire prend quelques secondes et aide à faire un choix plus éclairé.'
+            },
+            {
+                heading: 'Comprendre la liste INCI',
+                body: 'La liste INCI (International Nomenclature of Cosmetic Ingredients) énumère les ingrédients d’un produit, généralement par ordre décroissant de concentration. Les noms sont standardisés au niveau international, ce qui permet de comparer des produits entre eux même s’ils viennent de marques différentes.'
+            },
+            {
+                heading: 'Repérer les mentions utiles',
+                body: 'Le symbole représentant un pot ouvert, accompagné d’un nombre suivi de « M », indique la durée d’utilisation recommandée après ouverture (Period After Opening). La quantité, les précautions d’emploi et les éventuelles mises en garde figurent également sur l’emballage.'
+            },
+            {
+                heading: 'Les allégations à interpréter avec prudence',
+                body: 'Des mentions comme « naturel », « clean » ou « dermatologiquement testé » ne sont pas toujours encadrées par une définition unique et universelle. Elles méritent d’être mises en perspective avec la liste d’ingrédients plutôt que prises comme une garantie à elles seules.'
+            },
+            {
+                heading: 'Où trouver de l’aide en cas de doute',
+                body: 'En cas de doute sur la composition d’un produit, sur une éventuelle réaction ou sur son adéquation avec une situation particulière (grossesse, peau réactive, traitement en cours), un pharmacien reste l’interlocuteur le plus accessible pour un avis adapté.'
+            }
+        ],
+        faq: [],
+        sources: [AMELI_SOURCE],
+        relatedArticleSlugs: ['soins-peau-sensible', 'choisir-produit-selon-type-de-peau']
+    },
+    {
+        slug: 'choisir-produit-selon-type-de-peau',
+        title: 'Choisir ses produits selon son type de peau : le guide de base',
+        description: 'Peau grasse, sèche, mixte, sensible ou normale : comment identifier son type de peau et adapter nettoyant, hydratation et protection solaire.',
+        category: 'Visage',
+        categorySlug: 'visage',
+        heroImage: '/assets/products/category-fallback-visage.webp',
+        publishedDate: '2026-07-12',
+        updatedDate: '2026-07-12',
+        readingTimeMinutes: 6,
+        author: AUTHOR,
+        sections: [
+            {
+                heading: 'Identifier son type de peau',
+                body: 'On distingue généralement les peaux grasses (brillance, pores marqués), sèches (tiraillements, aspect terne), mixtes (zone T grasse, joues plus sèches), sensibles (réactivité aux produits ou au climat) et normales (peu de déséquilibres visibles). Le type de peau peut aussi varier selon la saison.'
+            },
+            {
+                heading: 'Adapter le nettoyant à son type de peau',
+                body: 'Un gel moussant convient souvent aux peaux grasses ou mixtes, tandis qu’un lait ou une huile démaquillante est généralement mieux toléré par les peaux sèches ou sensibles. Le détail des textures est développé dans notre guide sur le <a href="/conseils/comment-choisir-nettoyant-visage/">choix du nettoyant visage</a>.'
+            },
+            {
+                heading: 'Adapter l’hydratation',
+                body: 'Une texture légère et non comédogène convient aux peaux grasses ou mixtes ; une texture plus riche, associant ingrédients humectants et occlusifs, est souvent recherchée pour les peaux sèches. Voir notre article dédié à l’<a href="/conseils/hydratation-peau-seche/">hydratation des peaux sèches</a>.'
+            },
+            {
+                heading: 'Ne pas oublier la protection solaire',
+                body: 'Quel que soit le type de peau, une protection solaire adaptée reste une étape recommandée en journée. Consultez notre guide sur le <a href="/conseils/comment-choisir-creme-solaire-maroc/">choix d’une crème solaire au Maroc</a> et sur la <a href="/conseils/difference-spf-30-spf-50/">différence entre les indices SPF</a>.'
+            },
+            {
+                heading: 'Récapitulatif : une routine de base par type de peau',
+                body: 'Dans tous les cas, une routine simple et régulière (nettoyant adapté, hydratation, protection solaire) donne de meilleurs résultats sur la durée qu’une accumulation de produits changés trop souvent. En cas de doute sur son type de peau ou en cas de réaction, l’avis d’un pharmacien reste la meilleure orientation.'
+            }
+        ],
+        faq: [],
+        sources: [AMELI_SOURCE],
+        relatedArticleSlugs: [
+            'comment-choisir-nettoyant-visage',
+            'hydratation-peau-seche',
+            'routine-peau-grasse',
+            'soins-peau-sensible',
+            'comment-choisir-creme-solaire-maroc'
+        ]
+    }
+];
+
+export const DISCLAIMER_TEXT = DISCLAIMER;
+export const DEFAULT_AUTHOR = AUTHOR;
+
+export function getArticleBySlug(slug) {
+    return articles.find((article) => article.slug === slug) || null;
+}

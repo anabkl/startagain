@@ -4,7 +4,14 @@ import { fileURLToPath } from 'node:url';
 
 import { catalogProducts, categories } from '../js/catalog-data.js';
 import { catalogApiIdBySlug } from '../js/catalog-api-id-map.js';
-import { categoryRoute, productRoute, SITE_ORIGIN, TRUST_PAGE_ROUTES } from '../js/seo-routes.js';
+import {
+    ARTICLE_ROUTES,
+    CONSEILS_INDEX_ROUTE,
+    categoryRoute,
+    productRoute,
+    SITE_ORIGIN,
+    TRUST_PAGE_ROUTES
+} from '../js/seo-routes.js';
 import legacySeoRedirect from '../netlify/edge-functions/legacy-seo-redirect.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -94,7 +101,7 @@ const sitemapFile = path.join(dist, 'sitemap.xml');
 const sitemap = await readFile(sitemapFile, 'utf8');
 const locations = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
 const lastmods = [...sitemap.matchAll(/<lastmod>([^<]+)<\/lastmod>/g)].map((match) => match[1]);
-const expectedCount = 2 + categories.length + catalogProducts.length + TRUST_PAGE_ROUTES.length;
+const expectedCount = 2 + categories.length + catalogProducts.length + TRUST_PAGE_ROUTES.length + ARTICLE_ROUTES.length;
 
 if (locations.length !== expectedCount) fail(`sitemap.xml: expected ${expectedCount} URLs, found ${locations.length}`);
 if (new Set(locations).size !== locations.length) fail('sitemap.xml: duplicate URLs found');
@@ -117,7 +124,8 @@ const expectedPaths = new Set([
     '/boutique/',
     ...categories.map(categoryRoute),
     ...catalogProducts.map(productRoute),
-    ...TRUST_PAGE_ROUTES
+    ...TRUST_PAGE_ROUTES,
+    ...ARTICLE_ROUTES
 ]);
 for (const route of expectedPaths) {
     if (!locations.includes(new URL(route, `${SITE_ORIGIN}/`).href)) fail(`sitemap.xml: missing ${route}`);
@@ -178,6 +186,11 @@ for (const url of locations) {
         const serialized = JSON.stringify(schemas);
         if (!serialized.includes('"priceCurrency":"MAD"')) fail(`${relative}: Product Offer must use MAD`);
         if (serialized.includes('"availability"')) fail(`${relative}: availability must be omitted until inventory is verified`);
+    }
+
+    const articlePathname = new URL(url).pathname;
+    if (articlePathname.startsWith('/conseils/') && articlePathname !== CONSEILS_INDEX_ROUTE) {
+        if (!types.includes('BlogPosting') && !types.includes('Article')) fail(`${relative}: missing BlogPosting/Article JSON-LD`);
     }
 }
 

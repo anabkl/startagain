@@ -2,7 +2,13 @@ import { access, readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { categories, catalogProducts } from '../js/catalog-data.js';
-import { categoryRoute, productRoute, TRUST_PAGE_ROUTES } from '../js/seo-routes.js';
+import {
+  ARTICLE_ROUTES,
+  categoryRoute,
+  productRoute,
+  RETURNS_ROUTE,
+  TRUST_PAGE_ROUTES
+} from '../js/seo-routes.js';
 
 const root = process.cwd();
 const requiredFiles = [
@@ -43,7 +49,9 @@ const generatedRoutes = new Set([
   '/boutique/',
   ...categories.map(categoryRoute),
   ...catalogProducts.map(productRoute),
-  ...TRUST_PAGE_ROUTES
+  ...TRUST_PAGE_ROUTES,
+  ...ARTICLE_ROUTES,
+  RETURNS_ROUTE
 ]);
 
 function isLocalReference(value) {
