@@ -31,6 +31,7 @@ function initMobileNavigation() {
         const isOpen = mainNav.classList.toggle('open');
         menuToggle.classList.toggle('active', isOpen);
         menuToggle.setAttribute('aria-expanded', String(isOpen));
+        menuToggle.setAttribute('aria-label', isOpen ? 'Fermer le menu' : 'Ouvrir le menu');
     });
 
     mainNav.querySelectorAll('a').forEach((link) => {
@@ -38,6 +39,7 @@ function initMobileNavigation() {
             mainNav.classList.remove('open');
             menuToggle.classList.remove('active');
             menuToggle.setAttribute('aria-expanded', 'false');
+            menuToggle.setAttribute('aria-label', 'Ouvrir le menu');
         });
     });
 }
