@@ -267,7 +267,15 @@ async function fetchOrders() {
         renderOrders();
     } catch (error) {
         console.error('Error fetching orders:', error);
-        ordersList.innerHTML = '<tr><td colspan="8" style="text-align:center; color:#d94343;">تعذر تحميل الطلبات.</td></tr>';
+        ordersList.innerHTML = `
+            <tr>
+                <td colspan="8" style="text-align:center; color:#d94343;">
+                    تعذر تحميل الطلبات. الخادم قد يكون في وضع الاستيقاظ.
+                    <button type="button" id="orders-inline-retry" class="btn btn--secondary" style="margin-inline-start:10px;">إعادة المحاولة</button>
+                </td>
+            </tr>
+        `;
+        document.getElementById('orders-inline-retry')?.addEventListener('click', fetchOrders);
     }
 }
 

@@ -1,5 +1,6 @@
 import {
     apiFetch,
+    apiFetchWithTimeout,
     clearSession,
     getAccessToken,
     getCurrentUser,
@@ -10,12 +11,18 @@ import { showToast } from './utils.js';
 
 export {
     apiFetch,
+    apiFetchWithTimeout,
     clearSession,
     getAccessToken,
     getCurrentUser,
     rehydrateSessionFromStorage,
     saveAuthSession
 };
+
+// Auth has no local fallback, but a Render cold start shouldn't hang the
+// login/register form forever — bound the wait and let the caller's status
+// UI + retry button take over past this point.
+const AUTH_TIMEOUT_MS = 20000;
 
 function normalizeRole(role) {
     return role === 'admin' ? 'admin' : 'user';
@@ -27,7 +34,7 @@ export async function registerUser(email, password, userData = {}, onError) {
             || `${userData?.firstName || ''} ${userData?.lastName || ''}`.trim()
             || 'Client';
 
-        await apiFetch('/auth/register', {
+        await apiFetchWithTimeout('/auth/register', {
             method: 'POST',
             body: JSON.stringify({
                 name: fullName,
@@ -38,7 +45,7 @@ export async function registerUser(email, password, userData = {}, onError) {
                 city: userData.city || '',
                 address: userData.address || ''
             })
-        });
+        }, AUTH_TIMEOUT_MS);
 
         const data = await loginUser(email, password, { suppressRedirect: true, rememberMe: true });
         showToast('تم إنشاء الحساب بنجاح.', 'success');
@@ -52,14 +59,14 @@ export async function registerUser(email, password, userData = {}, onError) {
 }
 
 export async function loginUser(email, password, { suppressRedirect = false, rememberMe = false } = {}) {
-    const data = await apiFetch('/auth/login', {
+    const data = await apiFetchWithTimeout('/auth/login', {
         method: 'POST',
         body: JSON.stringify({
             email: String(email || '').trim().toLowerCase(),
             password,
             rememberMe
         })
-    });
+    }, AUTH_TIMEOUT_MS);
 
     saveAuthSession(data, rememberMe && normalizeRole(data?.user?.role) === 'user');
     showToast('مرحباً بك مجدداً.', 'success');
@@ -73,7 +80,7 @@ export async function loginUser(email, password, { suppressRedirect = false, rem
 
 export async function logoutUser() {
     try {
-        await apiFetch('/auth/logout', { method: 'POST' }, { requiresAuth: true, retryOn401: false });
+        await apiFetchWithTimeout('/auth/logout', { method: 'POST' }, 6000, { requiresAuth: true, retryOn401: false });
     } catch {
         // Session cleanup should still happen if Render is asleep.
     } finally {

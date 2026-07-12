@@ -1,12 +1,13 @@
 import {
     apiFetch,
+    apiFetchWithTimeout,
     bindLogoutButton,
     getAccessToken,
     getCurrentUser,
     saveAuthSession
 } from './auth.js';
 import { listMyOrders } from './order-service.js';
-import { formatCurrency } from './utils.js';
+import { formatCurrency, renderStatusBanner, setStatus as setStatusText } from './utils.js';
 
 const FALLBACK_IMAGE = 'assets/products/product-placeholder.svg';
 const menuButtons = document.querySelectorAll('[data-profile-tab]');
@@ -17,6 +18,7 @@ const passwordForm = document.getElementById('password-form');
 const profileStatus = document.getElementById('profile-status');
 const passwordStatus = document.getElementById('password-status');
 const ordersList = document.getElementById('orders-list');
+const dashboardStatus = document.getElementById('dashboard-status');
 
 let profile = getCurrentUser() || {};
 
@@ -32,10 +34,7 @@ function setText(id, value) {
 }
 
 function setStatus(element, message, type = '') {
-    if (!element) return;
-    element.textContent = message;
-    element.dataset.type = type;
-    element.hidden = !message;
+    setStatusText(element, message, type);
 }
 
 function splitName(name = '') {
@@ -174,7 +173,7 @@ async function loadDashboard() {
     renderProfile(profile);
 
     try {
-        const dashboard = await apiFetch('/users/me/dashboard', {}, { requiresAuth: true });
+        const dashboard = await apiFetchWithTimeout('/users/me/dashboard', {}, 8000, { requiresAuth: true });
         const user = dashboard.user || dashboard.profile || profile;
         renderProfile(user);
         await loadProfileOrders(dashboard.orders || []);
@@ -182,9 +181,15 @@ async function loadDashboard() {
             access_token: getAccessToken(),
             user
         }, Boolean(localStorage.getItem('parapharmacie_access_token')));
+        renderStatusBanner(dashboardStatus, { state: 'idle' });
     } catch (error) {
         console.info('Using cached profile after dashboard fallback:', error?.message || error);
         await loadProfileOrders();
+        renderStatusBanner(dashboardStatus, {
+            state: 'error',
+            message: 'Le service est momentanément indisponible. Vos dernières informations enregistrées restent affichées.',
+            onRetry: loadDashboard
+        });
     }
 }
 
