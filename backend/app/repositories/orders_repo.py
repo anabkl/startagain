@@ -47,7 +47,9 @@ class OrdersRepository:
             query = {"_id": ObjectId(order_id)}
         except (InvalidId, TypeError):
             return None
-        self.col.update_one(query, {"$set": {"status": status, "updated_at": datetime.now(timezone.utc)}})
+        self.col.update_one(
+            query, {"$set": {"status": status, "updated_at": datetime.now(timezone.utc)}}
+        )
         return self.get_by_id(order_id)
 
     def delete(self, order_id: str) -> bool:

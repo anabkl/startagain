@@ -85,4 +85,6 @@ def update_order_status(order_id: str):
 @orders_bp.delete("/<order_id>")
 @admin_required
 def delete_order(order_id: str):
-    return success_response(data=get_order_service().delete_order(order_id), message="Order deleted")
+    return success_response(
+        data=get_order_service().delete_order(order_id), message="Order deleted"
+    )

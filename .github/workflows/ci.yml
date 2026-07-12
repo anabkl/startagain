@@ -44,5 +44,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - run: cp backend/.env.example backend/.env
       - run: docker compose -f docker-compose.yml config > /tmp/compose.out
       - run: docker compose -f docker-compose.dev.yml config > /tmp/compose-dev.out

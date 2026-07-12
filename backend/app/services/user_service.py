@@ -67,7 +67,11 @@ class UserService:
             "photoURL",
             "photo_url",
         }
-        updates = {key: value.strip() if isinstance(value, str) else value for key, value in payload.items() if key in allowed}
+        updates = {
+            key: value.strip() if isinstance(value, str) else value
+            for key, value in payload.items()
+            if key in allowed
+        }
         if "whatsapp" in updates and "phone" not in updates:
             updates["phone"] = updates["whatsapp"]
         if "phone" in updates and "whatsapp" not in updates:
