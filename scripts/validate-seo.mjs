@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { catalogProducts, categories } from '../js/catalog-data.js';
 import { catalogApiIdBySlug } from '../js/catalog-api-id-map.js';
 import { categoryRoute, productRoute, SITE_ORIGIN, TRUST_PAGE_ROUTES } from '../js/seo-routes.js';
+import legacySeoRedirect from '../netlify/edge-functions/legacy-seo-redirect.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
@@ -227,6 +228,18 @@ if (!redirects.includes('/* /404.html 404')) fail('_redirects: missing real 404 
 const robots = await readFile(path.join(dist, 'robots.txt'), 'utf8');
 if (!/^User-agent: \*$/m.test(robots) || !/^Allow: \/$/m.test(robots)) fail('robots.txt: crawler access is not explicitly allowed');
 if (!robots.includes(`Sitemap: ${SITE_ORIGIN}/sitemap.xml`)) fail('robots.txt: canonical sitemap directive is missing');
+
+const localLegacyResponse = await legacySeoRedirect(new Request(`${SITE_ORIGIN}/product.html?id=${catalogProducts[0].id}`));
+const apiLegacyResponse = await legacySeoRedirect(new Request(`${SITE_ORIGIN}/product.html?id=${catalogApiIdBySlug[catalogProducts[0].id]}`));
+const categoryLegacyResponse = await legacySeoRedirect(new Request(`${SITE_ORIGIN}/shop.html?category=visage`));
+for (const [label, response, expected] of [
+    ['local product ID', localLegacyResponse, `${SITE_ORIGIN}${productRoute(catalogProducts[0])}`],
+    ['API product ID', apiLegacyResponse, `${SITE_ORIGIN}${productRoute(catalogProducts[0])}`],
+    ['category query', categoryLegacyResponse, `${SITE_ORIGIN}${categoryRoute('visage')}`]
+]) {
+    if (response.status !== 301) fail(`edge redirect: ${label} must return 301`);
+    if (response.headers.get('location') !== expected) fail(`edge redirect: ${label} must strip the legacy query and target ${expected}`);
+}
 
 if (errors.length) {
     console.error(`SEO validation failed with ${errors.length} issue(s):`);

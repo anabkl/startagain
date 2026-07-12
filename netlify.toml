@@ -6,6 +6,14 @@
 [functions]
   node_bundler = "esbuild"
 
+[[edge_functions]]
+  path = "/product.html"
+  function = "legacy-seo-redirect"
+
+[[edge_functions]]
+  path = "/shop.html"
+  function = "legacy-seo-redirect"
+
 [[redirects]]
   from = "http://parapharmacie.me/*"
   to = "https://parapharmacie.me/:splat"
