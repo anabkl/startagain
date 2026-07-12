@@ -1,4 +1,4 @@
-import { apiFetch, getAccessToken } from './auth.js';
+import { apiFetch, apiFetchWithTimeout, getAccessToken } from './auth.js';
 import { isApiMode, isFirebaseEnabled } from './runtime-config.js';
 
 export const LOCAL_ORDERS_KEY = 'parapharmacie_orders';
@@ -208,10 +208,10 @@ export function toApiOrderPayload(orderData) {
 }
 
 async function saveOrderToApi(orderData) {
-    const payload = await apiFetch('/orders', {
+    const payload = await apiFetchWithTimeout('/orders', {
         method: 'POST',
         body: JSON.stringify(toApiOrderPayload(orderData))
-    }, { requiresAuth: Boolean(getAccessToken()) });
+    }, 15000, { requiresAuth: Boolean(getAccessToken()) });
 
     const normalized = normalizeOrder({
         ...orderData,
@@ -263,7 +263,7 @@ export async function listOrders() {
 
     if (isApiMode()) {
         try {
-            const payload = await apiFetch('/orders', {}, { requiresAuth: true });
+            const payload = await apiFetchWithTimeout('/orders', {}, 8000, { requiresAuth: true });
             return pickArray(payload)
                 .map((item) => normalizeOrder(item, item._id || item.id, 'api'))
                 .sort((a, b) => getOrderTimestamp(b) - getOrderTimestamp(a));
@@ -280,13 +280,13 @@ export async function listOrders() {
 export async function listMyOrders() {
     if (isApiMode() && getAccessToken()) {
         try {
-            const payload = await apiFetch('/orders/me', {}, { requiresAuth: true });
+            const payload = await apiFetchWithTimeout('/orders/me', {}, 8000, { requiresAuth: true });
             return pickArray(payload)
                 .map((item) => normalizeOrder(item, item._id || item.id, 'api'))
                 .sort((a, b) => getOrderTimestamp(b) - getOrderTimestamp(a));
         } catch {
             try {
-                const payload = await apiFetch('/orders/my-orders', {}, { requiresAuth: true });
+                const payload = await apiFetchWithTimeout('/orders/my-orders', {}, 8000, { requiresAuth: true });
                 return pickArray(payload)
                     .map((item) => normalizeOrder(item, item._id || item.id, 'api'))
                     .sort((a, b) => getOrderTimestamp(b) - getOrderTimestamp(a));

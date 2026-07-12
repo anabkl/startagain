@@ -4,11 +4,17 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { catalogProducts, categories } from '../js/catalog-data.js';
 import { catalogApiIdBySlug } from '../js/catalog-api-id-map.js';
+import { articles, DEFAULT_AUTHOR, DISCLAIMER_TEXT } from '../js/articles-data.js';
+import { returnsPolicy } from '../js/returns-policy-data.js';
 import {
     absoluteSiteUrl,
+    ARTICLE_ROUTES,
+    articleRoute,
     CATEGORY_ROUTE_MAP,
     categoryRoute,
+    CONSEILS_INDEX_ROUTE,
     productRoute,
+    RETURNS_ROUTE,
     SITE_ORIGIN,
     TRUST_PAGE_ROUTES
 } from '../js/seo-routes.js';
@@ -258,6 +264,7 @@ function header() {
                     <li><a href="${CATEGORY_ROUTE_MAP.solaire}">Solaire</a></li>
                     <li><a href="${CATEGORY_ROUTE_MAP['bebe-maman']}">Bébé et maman</a></li>
                     <li><a href="${CATEGORY_ROUTE_MAP['complements-alimentaires']}">Compléments</a></li>
+                    <li><a href="${CONSEILS_INDEX_ROUTE}">Conseils</a></li>
                     <li><a href="/a-propos/">À propos</a></li>
                 </ul></div>
             </nav>
@@ -282,7 +289,9 @@ function footer() {
                 <div><h2>Informations</h2>
                     <a href="/a-propos/">À propos</a>
                     <a href="/contact/">Contact</a>
+                    <a href="${CONSEILS_INDEX_ROUTE}">Conseils</a>
                     <a href="/livraison/">Commande et livraison</a>
+                    <a href="${RETURNS_ROUTE}">Retours et remboursements</a>
                     <a href="/confidentialite/">Confidentialité</a>
                     <a href="/conditions-utilisation/">Conditions d’utilisation</a>
                 </div>
@@ -547,6 +556,254 @@ function buildTrustPage(page) {
     });
 }
 
+function slugifyHeading(text) {
+    return String(text)
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+}
+
+function formatFrenchDate(isoDate) {
+    return new Date(isoDate).toLocaleDateString('fr-MA', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function faqSchema(faq) {
+    return {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: faq.map((item) => ({
+            '@type': 'Question',
+            name: item.q,
+            acceptedAnswer: { '@type': 'Answer', text: item.a }
+        }))
+    };
+}
+
+function articleTableOfContents(sections) {
+    if (sections.length < 3) return '';
+    return `<nav class="article-toc" aria-label="Sommaire de l’article">
+        <h2>Sommaire</h2>
+        <ol>${sections.map((section) => `<li><a href="#${slugifyHeading(section.heading)}">${escapeHtml(section.heading)}</a></li>`).join('')}</ol>
+    </nav>`;
+}
+
+function articleSections(sections) {
+    return sections.map((section) => `
+        <section class="article-section">
+            <h2 id="${slugifyHeading(section.heading)}">${escapeHtml(section.heading)}</h2>
+            <p>${section.body}</p>
+        </section>`).join('');
+}
+
+function articleFaqSection(faq) {
+    if (!faq.length) return '';
+    return `<section class="article-faq">
+        <h2>Questions fréquentes</h2>
+        ${faq.map((item) => `<article class="faq__item"><h3>${escapeHtml(item.q)}</h3><p>${escapeHtml(item.a)}</p></article>`).join('')}
+    </section>`;
+}
+
+function articleSourcesSection(sources) {
+    if (!sources.length) return '';
+    return `<section class="article-sources">
+        <h2>Sources et références</h2>
+        <ul>${sources.map((source) => `<li><a href="${escapeHtml(source.url)}" rel="noopener noreferrer" target="_blank">${escapeHtml(source.label)}</a></li>`).join('')}</ul>
+    </section>`;
+}
+
+function articleDisclaimer() {
+    return `<aside class="seo-medical-note"><strong>Information responsable</strong><p>${escapeHtml(DISCLAIMER_TEXT)}</p></aside>`;
+}
+
+function relatedArticlesSection(article) {
+    const related = (article.relatedArticleSlugs || [])
+        .map((slug) => articles.find((item) => item.slug === slug))
+        .filter(Boolean);
+    if (!related.length) return '';
+    return `<section class="related-section">
+        <div class="section-header"><div><p class="eyebrow">Pour aller plus loin</p><h2>Articles liés</h2></div></div>
+        <div class="related-grid">
+            ${related.map((item) => `<a href="${articleRoute(item)}" class="related-card"><img src="${escapeHtml(item.heroImage)}" alt="${escapeHtml(item.title)}" loading="lazy" width="320" height="180"><span>${escapeHtml(item.category)}</span><strong>${escapeHtml(item.title)}</strong></a>`).join('')}
+        </div>
+    </section>`;
+}
+
+function relatedProductsSection(article) {
+    const products = catalogProducts.filter((product) => product.categorySlug === article.categorySlug).slice(0, 4);
+    if (!products.length) return '';
+    return `<section class="related-section">
+        <div class="section-header"><div><p class="eyebrow">Références catalogue</p><h2>Produits ${escapeHtml(article.category)}</h2></div><a class="section-header__link" href="${categoryRoute(article.categorySlug)}">Voir la catégorie <i class="fa-solid fa-arrow-right"></i></a></div>
+        <div class="products__grid">${products.map(productCard).join('')}</div>
+    </section>`;
+}
+
+function buildArticlePage(article) {
+    const route = articleRoute(article);
+    const breadcrumbs = [
+        { name: 'Accueil', path: '/' },
+        { name: 'Conseils', path: CONSEILS_INDEX_ROUTE },
+        { name: article.title, path: route }
+    ];
+
+    const articleSchema = {
+        '@context': 'https://schema.org',
+        '@type': 'BlogPosting',
+        headline: article.title,
+        description: article.description,
+        image: [absoluteSiteUrl(article.heroImage)],
+        datePublished: article.publishedDate,
+        dateModified: article.updatedDate,
+        author: { '@type': 'Organization', name: article.author },
+        publisher: { '@type': 'Organization', name: 'Parapharmacie.me', url: `${SITE_ORIGIN}/` },
+        mainEntityOfPage: absoluteSiteUrl(route)
+    };
+
+    const schemas = [articleSchema, breadcrumbSchema(breadcrumbs)];
+    if (article.faq?.length) schemas.push(faqSchema(article.faq));
+
+    const content = `
+        <main class="section article-page">
+            <div class="container">
+                ${visibleBreadcrumb(breadcrumbs)}
+                <article class="article-detail">
+                    <header class="article-detail__header">
+                        <p class="eyebrow">${escapeHtml(article.category)}</p>
+                        <h1>${escapeHtml(article.title)}</h1>
+                        <p class="article-detail__lede">${escapeHtml(article.description)}</p>
+                        <div class="article-meta">
+                            <span><i class="fa-regular fa-user" aria-hidden="true"></i> ${escapeHtml(article.author)}</span>
+                            <span><i class="fa-regular fa-calendar" aria-hidden="true"></i> Publié le ${escapeHtml(formatFrenchDate(article.publishedDate))}</span>
+                            ${article.updatedDate && article.updatedDate !== article.publishedDate ? `<span><i class="fa-solid fa-rotate" aria-hidden="true"></i> Mis à jour le ${escapeHtml(formatFrenchDate(article.updatedDate))}</span>` : ''}
+                            <span><i class="fa-regular fa-clock" aria-hidden="true"></i> ${escapeHtml(String(article.readingTimeMinutes))} min de lecture</span>
+                        </div>
+                    </header>
+                    <img class="article-detail__hero" src="${escapeHtml(article.heroImage)}" alt="Illustration de la catégorie ${escapeHtml(article.category)}" loading="eager" fetchpriority="high" decoding="async" width="1200" height="675">
+                    ${articleTableOfContents(article.sections)}
+                    <div class="article-detail__body">
+                        ${articleSections(article.sections)}
+                    </div>
+                    ${articleFaqSection(article.faq || [])}
+                    ${articleDisclaimer()}
+                    ${articleSourcesSection(article.sources || [])}
+                </article>
+                ${relatedProductsSection(article)}
+                ${relatedArticlesSection(article)}
+            </div>
+        </main>`;
+
+    return documentHtml({
+        title: `${article.title} | Conseils Parapharmacie.me`,
+        description: article.description,
+        canonicalPath: route,
+        content,
+        ogType: 'article',
+        schemas
+    });
+}
+
+function buildConseilsIndexPage() {
+    const route = CONSEILS_INDEX_ROUTE;
+    const title = 'Conseils parapharmacie au Maroc | Parapharmacie.me';
+    const description = `Guides pratiques et non médicaux sur les soins visage, la protection solaire, les cheveux et l’hygiène quotidienne, rédigés pour un public marocain.`;
+    const breadcrumbs = [{ name: 'Accueil', path: '/' }, { name: 'Conseils', path: route }];
+    const categoriesInArticles = [...new Set(articles.map((article) => article.category))];
+
+    const articleCard = (article) => `
+        <a href="${articleRoute(article)}" class="article-card" data-reveal>
+            <img src="${escapeHtml(article.heroImage)}" alt="Illustration de la catégorie ${escapeHtml(article.category)}" loading="lazy" decoding="async" width="480" height="270">
+            <div class="article-card__body">
+                <span class="article-card__category">${escapeHtml(article.category)}</span>
+                <h3>${escapeHtml(article.title)}</h3>
+                <p>${escapeHtml(article.description)}</p>
+                <span class="article-card__meta"><i class="fa-regular fa-clock" aria-hidden="true"></i> ${escapeHtml(String(article.readingTimeMinutes))} min</span>
+            </div>
+        </a>`;
+
+    const groupedSections = categoriesInArticles.map((category) => {
+        const items = articles.filter((article) => article.category === category);
+        return `
+            <section class="conseils-category-group" id="${slugifyHeading(category)}">
+                <h2>${escapeHtml(category)}</h2>
+                <div class="article-grid">${items.map(articleCard).join('')}</div>
+            </section>`;
+    }).join('');
+
+    const content = `
+        <main>
+            <section class="page-hero"><div class="container page-hero__grid"><div>
+                <p class="eyebrow">Contenu éditorial</p>
+                <h1>Conseils parapharmacie au Maroc</h1>
+                <p>Des guides pratiques et non médicaux sur les soins visage, la protection solaire, les cheveux et l’hygiène quotidienne, rédigés par ${escapeHtml(DEFAULT_AUTHOR)} pour un public marocain. Ce contenu ne remplace pas l’avis d’un pharmacien ou d’un professionnel de santé.</p>
+            </div><div class="page-hero__badge"><i class="fa-solid fa-book-open"></i> ${articles.length} articles publiés</div></div></section>
+            <section class="section"><div class="container">
+                ${visibleBreadcrumb(breadcrumbs)}
+                <nav class="category-pills" aria-label="Catégories de conseils">
+                    ${categoriesInArticles.map((category) => `<a class="category-pill" href="#${slugifyHeading(category)}">${escapeHtml(category)}</a>`).join('')}
+                </nav>
+                ${groupedSections}
+            </div></section>
+        </main>`;
+
+    return documentHtml({
+        title,
+        description,
+        canonicalPath: route,
+        content,
+        schemas: [breadcrumbSchema(breadcrumbs)]
+    });
+}
+
+function returnsFieldRow(label, field) {
+    return `<div class="returns-field"><dt>${escapeHtml(label)}</dt><dd>${field.confirmed ? escapeHtml(String(field.value)) : '<em>En cours de confirmation</em>'}</dd></div>`;
+}
+
+function buildReturnsPage() {
+    const route = RETURNS_ROUTE;
+    const title = 'Retours et remboursements | Parapharmacie.me';
+    const description = 'Politique de retour et de remboursement Parapharmacie.me : conditions en cours de finalisation, contactez-nous pour toute demande.';
+    const breadcrumbs = [{ name: 'Accueil', path: '/' }, { name: 'Retours et remboursements', path: route }];
+
+    const content = `
+        <main><section class="page-hero"><div class="container">
+            <p class="eyebrow">Après votre commande</p>
+            <h1>Retours et remboursements</h1>
+            <p>Cette page décrit la structure générale de notre politique de retour. Certaines conditions précises sont en cours de validation par la pharmacie et seront publiées dès leur confirmation.</p>
+        </div></section>
+        <section class="section"><div class="container seo-prose">
+            ${visibleBreadcrumb(breadcrumbs)}
+            <p class="seo-page-updated">Dernière mise à jour de cette page : ${escapeHtml(formatFrenchDate(returnsPolicy.lastReviewedDate))}</p>
+            <div class="returns-status-note"><strong>Statut :</strong> les conditions détaillées de retour sont en cours de finalisation avec la pharmacie. En attendant leur publication, contactez-nous directement pour toute demande de retour ou de remboursement : nous traiterons votre demande au cas par cas.</div>
+            <dl class="returns-fields">
+                ${returnsFieldRow('Types de retour acceptés', returnsPolicy.acceptedReturnTypes)}
+                ${returnsFieldRow('Délai de retour', returnsPolicy.returnWindowDays)}
+                ${returnsFieldRow('Produits non ouverts non défectueux', returnsPolicy.unopenedNonDefectiveAccepted)}
+                ${returnsFieldRow('Produits d’hygiène / cosmétiques ouverts', returnsPolicy.openedHygieneCosmeticPolicy)}
+                ${returnsFieldRow('Échanges', returnsPolicy.exchangesAllowed)}
+                ${returnsFieldRow('Frais de retour', returnsPolicy.returnShippingFeePolicy)}
+                ${returnsFieldRow('Mode de remboursement', returnsPolicy.refundMethod)}
+                ${returnsFieldRow('Délai de remboursement', returnsPolicy.refundProcessingTime)}
+            </dl>
+            <h2>Comment nous contacter pour un retour</h2>
+            <div class="seo-contact-grid">
+                <a class="trust-card" href="tel:+212520828417"><i class="fa-solid fa-phone"></i><h3>Téléphone</h3><p>0520 828 417</p></a>
+                <a class="trust-card" href="https://wa.me/212675698351" rel="noreferrer"><i class="fa-brands fa-whatsapp"></i><h3>WhatsApp</h3><p>+212 675 698 351</p></a>
+                <a class="trust-card" href="mailto:Hamidkaram554@gmail.com"><i class="fa-regular fa-envelope"></i><h3>E-mail</h3><p>Hamidkaram554@gmail.com</p></a>
+            </div>
+            <p>Pour toute demande, indiquez votre numéro de commande, la référence concernée et le motif de la demande. Nous reviendrons vers vous pour confirmer la marche à suivre.</p>
+        </div></section></main>`;
+
+    return documentHtml({
+        title,
+        description,
+        canonicalPath: route,
+        content,
+        robots: 'noindex, follow',
+        schemas: [breadcrumbSchema(breadcrumbs)]
+    });
+}
+
 function buildNotFoundPage() {
     return documentHtml({
         title: 'Page introuvable | Parapharmacie.me',
@@ -621,6 +878,15 @@ export async function generateSeoPages({ outputDir = defaultOutputDir } = {}) {
         await writeRoute(outputDir, page.route, buildTrustPage(page));
     }
 
+    await writeRoute(outputDir, CONSEILS_INDEX_ROUTE, buildConseilsIndexPage());
+    for (const article of articles) {
+        await writeRoute(outputDir, articleRoute(article), buildArticlePage(article));
+    }
+
+    // Noindexed and deliberately excluded from the sitemap until the
+    // pharmacy confirms the return-policy fields in js/returns-policy-data.js.
+    await writeRoute(outputDir, RETURNS_ROUTE, buildReturnsPage());
+
     await writeRoute(outputDir, '/404.html', buildNotFoundPage());
     await writeRedirects(outputDir);
 
@@ -628,7 +894,12 @@ export async function generateSeoPages({ outputDir = defaultOutputDir } = {}) {
         throw new Error('Trust page routes are out of sync with js/seo-routes.js.');
     }
 
-    console.log(`Generated ${catalogProducts.length} product pages, ${categories.length} category pages, the boutique, trust pages, 404, and redirects.`);
+    const expectedArticleRoutes = [CONSEILS_INDEX_ROUTE, ...articles.map((article) => articleRoute(article))];
+    if (expectedArticleRoutes.some((route) => !ARTICLE_ROUTES.includes(route))) {
+        throw new Error('Article routes are out of sync with js/seo-routes.js.');
+    }
+
+    console.log(`Generated ${catalogProducts.length} product pages, ${categories.length} category pages, the boutique, trust pages, ${articles.length} conseils articles, the returns page, 404, and redirects.`);
 }
 
 const invokedPath = process.argv[1] ? pathToFileURL(path.resolve(process.argv[1])).href : '';

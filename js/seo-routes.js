@@ -1,3 +1,5 @@
+import { articles } from './articles-data.js';
+
 export const SITE_ORIGIN = 'https://parapharmacie.me';
 
 export const CATEGORY_ROUTE_MAP = Object.freeze({
@@ -22,6 +24,30 @@ export const TRUST_PAGE_ROUTES = Object.freeze([
     '/confidentialite/',
     '/conditions-utilisation/'
 ]);
+
+export const CONSEILS_INDEX_ROUTE = '/conseils/';
+
+// Computed from js/articles-data.js so this list can never drift from what
+// generate-seo-pages.mjs actually builds — unlike TRUST_PAGE_ROUTES, which
+// is hand-maintained alongside a separate `trustPages` array.
+export const ARTICLE_ROUTES = Object.freeze([
+    CONSEILS_INDEX_ROUTE,
+    ...articles.map((article) => `/conseils/${article.slug}/`)
+]);
+
+// Deliberately NOT part of TRUST_PAGE_ROUTES or ARTICLE_ROUTES: no approved
+// returns policy exists yet (see js/returns-policy-data.js), so this route
+// must stay out of the sitemap and noindexed until the business confirms
+// the policy fields. Only validate.mjs's generatedRoutes should reference
+// this export (to avoid a false "broken internal link" from footer/trust
+// page links) — never generate-sitemap.mjs or validate-seo.mjs's
+// expectedPaths.
+export const RETURNS_ROUTE = '/retours-remboursements/';
+
+export function articleRoute(articleOrSlug) {
+    const slug = typeof articleOrSlug === 'string' ? articleOrSlug : articleOrSlug?.slug;
+    return slug ? `/conseils/${encodeURIComponent(slug)}/` : CONSEILS_INDEX_ROUTE;
+}
 
 export function categoryRoute(categoryOrSlug) {
     const slug = typeof categoryOrSlug === 'string'

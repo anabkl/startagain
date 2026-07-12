@@ -22,7 +22,7 @@ async function persistPreferences() {
         await apiFetch('/users/preferences', {
             method: 'PATCH',
             body: JSON.stringify({ theme: currentTheme })
-        }, { requiresAuth: true, showLoading: false });
+        }, { requiresAuth: true });
     } catch {
         // Local theme is already saved, so the UI should never feel broken.
     }

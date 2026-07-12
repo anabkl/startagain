@@ -7,6 +7,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { catalogProducts, categories } from '../js/catalog-data.js';
 import {
     absoluteSiteUrl,
+    ARTICLE_ROUTES,
     categoryRoute,
     productRoute,
     TRUST_PAGE_ROUTES
@@ -62,13 +63,15 @@ export async function generateSitemap({ outputDir = root } = {}) {
         'js/static-storefront.js'
     ]);
     const trustLastmod = await latestFileDate(['scripts/generate-seo-pages.mjs']);
+    const articlesLastmod = await latestFileDate(['js/articles-data.js', 'scripts/generate-seo-pages.mjs']);
 
     const urls = [
         { path: '/', lastmod: homepageLastmod },
         { path: '/boutique/', lastmod: catalogLastmod },
         ...categories.map((category) => ({ path: categoryRoute(category), lastmod: catalogLastmod })),
         ...catalogProducts.map((product) => ({ path: productRoute(product), lastmod: catalogLastmod })),
-        ...TRUST_PAGE_ROUTES.map((route) => ({ path: route, lastmod: trustLastmod }))
+        ...TRUST_PAGE_ROUTES.map((route) => ({ path: route, lastmod: trustLastmod })),
+        ...ARTICLE_ROUTES.map((route) => ({ path: route, lastmod: articlesLastmod }))
     ];
 
     const uniqueUrls = [...new Map(urls.map((entry) => [entry.path, entry])).values()];

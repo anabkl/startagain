@@ -4,6 +4,7 @@ import {
     loginUser,
     rehydrateSessionFromStorage
 } from './auth.js';
+import { setStatus as setStatusText } from './utils.js';
 
 const form = document.getElementById('login-form');
 const emailInput = document.getElementById('login-email');
@@ -14,10 +15,7 @@ const submitButton = document.getElementById('login-submit');
 const statusEl = document.getElementById('login-status');
 
 function setStatus(message = '', type = '') {
-    if (!statusEl) return;
-    statusEl.textContent = message;
-    statusEl.dataset.type = type;
-    statusEl.hidden = !message;
+    setStatusText(statusEl, message, type);
 }
 
 function normalizeRole(role) {

@@ -2,12 +2,15 @@ import { getCart, saveCart } from './main.js';
 import { getProductImage } from './catalog.js';
 import { buildWhatsAppOrderMessage, saveOrder } from './order-service.js';
 import { getCurrentUser } from './auth.js';
-import { showToast, formatCurrency } from './utils.js';
+import { showToast, formatCurrency, renderStatusBanner } from './utils.js';
 
 const checkoutForm = document.getElementById('checkout-form');
 const orderTotalEl = document.getElementById('order-total-amount');
 const summaryList = document.getElementById('summary-items-list');
 const subtotalEl = document.getElementById('order-subtotal-amount');
+const checkoutStatus = document.getElementById('checkout-status');
+
+let isSubmitting = false;
 
 function sanitizeHtml(value) {
     const div = document.createElement('div');
@@ -110,17 +113,33 @@ function normalizeMoroccanPhone(phone) {
 
 async function processOrder(event) {
     event.preventDefault();
+    if (isSubmitting) return;
 
-    const btn = event.submitter || document.querySelector('.btn-confirm');
-    const originalText = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Confirmation...';
+    const buttons = [...document.querySelectorAll('.btn-confirm')];
+    const originalHtml = buttons.map((el) => el.innerHTML);
+
+    function lockButtons() {
+        isSubmitting = true;
+        buttons.forEach((el) => {
+            el.disabled = true;
+            el.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Confirmation...';
+        });
+    }
+
+    function unlockButtons() {
+        isSubmitting = false;
+        buttons.forEach((el, index) => {
+            el.disabled = false;
+            el.innerHTML = originalHtml[index];
+        });
+    }
+
+    lockButtons();
 
     const cart = getCart();
     if (cart.length === 0) {
         showToast('Votre panier est vide.', 'error');
-        btn.disabled = false;
-        btn.innerHTML = originalText;
+        unlockButtons();
         return;
     }
 
@@ -134,15 +153,13 @@ async function processOrder(event) {
 
     if (!firstName || !lastName || !phoneOriginal || !city || !address) {
         showToast('Veuillez remplir les champs obligatoires.', 'error');
-        btn.disabled = false;
-        btn.innerHTML = originalText;
+        unlockButtons();
         return;
     }
 
     if (!phoneNormalized) {
         showToast('Numero WhatsApp invalide. Exemples: 0675698351, +212675698351 ou 212675698351.', 'error');
-        btn.disabled = false;
-        btn.innerHTML = originalText;
+        unlockButtons();
         return;
     }
 
@@ -176,6 +193,11 @@ async function processOrder(event) {
         total
     };
 
+    renderStatusBanner(checkoutStatus, {
+        state: 'pending',
+        message: 'Enregistrement de votre commande en cours...'
+    });
+
     try {
         const savedOrder = await saveOrder(orderPayload);
         const orderId = savedOrder.id;
@@ -188,6 +210,7 @@ async function processOrder(event) {
         localStorage.setItem('parapharmacie_last_order_id', orderId);
         localStorage.setItem('parapharmacie_last_order_source', source);
         saveCart([]);
+        renderStatusBanner(checkoutStatus, { state: 'idle' });
         showToast('Commande enregistree avec succes.', 'success');
 
         setTimeout(() => {
@@ -196,8 +219,12 @@ async function processOrder(event) {
     } catch (error) {
         console.error('Order error:', error);
         showToast(error.message || 'Impossible de confirmer la commande pour le moment.', 'error');
-        btn.disabled = false;
-        btn.innerHTML = originalText;
+        renderStatusBanner(checkoutStatus, {
+            state: 'error',
+            message: 'Le service est momentanément indisponible. Veuillez réessayer.',
+            onRetry: () => processOrder(event)
+        });
+        unlockButtons();
     }
 }
 

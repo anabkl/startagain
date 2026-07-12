@@ -6,8 +6,6 @@ export const API_BASE = window.API_BASE
     || localStorage.getItem(API_BASE_KEY)
     || 'https://startagain.onrender.com/api/v1';
 
-let activeRequests = 0;
-
 function parseJson(text, fallback = {}) {
     try {
         return JSON.parse(text);
@@ -22,40 +20,9 @@ function normalizeErrorMessage(message) {
     if (/email already exists/i.test(message)) return 'هذا البريد الإلكتروني مستخدم بالفعل.';
     if (/account temporarily locked/i.test(message)) return 'تم قفل الحساب مؤقتًا بسبب محاولات كثيرة.';
     if (/validation error/i.test(message)) return 'البيانات المدخلة غير صالحة.';
-    if (/abort|aborted/i.test(message)) return 'La connexion prend plus de temps que prevu.';
-    if (/failed to fetch|network/i.test(message)) return 'الخادم يستيقظ الآن. المرجو المحاولة بعد لحظات.';
+    if (/abort|aborted/i.test(message)) return 'Le service est momentanément indisponible. Veuillez réessayer.';
+    if (/failed to fetch|network/i.test(message)) return 'Le service est momentanément indisponible. Veuillez réessayer.';
     return message;
-}
-
-function ensureLoadingOverlay() {
-    let overlay = document.getElementById('global-loading-overlay');
-    if (overlay) return overlay;
-
-    overlay = document.createElement('div');
-    overlay.id = 'global-loading-overlay';
-    overlay.className = 'loading-overlay';
-    overlay.innerHTML = `
-        <div class="loading-box" role="status" aria-live="polite" aria-label="Chargement">
-            <div class="loading-spinner" aria-hidden="true"></div>
-            <p class="loading-eyebrow">Render Free Tier</p>
-            <h2>Chargement, Merci de patienter...</h2>
-            <p>المرجو الانتظار، الخادم يستيقظ الآن...</p>
-        </div>
-    `;
-    document.body.appendChild(overlay);
-    return overlay;
-}
-
-export function showGlobalLoader() {
-    activeRequests += 1;
-    ensureLoadingOverlay().classList.add('is-visible');
-}
-
-export function hideGlobalLoader() {
-    activeRequests = Math.max(0, activeRequests - 1);
-    if (activeRequests === 0) {
-        ensureLoadingOverlay().classList.remove('is-visible');
-    }
 }
 
 export function getAccessToken() {
@@ -132,9 +99,7 @@ async function refreshAccessToken() {
     }
 }
 
-export async function apiFetch(path, options = {}, { requiresAuth = false, retryOn401 = true, showLoading = true } = {}) {
-    if (showLoading) showGlobalLoader();
-
+export async function apiFetch(path, options = {}, { requiresAuth = false, retryOn401 = true } = {}) {
     try {
         const headers = {
             'Content-Type': 'application/json',
@@ -155,7 +120,7 @@ export async function apiFetch(path, options = {}, { requiresAuth = false, retry
         if (response.status === 401 && requiresAuth && retryOn401) {
             const refreshed = await refreshAccessToken();
             if (refreshed) {
-                return apiFetch(path, options, { requiresAuth, retryOn401: false, showLoading: false });
+                return apiFetch(path, options, { requiresAuth, retryOn401: false });
             }
             clearSession();
             throw new Error('Session expired');
@@ -169,7 +134,19 @@ export async function apiFetch(path, options = {}, { requiresAuth = false, retry
         return payload.data;
     } catch (error) {
         throw new Error(normalizeErrorMessage(error.message));
+    }
+}
+
+/**
+ * Bounds an apiFetch call with a timeout so a sleeping Render instance
+ * can't hold the caller (and its UI) hostage indefinitely.
+ */
+export async function apiFetchWithTimeout(path, options = {}, timeoutMs = 8000, fetchOptions = {}) {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        return await apiFetch(path, { ...options, signal: controller.signal }, fetchOptions);
     } finally {
-        if (showLoading) hideGlobalLoader();
+        window.clearTimeout(timeout);
     }
 }

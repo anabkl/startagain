@@ -508,59 +508,6 @@ body {
     color: #0d7c3e;
 }
 
-.loading-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    display: none;
-    place-items: center;
-    padding: 24px;
-    background: rgba(15, 23, 42, 0.72);
-    backdrop-filter: blur(14px);
-}
-
-.loading-overlay.is-visible {
-    display: grid;
-}
-
-.loading-box {
-    width: min(430px, 100%);
-    padding: 34px;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 22px;
-    background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(246,251,249,0.94));
-    color: #14213d;
-    box-shadow: 0 34px 90px rgba(0, 0, 0, 0.32);
-    text-align: center;
-}
-
-:root[data-theme="dark"] .loading-box {
-    background: linear-gradient(180deg, #1e293b, #172033);
-    color: #e5eef7;
-}
-
-.loading-spinner {
-    width: 64px;
-    height: 64px;
-    margin: 0 auto 18px;
-    border: 7px solid rgba(15, 127, 100, 0.14);
-    border-top-color: #0d7c3e;
-    border-radius: 50%;
-    animation: spin 0.9s linear infinite;
-}
-
-.loading-eyebrow {
-    margin: 0 0 8px;
-    color: #0d7c3e;
-    font-size: 0.76rem;
-    font-weight: 900;
-    text-transform: uppercase;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
 .admin-checkbox {
     display: flex;
     align-items: center;
