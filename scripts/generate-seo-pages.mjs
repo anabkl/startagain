@@ -7,6 +7,18 @@ import { catalogApiIdBySlug } from '../js/catalog-api-id-map.js';
 import { articles, DEFAULT_AUTHOR, DISCLAIMER_TEXT } from '../js/articles-data.js';
 import { returnsPolicy } from '../js/returns-policy-data.js';
 import {
+    ADDRESS,
+    CONTACT,
+    DELIVERY,
+    MAPS_URL,
+    OPENING_HOURS_DISPLAY,
+    OPERATOR,
+    SERVICE_AREA,
+    SOCIAL,
+    organizationSchema,
+    pharmacySchema
+} from '../js/business-config.js';
+import {
     absoluteSiteUrl,
     ARTICLE_ROUTES,
     articleRoute,
@@ -85,6 +97,14 @@ const categorySeo = {
     }
 };
 
+function contactCardsHtml(headingTag = 'h2') {
+    return `<div class="seo-contact-grid">
+                <a class="trust-card" href="${CONTACT.phone.href}"><i class="fa-solid fa-phone"></i><${headingTag}>Téléphone</${headingTag}><p>${escapeHtml(CONTACT.phone.display)}</p></a>
+                <a class="trust-card" href="${CONTACT.whatsapp.href}" rel="noreferrer"><i class="fa-brands fa-whatsapp"></i><${headingTag}>WhatsApp</${headingTag}><p>${escapeHtml(CONTACT.whatsapp.display)}</p></a>
+                <a class="trust-card" href="${MAPS_URL}" rel="noreferrer" target="_blank"><i class="fa-solid fa-location-dot"></i><${headingTag}>Adresse</${headingTag}><p>${escapeHtml(ADDRESS.full)}</p></a>
+            </div>`;
+}
+
 const trustPages = [
     {
         route: '/a-propos/',
@@ -107,26 +127,34 @@ const trustPages = [
     {
         route: '/contact/',
         title: 'Contact | Parapharmacie.me',
-        description: 'Contactez Parapharmacie.me par téléphone, WhatsApp ou e-mail pour confirmer une référence, un prix ou une commande.',
+        description: 'Contactez Pharmacie Tawfiq à Khouribga par téléphone ou WhatsApp pour confirmer une référence, un prix ou une commande.',
         eyebrow: 'Nous contacter',
         h1: 'Contact Parapharmacie.me',
         content: `
-            <p>Utilisez les coordonnées actuellement affichées par le site pour demander la confirmation d’une référence, d’un prix ou d’une commande.</p>
-            <div class="seo-contact-grid">
-                <a class="trust-card" href="tel:+212520828417"><i class="fa-solid fa-phone"></i><h2>Téléphone</h2><p>0520 828 417</p></a>
-                <a class="trust-card" href="https://wa.me/212675698351" rel="noreferrer"><i class="fa-brands fa-whatsapp"></i><h2>WhatsApp</h2><p>+212 675 698 351</p></a>
-                <a class="trust-card" href="mailto:Hamidkaram554@gmail.com"><i class="fa-regular fa-envelope"></i><h2>E-mail</h2><p>Hamidkaram554@gmail.com</p></a>
-            </div>
-            <p>Le site ne publie pas de délai de réponse garanti. N’envoyez pas d’informations médicales sensibles par WhatsApp ou e-mail. Pour une urgence ou un avis médical, contactez un professionnel de santé adapté.</p>`
+            <p>Parapharmacie.me est le site du catalogue en ligne de ${escapeHtml(OPERATOR.displayName)}, à Khouribga. Utilisez les coordonnées ci-dessous pour demander la confirmation d’une référence, d’un prix ou d’une commande.</p>
+            ${contactCardsHtml('h2')}
+            <h2>Adresse et horaires</h2>
+            <p>${escapeHtml(ADDRESS.full)}</p>
+            <ul>
+                ${OPENING_HOURS_DISPLAY.map((line) => `<li>${escapeHtml(line)}</li>`).join('')}
+            </ul>
+            <p>Zone de service : ${escapeHtml(SERVICE_AREA)}. Retrouvez-nous aussi sur <a href="${SOCIAL.instagram}" rel="noreferrer" target="_blank">Instagram</a> et <a href="${SOCIAL.facebook}" rel="noreferrer" target="_blank">Facebook</a>.</p>
+            <p>Le site ne publie pas de délai de réponse garanti. N’envoyez pas d’informations médicales sensibles par WhatsApp. Pour une urgence ou un avis médical, contactez un professionnel de santé adapté.</p>`
     },
     {
         route: '/livraison/',
         title: 'Commande et livraison | Parapharmacie.me',
-        description: 'Comprenez comment Parapharmacie.me collecte la ville et l’adresse, puis confirme les frais et modalités avant expédition.',
+        description: 'Frais de livraison Parapharmacie.me : 15 MAD à Khouribga et les environs, 35 MAD vers les autres villes du Maroc desservies.',
         eyebrow: 'Avant de commander',
         h1: 'Commande et modalités de livraison',
         content: `
-            <p>Le formulaire de commande demande une ville et une adresse afin de préparer la demande. Le panier indique les frais de livraison comme « à confirmer » : aucun tarif, délai ou zone de couverture non vérifié n’est promis sur cette page.</p>
+            <p>Le formulaire de commande demande une ville et une adresse afin de préparer la demande.</p>
+            <h2>Frais de livraison</h2>
+            <ul>
+                <li>${escapeHtml(DELIVERY.local.area)} : ${DELIVERY.local.feeMAD} MAD</li>
+                <li>${escapeHtml(DELIVERY.other.area)} : ${DELIVERY.other.feeMAD} MAD</li>
+            </ul>
+            <p>Le délai de livraison précis et la couverture exacte hors de ces zones restent à confirmer au moment de la commande. Le paiement s’effectue actuellement à la livraison ; le paiement en ligne CMI et Apple Pay sont prévus mais pas encore actifs.</p>
             <h2>Étapes affichées par le site</h2>
             <ol>
                 <li>Ajoutez les références souhaitées au panier.</li>
@@ -148,7 +176,7 @@ const trustPages = [
             <h2>Services sollicités</h2>
             <p>Le site communique avec son API pour le catalogue, le compte et les commandes. Si vous choisissez le bouton WhatsApp, vous quittez Parapharmacie.me et les règles de confidentialité de WhatsApp s’appliquent.</p>
             <h2>Vos choix et vos demandes</h2>
-            <p>Vous pouvez vider votre panier et les données locales depuis votre navigateur. Pour une question, une demande d’accès, de rectification ou de suppression concernant les données transmises, écrivez à <a href="mailto:Hamidkaram554@gmail.com">Hamidkaram554@gmail.com</a>. N’envoyez pas d’informations médicales sensibles par ce canal.</p>`
+            <p>Vous pouvez vider votre panier et les données locales depuis votre navigateur. Pour une question, une demande d’accès, de rectification ou de suppression concernant les données transmises, contactez-nous par <a href="${CONTACT.whatsapp.href}" rel="noreferrer">WhatsApp</a> ou par <a href="${CONTACT.phone.href}">téléphone</a>. N’envoyez pas d’informations médicales sensibles par ce canal.</p>`
     },
     {
         route: '/conditions-utilisation/',
@@ -295,6 +323,17 @@ function footer() {
                     <a href="/confidentialite/">Confidentialité</a>
                     <a href="/conditions-utilisation/">Conditions d’utilisation</a>
                 </div>
+                <div><h2>${escapeHtml(OPERATOR.displayName)}</h2>
+                    <address class="footer__address">${escapeHtml(ADDRESS.streetAddress)}<br>${escapeHtml(ADDRESS.addressLocality)} ${escapeHtml(ADDRESS.postalCode)}, ${escapeHtml(ADDRESS.countryName)}</address>
+                    <a href="${CONTACT.phone.href}">${escapeHtml(CONTACT.phone.display)}</a>
+                    <a href="${CONTACT.whatsapp.href}" rel="noreferrer">WhatsApp : ${escapeHtml(CONTACT.whatsapp.display)}</a>
+                    <a href="${MAPS_URL}" rel="noreferrer">Voir sur Google Maps</a>
+                    <p class="footer__hours">${OPENING_HOURS_DISPLAY.map(escapeHtml).join('<br>')}</p>
+                    <div class="footer__social">
+                        <a href="${SOCIAL.instagram}" rel="noreferrer" aria-label="Instagram ${escapeHtml(OPERATOR.displayName)}"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="${SOCIAL.facebook}" rel="noreferrer" aria-label="Facebook ${escapeHtml(OPERATOR.displayName)}"><i class="fa-brands fa-facebook"></i></a>
+                    </div>
+                </div>
             </div>
             <div class="footer__bottom"><div class="container">© 2026 Parapharmacie.me — information produit sans conseil médical.</div></div>
         </footer>`;
@@ -339,7 +378,7 @@ function documentHtml({ title, description, canonicalPath, content, schemas = []
     ${header()}
     ${content}
     ${footer()}
-    <a href="https://wa.me/212675698351" class="whatsapp-float" rel="noreferrer" aria-label="Contacter Parapharmacie.me sur WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+    <a href="${CONTACT.whatsapp.href}" class="whatsapp-float" rel="noreferrer" aria-label="Contacter Parapharmacie.me sur WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
     <script type="module" src="/js/main.js"></script>
     <script type="module" src="/js/static-storefront.js"></script>
 </body>
@@ -513,7 +552,7 @@ function buildProductPage(product) {
                                 <button class="qty-control__btn" type="button" data-static-qty="1" aria-label="Augmenter la quantité">+</button>
                             </div>
                             <button class="btn btn--primary" type="button" data-seo-add-product="${escapeHtml(product.id)}"><i class="fa-solid fa-cart-plus"></i> Ajouter au panier</button>
-                            <a class="btn btn--whatsapp" href="https://wa.me/212675698351?text=${encodeURIComponent(`Bonjour, je souhaite confirmer la disponibilité de ${product.name} (${route})`)}" rel="noreferrer"><i class="fa-brands fa-whatsapp"></i> Confirmer par WhatsApp</a>
+                            <a class="btn btn--whatsapp" href="${CONTACT.whatsapp.href}?text=${encodeURIComponent(`Bonjour, je souhaite confirmer la disponibilité de ${product.name} (${route})`)}" rel="noreferrer"><i class="fa-brands fa-whatsapp"></i> Confirmer par WhatsApp</a>
                         </div>
                         <p class="product-detail__description">${escapeHtml(description)}</p>
                         <dl class="seo-product-facts">
@@ -786,11 +825,7 @@ function buildReturnsPage() {
                 ${returnsFieldRow('Délai de remboursement', returnsPolicy.refundProcessingTime)}
             </dl>
             <h2>Comment nous contacter pour un retour</h2>
-            <div class="seo-contact-grid">
-                <a class="trust-card" href="tel:+212520828417"><i class="fa-solid fa-phone"></i><h3>Téléphone</h3><p>0520 828 417</p></a>
-                <a class="trust-card" href="https://wa.me/212675698351" rel="noreferrer"><i class="fa-brands fa-whatsapp"></i><h3>WhatsApp</h3><p>+212 675 698 351</p></a>
-                <a class="trust-card" href="mailto:Hamidkaram554@gmail.com"><i class="fa-regular fa-envelope"></i><h3>E-mail</h3><p>Hamidkaram554@gmail.com</p></a>
-            </div>
+            ${contactCardsHtml('h3')}
             <p>Pour toute demande, indiquez votre numéro de commande, la référence concernée et le motif de la demande. Nous reviendrons vers vous pour confirmer la marche à suivre.</p>
         </div></section></main>`;
 
@@ -861,9 +896,43 @@ async function injectHomepageProducts(outputDir) {
     await writeFile(homepagePath, homepage.replace(new RegExp(`${start}[\\s\\S]*?${end}`), replacement));
 }
 
+async function injectHomepageJsonLd(outputDir) {
+    const homepagePath = path.join(outputDir, 'index.html');
+    const homepage = await readFile(homepagePath, 'utf8');
+    const start = '<!-- seo:jsonld:start -->';
+    const end = '<!-- seo:jsonld:end -->';
+    if (!homepage.includes(start) || !homepage.includes(end)) {
+        throw new Error('Homepage JSON-LD markers are missing.');
+    }
+
+    const graph = {
+        '@context': 'https://schema.org',
+        '@graph': [
+            {
+                '@type': 'WebSite',
+                '@id': 'https://parapharmacie.me/#website',
+                name: 'Parapharmacie.me',
+                url: 'https://parapharmacie.me/',
+                inLanguage: 'fr-MA',
+                publisher: { '@id': 'https://parapharmacie.me/#organization' },
+                potentialAction: {
+                    '@type': 'SearchAction',
+                    target: 'https://parapharmacie.me/boutique/?q={search_term_string}',
+                    'query-input': 'required name=search_term_string'
+                }
+            },
+            organizationSchema(),
+            pharmacySchema()
+        ]
+    };
+    const replacement = `${start}\n    ${jsonLd(graph)}\n    ${end}`;
+    await writeFile(homepagePath, homepage.replace(new RegExp(`${start}[\\s\\S]*?${end}`), replacement));
+}
+
 export async function generateSeoPages({ outputDir = defaultOutputDir } = {}) {
     await mkdir(outputDir, { recursive: true });
     await injectHomepageProducts(outputDir);
+    await injectHomepageJsonLd(outputDir);
     await writeRoute(outputDir, '/boutique/', buildBoutiquePage());
 
     for (const category of categories) {

@@ -2174,8 +2174,41 @@ img {
 
 .footer__grid {
     display: grid;
-    grid-template-columns: 1.4fr 1fr 1fr;
+    grid-template-columns: 1.2fr 0.8fr 1fr 1fr;
     gap: 30px;
+}
+
+.footer__address {
+    font-style: normal;
+    color: #cbd5e1;
+    margin: 8px 0;
+}
+
+.footer__hours {
+    color: #aebbd0;
+    font-size: 0.9rem;
+    margin: 8px 0;
+}
+
+.footer__social {
+    display: flex;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.footer__social a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    margin: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.footer__social a:hover {
+    background: rgba(255, 255, 255, 0.16);
 }
 
 .footer__brand {

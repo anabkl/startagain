@@ -117,6 +117,19 @@ for (const url of locations) {
     for (const fragment of forbiddenSitemapFragments) {
         if (url.includes(fragment)) fail(`sitemap.xml: low-value or legacy URL ${url}`);
     }
+
+    // Regression guard: every sitemap URL must be a well-formed, HTTPS,
+    // apex (non-www) parapharmacie.me URL. Malformed URLs must fail
+    // validation cleanly instead of crashing the later new URL() calls.
+    let parsedLocation;
+    try {
+        parsedLocation = new URL(url);
+    } catch {
+        fail(`sitemap.xml: invalid URL ${url}`);
+        continue;
+    }
+    if (parsedLocation.protocol !== 'https:') fail(`sitemap.xml: non-HTTPS URL ${url}`);
+    if (parsedLocation.hostname !== 'parapharmacie.me') fail(`sitemap.xml: URL host must be the apex domain, found ${parsedLocation.hostname} in ${url}`);
 }
 
 const expectedPaths = new Set([
@@ -203,6 +216,35 @@ for (const file of allHtmlFiles) {
     if (!/noindex/i.test(robots)) fail(`${path.relative(dist, file)}: non-sitemap HTML must be noindex`);
 }
 
+// Regression guard: no generated page may link to the plain-HTTP or "www"
+// forms of the domain — every internal reference (links, canonical, OG,
+// JSON-LD, assets) must already point at the HTTPS apex domain.
+const insecureInternalLinkPattern = /(?:href|src|content)=["']http:\/\/(?:www\.)?parapharmacie\.me[^"']*["']/gi;
+const wwwDomainPattern = /www\.parapharmacie\.me/gi;
+for (const file of allHtmlFiles) {
+    const relative = path.relative(dist, file);
+    const html = await readFile(file, 'utf8');
+    if (insecureInternalLinkPattern.test(html)) fail(`${relative}: contains a plain-HTTP internal parapharmacie.me reference`);
+    if (wwwDomainPattern.test(html)) fail(`${relative}: contains a www.parapharmacie.me reference (must be the HTTPS apex domain)`);
+
+    // Any page that declares a canonical at all (sitemap or not) must
+    // declare an HTTPS apex one — never http:// or www.
+    const canonical = canonicalContent(html);
+    if (canonical) {
+        let parsedCanonical;
+        try {
+            parsedCanonical = new URL(canonical);
+        } catch {
+            fail(`${relative}: canonical is not a valid URL (${canonical})`);
+            parsedCanonical = null;
+        }
+        if (parsedCanonical) {
+            if (parsedCanonical.protocol !== 'https:') fail(`${relative}: canonical must be HTTPS, found ${canonical}`);
+            if (parsedCanonical.hostname !== 'parapharmacie.me') fail(`${relative}: canonical must use the apex domain, found ${canonical}`);
+        }
+    }
+}
+
 const transactionalPages = {
     'cart.html': 'noindex, follow',
     'checkout.html': 'noindex, follow',
@@ -252,6 +294,29 @@ for (const [label, response, expected] of [
 ]) {
     if (response.status !== 301) fail(`edge redirect: ${label} must return 301`);
     if (response.headers.get('location') !== expected) fail(`edge redirect: ${label} must strip the legacy query and target ${expected}`);
+}
+
+// Regression guard: netlify.toml must declare the three HTTP/www -> HTTPS
+// apex 301 rules, each forced (so they run even if a matching static file
+// exists) and pointing at the bare https://parapharmacie.me apex. Order
+// matters too: all three must appear before Netlify's SPA/edge routing so
+// none of them can be shadowed into a loop or a chain.
+const netlifyToml = await readFile(path.join(root, 'netlify.toml'), 'utf8');
+const requiredHttpsRedirects = [
+    { from: 'http://parapharmacie.me/*', label: 'HTTP apex -> HTTPS apex' },
+    { from: 'http://www.parapharmacie.me/*', label: 'HTTP www -> HTTPS apex' },
+    { from: 'https://www.parapharmacie.me/*', label: 'HTTPS www -> HTTPS apex' }
+];
+let lastRedirectIndex = -1;
+for (const { from, label } of requiredHttpsRedirects) {
+    const block = new RegExp(`\\[\\[redirects\\]\\]\\s*\\n\\s*from\\s*=\\s*"${from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"\\s*\\n\\s*to\\s*=\\s*"https://parapharmacie\\.me/:splat"\\s*\\n\\s*status\\s*=\\s*301\\s*\\n\\s*force\\s*=\\s*true`);
+    const match = block.exec(netlifyToml);
+    if (!match) {
+        fail(`netlify.toml: missing forced 301 redirect for ${label} (${from} -> https://parapharmacie.me/:splat)`);
+        continue;
+    }
+    if (match.index < lastRedirectIndex) fail(`netlify.toml: ${label} redirect must not appear after a later HTTPS-consolidation rule (risk of a redirect chain)`);
+    lastRedirectIndex = match.index;
 }
 
 if (errors.length) {
