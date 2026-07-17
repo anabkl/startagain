@@ -1,11 +1,12 @@
+import { growthArticles } from './growth-articles-data.js';
+
 // Source of truth for the /conseils/ content hub. Each entry is prerendered
 // into a standalone article page by scripts/generate-seo-pages.mjs.
 //
 // Content rules (do not violate when adding articles):
 // - Cosmetic/hygiene education only — no diagnosis, no prescription, no
 //   promised outcomes, no invented ingredients/certifications/benefits.
-// - `sources` must be real, generic, authoritative organizations (homepage
-//   or topic-level links only — never a fabricated deep citation).
+// - `sources` must be exact primary/official pages that support the text.
 // - `categorySlug` must match a real js/catalog-data.js category slug so
 //   related-products/related-category links resolve to real pages.
 
@@ -13,11 +14,16 @@ const DISCLAIMER = 'Cet article a un objectif d’information générale et cosm
 
 const AUTHOR = 'Équipe Parapharmacie.me';
 
-const OMS_SOURCE = { label: 'Organisation mondiale de la santé (OMS)', url: 'https://www.who.int' };
-const SANTE_MA_SOURCE = { label: 'Ministère de la Santé et de la Protection Sociale (Maroc)', url: 'https://www.sante.gov.ma' };
-const AMELI_SOURCE = { label: 'Assurance Maladie — ameli.fr, information santé grand public', url: 'https://www.ameli.fr' };
+const OMS_SOURCE = { label: 'OMS — Rayonnement ultraviolet (fiche d’information)', url: 'https://www.who.int/news-room/fact-sheets/detail/ultraviolet-radiation' };
+const FDA_SOLAR_SOURCE = { label: 'FDA — Conseils officiels sur la protection solaire', url: 'https://www.fda.gov/consumers/consumer-updates/tips-stay-safe-sun-sunscreen-sunglasses' };
+const AAD_ACNE_SOURCE = { label: 'American Academy of Dermatology — Conseils de soin en cas d’acné', url: 'https://www.aad.org/public/diseases/acne/skin-care/tips' };
+const AAD_DRY_SOURCE = { label: 'American Academy of Dermatology — Choisir un hydratant', url: 'https://www.aad.org/public/everyday-care/skin-care-basics/dry/pick-moisturizer?pp=1' };
+const AAD_PATCH_SOURCE = { label: 'American Academy of Dermatology — Tester un produit de soin', url: 'https://www.aad.org/public/everyday-care/skin-care-secrets/prevent-skin-problems/test-skin-care-products' };
+const AAD_HAIR_SOURCE = { label: 'American Academy of Dermatology — Conseils pour des cheveux sains', url: 'https://www.aad.org/public/everyday-care/hair-scalp-care/hair/healthy-hair-tips' };
+const NHS_BABY_SOURCE = { label: 'NHS — Donner le bain à son bébé', url: 'https://www.nhs.uk/best-start-in-life/baby/baby-basics/caring-for-your-baby/bathing-your-baby/' };
+const EU_COSMETICS_SOURCE = { label: 'Union européenne — Règlement relatif aux produits cosmétiques', url: 'https://eur-lex.europa.eu/legal-content/FR/TXT/?uri=CELEX%3A02009R1223-20240404' };
 
-export const articles = [
+const existingArticles = [
     {
         slug: 'comment-choisir-creme-solaire-maroc',
         title: 'Comment choisir sa crème solaire au Maroc : le guide complet',
@@ -26,7 +32,7 @@ export const articles = [
         categorySlug: 'solaire',
         heroImage: '/assets/products/category-fallback-solaire.webp',
         publishedDate: '2026-07-12',
-        updatedDate: '2026-07-12',
+        updatedDate: '2026-07-17',
         readingTimeMinutes: 6,
         author: AUTHOR,
         sections: [
@@ -61,7 +67,7 @@ export const articles = [
                 a: 'Non. La résistance à l’eau limite la perte de protection pendant une durée définie sur l’emballage, mais une nouvelle application après la baignade ou le séchage reste recommandée.'
             }
         ],
-        sources: [OMS_SOURCE, SANTE_MA_SOURCE],
+        sources: [OMS_SOURCE, FDA_SOLAR_SOURCE],
         relatedArticleSlugs: ['difference-spf-30-spf-50', 'choisir-produit-selon-type-de-peau']
     },
     {
@@ -72,7 +78,7 @@ export const articles = [
         categorySlug: 'solaire',
         heroImage: '/assets/products/category-fallback-solaire.webp',
         publishedDate: '2026-07-12',
-        updatedDate: '2026-07-12',
+        updatedDate: '2026-07-17',
         readingTimeMinutes: 5,
         author: AUTHOR,
         sections: [
@@ -103,7 +109,7 @@ export const articles = [
                 a: 'Non. La différence de filtration entre ces deux indices est marginale en pourcentage ; aucun produit ne filtre la totalité des rayons UV.'
             }
         ],
-        sources: [OMS_SOURCE],
+        sources: [OMS_SOURCE, FDA_SOLAR_SOURCE],
         relatedArticleSlugs: ['comment-choisir-creme-solaire-maroc', 'choisir-produit-selon-type-de-peau']
     },
     {
@@ -114,7 +120,7 @@ export const articles = [
         categorySlug: 'visage',
         heroImage: '/assets/products/category-fallback-visage.webp',
         publishedDate: '2026-07-12',
-        updatedDate: '2026-07-12',
+        updatedDate: '2026-07-17',
         readingTimeMinutes: 5,
         author: AUTHOR,
         sections: [
@@ -140,7 +146,7 @@ export const articles = [
             }
         ],
         faq: [],
-        sources: [AMELI_SOURCE],
+        sources: [AAD_ACNE_SOURCE],
         relatedArticleSlugs: ['comment-choisir-nettoyant-visage', 'choisir-produit-selon-type-de-peau']
     },
     {
@@ -151,7 +157,7 @@ export const articles = [
         categorySlug: 'visage',
         heroImage: '/assets/products/category-fallback-visage.webp',
         publishedDate: '2026-07-12',
-        updatedDate: '2026-07-12',
+        updatedDate: '2026-07-17',
         readingTimeMinutes: 5,
         author: AUTHOR,
         sections: [
@@ -169,7 +175,7 @@ export const articles = [
             },
             {
                 heading: 'Tester avant d’adopter un nouveau produit',
-                body: 'Un test sur une petite zone de peau (par exemple l’intérieur du poignet ou derrière l’oreille), maintenu 24 à 48 heures avant application sur le visage, permet de repérer une éventuelle réaction avant une utilisation complète.'
+                body: 'Avant une utilisation étendue, l’American Academy of Dermatology conseille d’appliquer le produit sur une petite zone, deux fois par jour pendant sept à dix jours, selon les instructions normales du produit. En cas de réaction, cessez l’essai et demandez un avis professionnel si nécessaire.'
             },
             {
                 heading: 'Construire une routine minimaliste',
@@ -182,7 +188,7 @@ export const articles = [
                 a: 'Non, ce sont deux notions différentes. Une véritable allergie cutanée nécessite un avis médical pour être identifiée ; la sensibilité cutanée décrit une réactivité plus générale de la peau.'
             }
         ],
-        sources: [AMELI_SOURCE],
+        sources: [AAD_PATCH_SOURCE],
         relatedArticleSlugs: ['comment-choisir-nettoyant-visage', 'comment-lire-etiquette-cosmetique']
     },
     {
@@ -193,7 +199,7 @@ export const articles = [
         categorySlug: 'visage',
         heroImage: '/assets/products/category-fallback-visage.webp',
         publishedDate: '2026-07-12',
-        updatedDate: '2026-07-12',
+        updatedDate: '2026-07-17',
         readingTimeMinutes: 5,
         author: AUTHOR,
         sections: [
@@ -219,7 +225,7 @@ export const articles = [
             }
         ],
         faq: [],
-        sources: [AMELI_SOURCE],
+        sources: [AAD_ACNE_SOURCE],
         relatedArticleSlugs: ['routine-peau-grasse', 'hydratation-peau-seche', 'choisir-produit-selon-type-de-peau']
     },
     {
@@ -230,7 +236,7 @@ export const articles = [
         categorySlug: 'visage',
         heroImage: '/assets/products/category-fallback-visage.webp',
         publishedDate: '2026-07-12',
-        updatedDate: '2026-07-12',
+        updatedDate: '2026-07-17',
         readingTimeMinutes: 6,
         author: AUTHOR,
         sections: [
@@ -256,7 +262,7 @@ export const articles = [
             }
         ],
         faq: [],
-        sources: [AMELI_SOURCE],
+        sources: [AAD_DRY_SOURCE],
         relatedArticleSlugs: ['comment-choisir-nettoyant-visage', 'choisir-produit-selon-type-de-peau']
     },
     {
@@ -267,7 +273,7 @@ export const articles = [
         categorySlug: 'cheveux',
         heroImage: '/assets/products/category-fallback-cheveux.webp',
         publishedDate: '2026-07-12',
-        updatedDate: '2026-07-12',
+        updatedDate: '2026-07-17',
         readingTimeMinutes: 5,
         author: AUTHOR,
         sections: [
@@ -293,7 +299,7 @@ export const articles = [
             }
         ],
         faq: [],
-        sources: [AMELI_SOURCE],
+        sources: [AAD_HAIR_SOURCE],
         relatedArticleSlugs: ['choisir-produit-selon-type-de-peau']
     },
     {
@@ -304,7 +310,7 @@ export const articles = [
         categorySlug: 'bebe-maman',
         heroImage: '/assets/products/category-fallback-bebe-maman.webp',
         publishedDate: '2026-07-12',
-        updatedDate: '2026-07-12',
+        updatedDate: '2026-07-17',
         readingTimeMinutes: 5,
         author: AUTHOR,
         sections: [
@@ -330,7 +336,7 @@ export const articles = [
             }
         ],
         faq: [],
-        sources: [SANTE_MA_SOURCE, AMELI_SOURCE],
+        sources: [NHS_BABY_SOURCE],
         relatedArticleSlugs: ['comment-lire-etiquette-cosmetique']
     },
     {
@@ -341,7 +347,7 @@ export const articles = [
         categorySlug: 'hygiene',
         heroImage: '/assets/products/category-fallback-hygiene.webp',
         publishedDate: '2026-07-12',
-        updatedDate: '2026-07-12',
+        updatedDate: '2026-07-17',
         readingTimeMinutes: 6,
         author: AUTHOR,
         sections: [
@@ -367,7 +373,7 @@ export const articles = [
             }
         ],
         faq: [],
-        sources: [AMELI_SOURCE],
+        sources: [EU_COSMETICS_SOURCE],
         relatedArticleSlugs: ['soins-peau-sensible', 'choisir-produit-selon-type-de-peau']
     },
     {
@@ -378,7 +384,7 @@ export const articles = [
         categorySlug: 'visage',
         heroImage: '/assets/products/category-fallback-visage.webp',
         publishedDate: '2026-07-12',
-        updatedDate: '2026-07-12',
+        updatedDate: '2026-07-17',
         readingTimeMinutes: 6,
         author: AUTHOR,
         sections: [
@@ -404,7 +410,7 @@ export const articles = [
             }
         ],
         faq: [],
-        sources: [AMELI_SOURCE],
+        sources: [AAD_ACNE_SOURCE, AAD_DRY_SOURCE, AAD_PATCH_SOURCE],
         relatedArticleSlugs: [
             'comment-choisir-nettoyant-visage',
             'hydratation-peau-seche',
@@ -414,6 +420,13 @@ export const articles = [
         ]
     }
 ];
+
+export const articles = [
+    ...existingArticles.map((article) => ({ status: 'published', ...article })),
+    ...growthArticles
+];
+
+export const publishedArticles = articles.filter((article) => article.status === 'published');
 
 export const DISCLAIMER_TEXT = DISCLAIMER;
 export const DEFAULT_AUTHOR = AUTHOR;

@@ -1,4 +1,4 @@
-import { articles } from './articles-data.js';
+import { publishedArticles } from './articles-data.js';
 
 export const SITE_ORIGIN = 'https://parapharmacie.me';
 
@@ -39,7 +39,7 @@ export const CONSEILS_INDEX_ROUTE = '/conseils/';
 // is hand-maintained alongside a separate `trustPages` array.
 export const ARTICLE_ROUTES = Object.freeze([
     CONSEILS_INDEX_ROUTE,
-    ...articles.map((article) => `/conseils/${article.slug}/`)
+    ...publishedArticles.map((article) => `/conseils/${article.slug}/`)
 ]);
 
 // Deliberately NOT part of TRUST_PAGE_ROUTES or ARTICLE_ROUTES: no approved

@@ -3,14 +3,17 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { catalogProducts, categories } from '../js/catalog-data.js';
+import { articles, DEFAULT_AUTHOR, publishedArticles } from '../js/articles-data.js';
 import { catalogApiIdBySlug } from '../js/catalog-api-id-map.js';
 import {
     ARTICLE_ROUTES,
+    articleRoute,
     CONSEILS_INDEX_ROUTE,
     categoryRoute,
     KHOURIBGA_ROUTE,
     LOCAL_LANDING_ROUTES,
     productRoute,
+    RETURNS_ROUTE,
     SITE_ORIGIN,
     TRUST_PAGE_ROUTES
 } from '../js/seo-routes.js';
@@ -160,6 +163,7 @@ for (const route of expectedPaths) {
 const titles = new Map();
 const descriptions = new Map();
 const h1s = new Map();
+const indexableHtmlByPath = new Map();
 for (const url of locations) {
     const file = htmlFileForUrl(url);
     const relative = path.relative(dist, file);
@@ -169,6 +173,7 @@ for (const url of locations) {
     }
 
     const html = await readFile(file, 'utf8');
+    indexableHtmlByPath.set(new URL(url).pathname, html);
     const title = matchOne(html, /<title>([\s\S]*?)<\/title>/gi, 'title', relative);
     const description = metaContent(html, 'name', 'description');
     const h1 = matchOne(html, /<h1(?:\s[^>]*)?>([\s\S]*?)<\/h1>/gi, 'H1', relative).replace(/<[^>]+>/g, '').trim();
@@ -230,7 +235,75 @@ for (const url of locations) {
     const articlePathname = new URL(url).pathname;
     if (articlePathname.startsWith('/conseils/') && articlePathname !== CONSEILS_INDEX_ROUTE) {
         if (!types.includes('BlogPosting') && !types.includes('Article')) fail(`${relative}: missing BlogPosting/Article JSON-LD`);
+        const article = publishedArticles.find((item) => articleRoute(item) === articlePathname);
+        const articleSchema = schemas.find((schema) => schema['@type'] === 'BlogPosting' || schema['@type'] === 'Article');
+        if (!article) {
+            fail(`${relative}: generated article has no published source entry`);
+        } else {
+            if (!html.includes('<strong>Réponse pratique :</strong>')) fail(`${relative}: missing the direct practical answer near the beginning`);
+            if (!html.includes(article.author) || article.author !== DEFAULT_AUTHOR) fail(`${relative}: visible byline must use the honest default editorial author`);
+            if (articleSchema?.headline !== article.title || articleSchema?.description !== article.description) fail(`${relative}: visible title/description conflict with Article JSON-LD`);
+            if (articleSchema?.datePublished !== article.publishedDate || articleSchema?.dateModified !== article.updatedDate) fail(`${relative}: visible publication data conflict with Article JSON-LD`);
+            if (articleSchema?.author?.name !== article.author) fail(`${relative}: visible author conflicts with Article JSON-LD`);
+            if (!article.sources?.length) fail(`${relative}: published article needs at least one source`);
+            for (const source of article.sources || []) {
+                if (!source.label || !source.url) fail(`${relative}: source label and URL are required`);
+                if (source.url.startsWith('http:')) fail(`${relative}: source must use HTTPS (${source.url})`);
+                if (/^https:\/\/(www\.)?(who\.int|aad\.org|nhs\.uk|fda\.gov|eur-lex\.europa\.eu|bioderma\.fr|eau-thermale-avene\.fr)\/?$/i.test(source.url)) fail(`${relative}: source must be an exact supporting page, not an organization homepage (${source.url})`);
+            }
+            for (const productSlug of article.relatedProductSlugs || []) {
+                const product = catalogProducts.find((item) => item.id === productSlug);
+                if (!product) fail(`${relative}: related product does not exist (${productSlug})`);
+                else {
+                    if (!html.includes(`href="${productRoute(product)}"`)) fail(`${relative}: missing visible link to related product ${productSlug}`);
+                    const productHtml = indexableHtmlByPath.get(productRoute(product));
+                    if (productHtml && !productHtml.includes(`href="${articleRoute(article)}"`)) fail(`${relative}: product ${productSlug} does not link back to this useful article`);
+                }
+            }
+            const categoryHtml = indexableHtmlByPath.get(categoryRoute(article.categorySlug));
+            if (!html.includes(`href="${categoryRoute(article.categorySlug)}"`)) fail(`${relative}: missing link to its real catalogue category`);
+            if (categoryHtml && !categoryHtml.includes(`href="${articleRoute(article)}"`) && publishedArticles.filter((item) => item.categorySlug === article.categorySlug).indexOf(article) < 4) {
+                fail(`${relative}: relevant category page does not link back to this featured article`);
+            }
+        }
     }
+}
+
+for (const article of articles) {
+    const route = articleRoute(article);
+    const isPublished = article.status === 'published';
+    if (isPublished !== ARTICLE_ROUTES.includes(route)) fail(`${route}: publication status and sitemap route list disagree`);
+}
+
+// Every canonical/indexable page except the homepage must receive at least
+// one link from another canonical/indexable page. Also resolve every local
+// anchor to a generated HTML route so orphan and broken-link regressions fail
+// the build instead of relying on a manual crawl.
+const indexablePaths = new Set(locations.map((url) => new URL(url).pathname));
+const inbound = new Map([...indexablePaths].map((pathname) => [pathname, 0]));
+for (const [sourcePath, html] of indexableHtmlByPath) {
+    for (const match of html.matchAll(/<a\b[^>]*href=["']([^"']+)["']/gi)) {
+        const href = match[1];
+        if (/^(?:mailto:|tel:|javascript:|#)/i.test(href)) continue;
+        let parsed;
+        try {
+            parsed = new URL(href, `${SITE_ORIGIN}${sourcePath}`);
+        } catch {
+            fail(`${sourcePath}: invalid link ${href}`);
+            continue;
+        }
+        if (parsed.origin !== SITE_ORIGIN) continue;
+        const targetPath = parsed.pathname;
+        if (indexablePaths.has(targetPath) && targetPath !== sourcePath) inbound.set(targetPath, inbound.get(targetPath) + 1);
+        if (/\.(?:webp|png|jpe?g|svg|css|js|xml|txt|ico|woff2?)$/i.test(targetPath)) continue;
+        const targetFile = targetPath.endsWith('.html')
+            ? path.join(dist, targetPath.replace(/^\//, ''))
+            : htmlFileForUrl(`${SITE_ORIGIN}${targetPath}`);
+        if (!await exists(targetFile) && targetPath !== RETURNS_ROUTE) fail(`${sourcePath}: broken internal link ${href}`);
+    }
+}
+for (const [pathname, count] of inbound) {
+    if (pathname !== '/' && count === 0) fail(`${pathname}: orphan indexable page (no inbound link from another sitemap page)`);
 }
 
 const allHtmlFiles = await walkHtml(dist);

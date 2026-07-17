@@ -1631,6 +1631,19 @@ img {
     line-height: 1.6;
 }
 
+.article-direct-answer {
+    margin: 1.25rem 0 0;
+    padding: 1rem 1.1rem;
+    border-inline-start: 4px solid var(--primary, #1f7a5a);
+    border-radius: 0.5rem;
+    background: var(--surface-soft, #f2f8f5);
+    line-height: 1.65;
+}
+
+.article-related-links {
+    margin-top: 2rem;
+}
+
 .article-meta {
     display: flex;
     flex-wrap: wrap;

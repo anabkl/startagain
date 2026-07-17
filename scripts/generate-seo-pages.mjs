@@ -4,7 +4,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { catalogProducts, categories } from '../js/catalog-data.js';
 import { catalogApiIdBySlug } from '../js/catalog-api-id-map.js';
-import { articles, DEFAULT_AUTHOR, DISCLAIMER_TEXT } from '../js/articles-data.js';
+import { publishedArticles as articles, DEFAULT_AUTHOR, DISCLAIMER_TEXT } from '../js/articles-data.js';
 import { returnsPolicy } from '../js/returns-policy-data.js';
 import { productAvailability, productGtin } from '../js/product-schema.js';
 import {
@@ -480,6 +480,7 @@ function buildCategoryPage(category) {
     const seo = categorySeo[category.slug];
     const route = categoryRoute(category);
     const brands = [...new Set(products.map((product) => product.brand).filter(Boolean))].slice(0, 5);
+    const usefulArticles = articles.filter((article) => article.categorySlug === category.slug).slice(0, 4);
     const breadcrumbs = [{ name: 'Accueil', path: '/' }, { name: 'Boutique', path: '/boutique/' }, { name: seo.h1, path: route }];
     const specialNote = category.slug === 'cheveux'
         ? 'Cette sélection transversale rassemble les références dont le nom ou les repères du catalogue mentionnent les cheveux ; leur catégorie principale reste affichée sur chaque carte.'
@@ -498,6 +499,7 @@ function buildCategoryPage(category) {
                 ${categoryLinks(category.slug)}
                 <div class="section-header"><div><p class="eyebrow">Sélection ${escapeHtml(category.name)}</p><h2>${products.length} référence${products.length > 1 ? 's' : ''} à comparer</h2></div><a class="section-header__link" href="/boutique/">Voir tout le catalogue <i class="fa-solid fa-arrow-right"></i></a></div>
                 <div class="products__grid">${products.map(productCard).join('')}</div>
+                ${usefulArticles.length ? `<section class="related-section"><div class="section-header"><div><p class="eyebrow">Bien choisir</p><h2>Conseils utiles pour cette catégorie</h2></div><a class="section-header__link" href="${CONSEILS_INDEX_ROUTE}">Tous les conseils <i class="fa-solid fa-arrow-right"></i></a></div><div class="related-grid">${usefulArticles.map((article) => `<a href="${articleRoute(article)}" class="related-card"><img src="${escapeHtml(article.heroImage)}" alt="${escapeHtml(article.title)}" loading="lazy" width="320" height="180"><span>${escapeHtml(article.category)}</span><strong>${escapeHtml(article.title)}</strong></a>`).join('')}</div></section>` : ''}
                 <aside class="seo-medical-note"><strong>Information responsable</strong><p>Les noms et formats servent à identifier les références. Consultez l’étiquette et la notice ; pour une question de santé, demandez un avis professionnel.</p></aside>
             </div></section>
         </main>`;
@@ -524,6 +526,9 @@ function buildProductPage(product) {
     const related = catalogProducts
         .filter((candidate) => candidate.id !== product.id && candidate.categorySlug === product.categorySlug)
         .slice(0, 4);
+    const usefulArticles = articles
+        .filter((article) => (article.relatedProductSlugs || []).includes(product.id))
+        .slice(0, 3);
     const availability = productAvailability(product);
     const gtin = productGtin(product);
     const productSchema = {
@@ -584,6 +589,7 @@ function buildProductPage(product) {
                     </div>
                 </article>
                 ${related.length ? `<section class="related-section"><div class="section-header"><div><p class="eyebrow">Même catégorie</p><h2>Références liées</h2></div></div><div class="related-grid">${related.map((item) => `<a href="${productRoute(item)}" class="related-card"><img src="${productImage(item)}" alt="${escapeHtml(productImageAlt(item))}" loading="lazy" width="320" height="320"><span>${escapeHtml(item.category)}</span><strong>${escapeHtml(item.name)}</strong><em>${formatPrice(item.priceMAD)}</em></a>`).join('')}</div></section>` : ''}
+                ${usefulArticles.length ? `<section class="related-section"><div class="section-header"><div><p class="eyebrow">Conseils associés</p><h2>Repères pour bien choisir</h2></div></div><div class="related-grid">${usefulArticles.map((article) => `<a href="${articleRoute(article)}" class="related-card"><img src="${escapeHtml(article.heroImage)}" alt="${escapeHtml(article.title)}" loading="lazy" width="320" height="180"><span>${escapeHtml(article.category)}</span><strong>${escapeHtml(article.title)}</strong></a>`).join('')}</div></section>` : ''}
             </div>
         </main>`;
     return documentHtml({
@@ -640,7 +646,7 @@ function buildKhouribgaPage() {
     const popularCategorySlugs = ['visage', 'solaire', 'bebe-maman', 'complements-alimentaires', 'hygiene', 'sante'];
     const popularCategories = categories.filter((category) => popularCategorySlugs.includes(category.slug));
     const selectedProducts = catalogProducts.filter((product) => popularCategorySlugs.includes(product.categorySlug)).slice(0, 8);
-    const relatedArticles = ['comment-choisir-creme-solaire-maroc', 'hygiene-bebe-conseils']
+    const relatedArticles = ['parapharmacie-en-ligne-livraison-maroc', 'commander-parapharmacie-khouribga', 'comment-choisir-creme-solaire-maroc', 'hygiene-bebe-conseils']
         .map((slug) => articles.find((article) => article.slug === slug))
         .filter(Boolean);
 
@@ -717,6 +723,7 @@ function buildKhouribgaPage() {
 
                 <h2>Aller plus loin</h2>
                 <div class="local-map__actions">
+                    <a class="btn btn--secondary" href="/">Accueil</a>
                     <a class="btn btn--secondary" href="/boutique/">Boutique</a>
                     <a class="btn btn--secondary" href="/contact/">Contact</a>
                     <a class="btn btn--secondary" href="/livraison/">Livraison</a>
@@ -805,7 +812,10 @@ function articleSourcesSection(sources) {
     if (!sources.length) return '';
     return `<section class="article-sources">
         <h2>Sources et références</h2>
-        <ul>${sources.map((source) => `<li><a href="${escapeHtml(source.url)}" rel="noopener noreferrer" target="_blank">${escapeHtml(source.label)}</a></li>`).join('')}</ul>
+        <ul>${sources.map((source) => {
+            const externalAttributes = source.url.startsWith('http') ? ' rel="noopener noreferrer" target="_blank"' : '';
+            return `<li><a href="${escapeHtml(source.url)}"${externalAttributes}>${escapeHtml(source.label)}</a></li>`;
+        }).join('')}</ul>
     </section>`;
 }
 
@@ -827,12 +837,27 @@ function relatedArticlesSection(article) {
 }
 
 function relatedProductsSection(article) {
-    const products = catalogProducts.filter((product) => product.categorySlug === article.categorySlug).slice(0, 4);
+    const hasExplicitSelection = Array.isArray(article.relatedProductSlugs);
+    const explicitProducts = (article.relatedProductSlugs || [])
+        .map((slug) => catalogProducts.find((product) => product.id === slug))
+        .filter(Boolean);
+    const products = (hasExplicitSelection
+        ? explicitProducts
+        : catalogProducts.filter((product) => product.categorySlug === article.categorySlug)).slice(0, 4);
     if (!products.length) return '';
     return `<section class="related-section">
         <div class="section-header"><div><p class="eyebrow">Références catalogue</p><h2>Produits ${escapeHtml(article.category)}</h2></div><a class="section-header__link" href="${categoryRoute(article.categorySlug)}">Voir la catégorie <i class="fa-solid fa-arrow-right"></i></a></div>
         <div class="products__grid">${products.map(productCard).join('')}</div>
     </section>`;
+}
+
+function articleRelatedLinks(article) {
+    const links = [
+        { href: categoryRoute(article.categorySlug), label: `Voir la catégorie ${article.category}` },
+        { href: KHOURIBGA_ROUTE, label: 'Service local à Khouribga' },
+        ...(article.relatedLinks || [])
+    ].filter((link, index, all) => all.findIndex((candidate) => candidate.href === link.href) === index);
+    return `<nav class="article-related-links" aria-label="Liens pratiques"><h2>Liens pratiques</h2><div class="local-map__actions">${links.map((link) => `<a class="btn btn--secondary" href="${escapeHtml(link.href)}">${escapeHtml(link.label)}</a>`).join('')}</div></nav>`;
 }
 
 function buildArticlePage(article) {
@@ -868,6 +893,7 @@ function buildArticlePage(article) {
                         <p class="eyebrow">${escapeHtml(article.category)}</p>
                         <h1>${escapeHtml(article.title)}</h1>
                         <p class="article-detail__lede">${escapeHtml(article.description)}</p>
+                        <p class="article-direct-answer"><strong>Réponse pratique :</strong> ${escapeHtml(article.directAnswer || article.description)}</p>
                         <div class="article-meta">
                             <span><i class="fa-regular fa-user" aria-hidden="true"></i> ${escapeHtml(article.author)}</span>
                             <span><i class="fa-regular fa-calendar" aria-hidden="true"></i> Publié le ${escapeHtml(formatFrenchDate(article.publishedDate))}</span>
@@ -883,6 +909,7 @@ function buildArticlePage(article) {
                     ${articleFaqSection(article.faq || [])}
                     ${articleDisclaimer()}
                     ${articleSourcesSection(article.sources || [])}
+                    ${articleRelatedLinks(article)}
                 </article>
                 ${relatedProductsSection(article)}
                 ${relatedArticlesSection(article)}
