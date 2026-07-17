@@ -45,6 +45,15 @@ class ProductsRepository:
             "image_url": 1,
             "created_at": 1,
             "updated_at": 1,
+            "sku": 1,
+            "ean": 1,
+            "size": 1,
+            "imageSource": 1,
+            "imageRightsStatus": 1,
+            "priceVerifiedAt": 1,
+            "priceSource": 1,
+            "stockVerifiedAt": 1,
+            "deliveryEligible": 1,
         }
         skip = (page - 1) * per_page
         cursor = (

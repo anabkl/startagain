@@ -1039,6 +1039,17 @@ const rawProducts = [
     }
 ];
 
+const SIZE_PATTERN = /\b\d+(?:[,.]\d+)?\s?(?:ml|l|g|mg|comprimés?|gélules?|ampoules?|tests?|bandelettes?)\b/gi;
+
+// Parses the size/format straight out of the (real, verified) product
+// name — e.g. "400ml" out of "AVÈNE ... Gel Nettoyant 400ml". This is not
+// invented data: every catalog product name already carries this text.
+// An explicit `product.size` always wins when a source has confirmed one.
+function extractSizeFromName(name) {
+    const matches = String(name || '').match(SIZE_PATTERN);
+    return matches?.join(' · ') || null;
+}
+
 function createProduct(product) {
     const categorySlug = categorySlugByName[product.category];
     const hasPromo = Boolean(product.oldPriceMAD && product.oldPriceMAD > product.priceMAD);
@@ -1059,6 +1070,9 @@ function createProduct(product) {
         stockStatus,
         stock,
         stockVerified: hasVerifiedStock,
+        // Only meaningful once stockVerified is true; never backfilled with
+        // "now" just because a stock number happens to be present.
+        stockVerifiedAt: hasVerifiedStock ? (product.stockVerifiedAt || null) : null,
         image,
         imageUrl: image,
         imageNeedsReview: product.imageNeedsReview ?? true,
@@ -1067,6 +1081,25 @@ function createProduct(product) {
         imageReplacementNote: product.imageReplacementNote || 'Replace with an owned, distributor-supplied, or brand-approved ecommerce packshot before production launch.',
         shortDescription: product.shortDescription || descriptionByCategory[product.category],
         description: product.shortDescription || descriptionByCategory[product.category],
+        // Our own catalog identifier used as our merchant-specific SKU
+        // (schema.org's `sku` does not require a manufacturer code). `ean`
+        // is left null — it is never generated, only ever set from a real
+        // verified barcode.
+        sku: product.sku || product.id,
+        ean: product.ean || null,
+        size: product.size || extractSizeFromName(product.name),
+        // No product has a verified delivery restriction today, so this
+        // stays true for the whole catalog — a scaffold for a future,
+        // explicitly owner-confirmed restriction (e.g. an oversized
+        // para-medical device), not a currently-enforced rule.
+        deliveryEligible: product.deliveryEligible !== false,
+        // priceSource defaults to the existing sourceUrl (where priceMAD
+        // was originally sourced from) rather than duplicating the value.
+        // priceVerifiedAt stays null: it means "re-confirmed against a
+        // live source on this date," which has not happened yet for any
+        // catalog product in this session.
+        priceSource: product.priceSource || product.sourceUrl || null,
+        priceVerifiedAt: product.priceVerifiedAt || null,
         tags: [
             product.category,
             product.brand,

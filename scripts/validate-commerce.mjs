@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { catalogProducts } from '../js/catalog-data.js';
 import { catalogApiIdBySlug } from '../js/catalog-api-id-map.js';
 import { productRoute } from '../js/seo-routes.js';
+import { DELIVERY, PAYMENT, resolveDeliveryZone } from '../js/business-config.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
@@ -38,10 +39,24 @@ for (const id of ['cart-empty', 'cart-content', 'cart-items', 'cart-cards', 'car
 requireText(cartHtml, 'src="js/cart.js"', 'cart.html');
 
 const checkoutHtml = await readFile(path.join(dist, 'checkout.html'), 'utf8');
-for (const id of ['checkout-form', 'firstName', 'lastName', 'email', 'whatsapp', 'city', 'address', 'summary-items-list', 'order-total-amount']) {
+for (const id of ['checkout-form', 'firstName', 'lastName', 'email', 'whatsapp', 'city', 'address', 'summary-items-list', 'order-total-amount', 'delivery-fee-amount', 'delivery-fee-note']) {
     requireElement(checkoutHtml, id, 'checkout.html');
 }
 requireText(checkoutHtml, 'src="js/checkout.js"', 'checkout.html');
+
+// Regression guard: CMI and Apple Pay must be visible in checkout but
+// never selectable — a disabled radio input is the concrete signal.
+for (const method of ['CMI', 'APPLE_PAY']) {
+    const radioMatch = checkoutHtml.match(new RegExp(`<input[^>]*value=["']${method}["'][^>]*>`, 'i'));
+    if (!radioMatch) {
+        errors.push(`checkout.html: missing a ${method} payment option`);
+    } else if (!/\bdisabled\b/.test(radioMatch[0])) {
+        errors.push(`checkout.html: ${method} payment option must be disabled (not selectable)`);
+    }
+}
+if (PAYMENT.active.includes('cmi') || PAYMENT.active.includes('apple_pay')) {
+    errors.push('js/business-config.js: PAYMENT.active must not include cmi or apple_pay until they are truly live');
+}
 
 const checkoutJs = await readFile(path.join(root, 'js/checkout.js'), 'utf8');
 const orderServiceJs = await readFile(path.join(root, 'js/order-service.js'), 'utf8');
@@ -51,6 +66,7 @@ requireText(checkoutJs, 'item.apiId || item.product_id || item.id', 'checkout AP
 requireText(orderServiceJs, 'item.apiId || item.product_id || item.id', 'order service API ID bridge');
 requireText(checkoutJs, 'saveCart([])', 'checkout clears cart after a saved order');
 requireText(checkoutJs, 'success.html?order=', 'checkout success handoff');
+requireText(checkoutJs, 'resolveDeliveryZone', 'checkout delivery-fee wiring (must not hardcode the fee)');
 requireText(cartJs, 'renderCart()', 'cart render entrypoint');
 requireText(mainJs, "export const CART_KEY = 'parashop_cart'", 'cart storage compatibility');
 
@@ -60,6 +76,35 @@ for (const breakpoint of ['@media (max-width: 1080px)', '@media (max-width: 860p
 }
 requireText(css, '.product-detail__purchase', 'responsive product purchase layout');
 requireText(css, '.cart__cards', 'responsive cart cards');
+requireText(css, '.payment-method--soon', 'non-selectable planned-payment styling');
+requireText(css, 'select,\n    textarea {\n        font-size: 16px;', 'mobile form-input iOS-zoom fix');
+requireText(css, ':focus-visible', 'keyboard focus-visible styling');
+
+// Central delivery-zone config: pure-function regression coverage. Only
+// the explicitly verified local city (Khouribga) may resolve to the 15
+// MAD tier; everything else — including nearby but unverified communes —
+// must fall back to the "other Moroccan cities" tier, never be guessed.
+const deliveryCases = [
+    ['Khouribga', 'local'],
+    ['khouribga', 'local'],
+    ['  KHOURIBGA  ', 'local'],
+    ['Khôuribga', 'local'],
+    ['Casablanca', 'other'],
+    ['Oued Zem', 'other'],
+    ['Boujniba', 'other'],
+    ['', 'other'],
+    [undefined, 'other']
+];
+for (const [city, expectedZone] of deliveryCases) {
+    const result = resolveDeliveryZone(city);
+    if (result.zone !== expectedZone) {
+        errors.push(`resolveDeliveryZone(${JSON.stringify(city)}): expected zone "${expectedZone}", got "${result.zone}"`);
+    }
+    const expectedFee = expectedZone === 'local' ? DELIVERY.local.feeMAD : DELIVERY.other.feeMAD;
+    if (result.feeMAD !== expectedFee) {
+        errors.push(`resolveDeliveryZone(${JSON.stringify(city)}): expected fee ${expectedFee}, got ${result.feeMAD}`);
+    }
+}
 
 class MemoryStorage {
     constructor() {

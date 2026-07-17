@@ -9,6 +9,11 @@ class ProductService:
         self.repo = ProductsRepository()
 
     def _normalize(self, doc: dict):
+        # Fields below (sku..stockVerifiedAt) are passed through as-is, or
+        # None when absent. They are never derived, defaulted to a
+        # non-null value, or otherwise inferred here — an absent value
+        # means "not verified," and must stay that way until a real
+        # source sets it via the write path (app/validators/product.py).
         return {
             "id": doc.get("id") or str(doc["_id"]),
             "name": doc.get("name", ""),
@@ -25,6 +30,15 @@ class ProductService:
             "image_url": doc.get("image_url"),
             "created_at": doc.get("created_at"),
             "updated_at": doc.get("updated_at"),
+            "sku": doc.get("sku"),
+            "ean": doc.get("ean"),
+            "size": doc.get("size"),
+            "imageSource": doc.get("imageSource"),
+            "imageRightsStatus": doc.get("imageRightsStatus"),
+            "priceVerifiedAt": doc.get("priceVerifiedAt"),
+            "priceSource": doc.get("priceSource"),
+            "stockVerifiedAt": doc.get("stockVerifiedAt"),
+            "deliveryEligible": doc.get("deliveryEligible", True),
         }
 
     def list_products(

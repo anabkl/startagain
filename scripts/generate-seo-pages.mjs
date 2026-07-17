@@ -6,6 +6,7 @@ import { catalogProducts, categories } from '../js/catalog-data.js';
 import { catalogApiIdBySlug } from '../js/catalog-api-id-map.js';
 import { articles, DEFAULT_AUTHOR, DISCLAIMER_TEXT } from '../js/articles-data.js';
 import { returnsPolicy } from '../js/returns-policy-data.js';
+import { productAvailability, productGtin } from '../js/product-schema.js';
 import {
     ADDRESS,
     CONTACT,
@@ -234,8 +235,7 @@ function productImageAlt(product) {
 }
 
 function extractFormat(product) {
-    const matches = String(product.name).match(/\b\d+(?:[,.]\d+)?\s?(?:ml|l|g|mg|comprimés?|gélules?|ampoules?|tests?|bandelettes?)\b/gi);
-    return matches?.join(' · ') || null;
+    return product.size || null;
 }
 
 function productDescription(product) {
@@ -524,12 +524,14 @@ function buildProductPage(product) {
     const related = catalogProducts
         .filter((candidate) => candidate.id !== product.id && candidate.categorySlug === product.categorySlug)
         .slice(0, 4);
+    const availability = productAvailability(product);
+    const gtin = productGtin(product);
     const productSchema = {
         '@context': 'https://schema.org',
         '@type': 'Product',
         name: product.name,
         description,
-        sku: product.id,
+        sku: product.sku || product.id,
         brand: { '@type': 'Brand', name: product.brand },
         category: product.category,
         url: absoluteSiteUrl(route),
@@ -538,9 +540,11 @@ function buildProductPage(product) {
             url: absoluteSiteUrl(route),
             price: Number(product.priceMAD).toFixed(2),
             priceCurrency: 'MAD',
-            seller: { '@type': 'Organization', name: 'Parapharmacie.me', url: `${SITE_ORIGIN}/` }
+            seller: { '@type': 'Organization', name: 'Parapharmacie.me', url: `${SITE_ORIGIN}/` },
+            ...(availability ? { availability } : {})
         }
     };
+    if (gtin) productSchema.gtin = gtin;
     if (!product.imageNeedsReview) productSchema.image = [absoluteSiteUrl(productImage(product))];
 
     const content = `

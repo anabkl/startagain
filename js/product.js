@@ -6,6 +6,7 @@ import {
     getProductImageAlt,
     isProductUnavailable
 } from './catalog.js';
+import { productAvailability, productGtin } from './product-schema.js';
 import { absoluteSiteUrl, categoryRoute, productRoute } from './seo-routes.js';
 import { formatCurrency, showToast } from './utils.js';
 import { getCart, saveCart } from './main.js';
@@ -107,12 +108,14 @@ function updateProductSeo(product, price) {
     setMeta('meta[name="twitter:description"]', 'content', description);
     setCanonical(productUrl);
 
+    const availability = productAvailability(product);
+    const gtin = productGtin(product);
     const productSchema = {
         '@context': 'https://schema.org',
         '@type': 'Product',
         name: product.name,
         description,
-        sku: product.id,
+        sku: product.sku || product.id,
         brand: {
             '@type': 'Brand',
             name: product.brand
@@ -128,10 +131,12 @@ function updateProductSeo(product, price) {
                 '@type': 'Organization',
                 name: 'Parapharmacie.me',
                 url: 'https://parapharmacie.me/'
-            }
+            },
+            ...(availability ? { availability } : {})
         }
     };
 
+    if (gtin) productSchema.gtin = gtin;
     if (!product.imageNeedsReview) productSchema.image = [imageUrl];
 
     upsertJsonLd('product-jsonld', productSchema);

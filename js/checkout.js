@@ -3,12 +3,16 @@ import { getProductImage } from './catalog.js';
 import { buildWhatsAppOrderMessage, saveOrder } from './order-service.js';
 import { getCurrentUser } from './auth.js';
 import { showToast, formatCurrency, renderStatusBanner } from './utils.js';
+import { resolveDeliveryZone } from './business-config.js';
 
 const checkoutForm = document.getElementById('checkout-form');
 const orderTotalEl = document.getElementById('order-total-amount');
 const summaryList = document.getElementById('summary-items-list');
 const subtotalEl = document.getElementById('order-subtotal-amount');
 const checkoutStatus = document.getElementById('checkout-status');
+const cityInput = document.getElementById('city');
+const deliveryFeeAmountEl = document.getElementById('delivery-fee-amount');
+const deliveryFeeNoteEl = document.getElementById('delivery-fee-note');
 
 let isSubmitting = false;
 
@@ -26,6 +30,32 @@ function getCartTotal(cart) {
     return cart.reduce((sum, item) => sum + getEffectivePrice(item) * (item.quantity || 1), 0);
 }
 
+// Returns null while no city has been entered yet — the fee must not be
+// guessed or defaulted to 0 before we know which delivery zone applies.
+function getDeliveryInfo() {
+    const city = cityInput?.value.trim() || '';
+    if (!city) return null;
+    return resolveDeliveryZone(city);
+}
+
+function updateDeliveryAndTotal() {
+    const cart = getCart();
+    const subtotal = getCartTotal(cart);
+    const delivery = getDeliveryInfo();
+    const total = subtotal + (delivery?.feeMAD || 0);
+
+    if (subtotalEl) subtotalEl.textContent = formatCurrency(subtotal);
+    if (deliveryFeeAmountEl) deliveryFeeAmountEl.textContent = delivery ? formatCurrency(delivery.feeMAD) : '—';
+    if (deliveryFeeNoteEl) {
+        deliveryFeeNoteEl.textContent = delivery
+            ? `${delivery.area} · confirmé avant expédition`
+            : 'Ville requise pour calculer les frais';
+    }
+    if (orderTotalEl) orderTotalEl.textContent = formatCurrency(total);
+
+    return { subtotal, delivery, total };
+}
+
 function renderOrderSummary() {
     const cart = getCart();
 
@@ -34,8 +64,6 @@ function renderOrderSummary() {
         setTimeout(() => { window.location.href = '/boutique/'; }, 1200);
         return;
     }
-
-    const total = getCartTotal(cart);
 
     if (summaryList) {
         summaryList.innerHTML = cart.map((item) => {
@@ -53,9 +81,10 @@ function renderOrderSummary() {
         }).join('');
     }
 
-    if (subtotalEl) subtotalEl.textContent = formatCurrency(total);
-    if (orderTotalEl) orderTotalEl.textContent = formatCurrency(total);
+    updateDeliveryAndTotal();
 }
+
+if (cityInput) cityInput.addEventListener('input', updateDeliveryAndTotal);
 
 function setFormValue(id, value) {
     const el = document.getElementById(id);
@@ -175,7 +204,10 @@ async function processOrder(event) {
         image: getProductImage(item)
     }));
 
-    const total = getCartTotal(cart);
+    const subtotal = getCartTotal(cart);
+    const delivery = resolveDeliveryZone(city);
+    const deliveryFee = delivery.feeMAD;
+    const total = subtotal + deliveryFee;
     const orderPayload = {
         firstName,
         lastName,
@@ -187,9 +219,9 @@ async function processOrder(event) {
         address,
         paymentMethod: 'COD',
         items,
-        subtotal: total,
-        deliveryFee: 0,
-        deliveryLabel: 'A confirmer',
+        subtotal,
+        deliveryFee,
+        deliveryLabel: `${formatCurrency(deliveryFee)} (${delivery.area})`,
         total
     };
 

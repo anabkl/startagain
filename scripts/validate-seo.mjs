@@ -23,6 +23,7 @@ import {
     OPERATOR,
     SERVICE_AREA
 } from '../js/business-config.js';
+import { productAvailability } from '../js/product-schema.js';
 import legacySeoRedirect from '../netlify/edge-functions/legacy-seo-redirect.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -210,7 +211,20 @@ for (const url of locations) {
         if (!types.includes('Product') || !types.includes('Offer') || !types.includes('Brand')) fail(`${relative}: incomplete Product/Offer/Brand JSON-LD`);
         const serialized = JSON.stringify(schemas);
         if (!serialized.includes('"priceCurrency":"MAD"')) fail(`${relative}: Product Offer must use MAD`);
-        if (serialized.includes('"availability"')) fail(`${relative}: availability must be omitted until inventory is verified`);
+
+        // Regression guard: availability may only appear when the matching
+        // catalog product has a verified stock source, and it must match
+        // exactly what productAvailability() computes for that product —
+        // never omitted-but-should-be-present, never present-but-guessed.
+        const matchedProduct = catalogProducts.find((product) => `${SITE_ORIGIN}${productRoute(product)}` === url);
+        const expectedAvailability = matchedProduct ? productAvailability(matchedProduct) : null;
+        if (expectedAvailability) {
+            if (!serialized.includes(`"availability":"${expectedAvailability}"`)) {
+                fail(`${relative}: expected availability "${expectedAvailability}" for this verified-stock product`);
+            }
+        } else if (serialized.includes('"availability"')) {
+            fail(`${relative}: availability must be omitted until inventory is verified`);
+        }
     }
 
     const articlePathname = new URL(url).pathname;

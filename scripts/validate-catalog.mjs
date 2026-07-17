@@ -2,6 +2,7 @@ import { access } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { productRoute as cleanProductRoute } from '../js/seo-routes.js';
+import { productAvailability, productGtin } from '../js/product-schema.js';
 
 const root = process.cwd();
 const productTemplate = path.join(root, 'product.html');
@@ -101,6 +102,52 @@ for (const product of catalogProducts) {
     if (product.stockVerified !== true && product.stockStatus !== 'Disponibilité à confirmer') {
         fail(product, 'unverified inventory needs a neutral availability label');
     }
+
+    // Product-truth fields (TASK 3): backward-compatible, never invented.
+    if (!product.sku) fail(product, 'missing sku');
+    if (product.ean !== null && !/^\d{8}$|^\d{12,14}$/.test(String(product.ean))) {
+        fail(product, 'ean must be a real, verified 8/12/13/14-digit GTIN, or left null');
+    }
+    if (product.priceVerifiedAt && !product.priceSource) {
+        fail(product, 'priceVerifiedAt is set without a priceSource');
+    }
+    if (product.stockVerifiedAt && product.stockVerified !== true) {
+        fail(product, 'stockVerifiedAt is set without stockVerified');
+    }
+
+    // Structured-data invariant: since no catalog product has verified
+    // stock yet, none may compute a schema.org availability value. This
+    // regression-guards rule "Add InStock/OutOfStock only when backed by
+    // a real current stock source" directly against the real catalog.
+    if (product.stockVerified !== true && productAvailability(product) !== null) {
+        fail(product, 'unverified product must not resolve a schema.org availability value');
+    }
+    if (!product.ean && productGtin(product) !== null) {
+        fail(product, 'product without a verified ean must not resolve a gtin value');
+    }
+}
+
+// Unit-style regression tests for the shared product-schema helpers.
+// The real catalog only exercises the "unverified" branch above, so this
+// covers the "verified" branch directly with synthetic products.
+const verifiedInStock = { stockVerified: true, stock: 4, ean: '3282770203915' };
+const verifiedOutOfStock = { stockVerified: true, stock: 0, ean: null };
+const unverified = { stockVerified: false, stock: null, ean: null };
+
+if (productAvailability(verifiedInStock) !== 'https://schema.org/InStock') {
+    fail({ id: 'productAvailability' }, 'verified in-stock product must resolve to schema.org/InStock');
+}
+if (productAvailability(verifiedOutOfStock) !== 'https://schema.org/OutOfStock') {
+    fail({ id: 'productAvailability' }, 'verified zero-stock product must resolve to schema.org/OutOfStock');
+}
+if (productAvailability(unverified) !== null) {
+    fail({ id: 'productAvailability' }, 'unverified product must resolve to null availability');
+}
+if (productGtin(verifiedInStock) !== '3282770203915') {
+    fail({ id: 'productGtin' }, 'product with a verified ean must resolve gtin to that ean');
+}
+if (productGtin(unverified) !== null) {
+    fail({ id: 'productGtin' }, 'product without ean must resolve gtin to null');
 }
 
 const sampleIds = [

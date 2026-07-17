@@ -101,8 +101,44 @@ export const DELIVERY = Object.freeze({
     other: Object.freeze({ area: 'Autres villes marocaines desservies', feeMAD: 35 })
 });
 
+// The ONLY city explicitly confirmed by the owner for the 15 MAD local
+// rate is Khouribga itself. Surrounding communes referenced elsewhere as
+// SEO keywords (Oued Zem, Boujniba, Boulanouare — see
+// js/catalog-data.js's localCityKeywords) are geographically close but
+// have NOT been confirmed by the owner as qualifying for the local rate.
+// Do not add a city here without an explicit owner confirmation for that
+// exact name — guessing "surrounding communes" is exactly what this list
+// exists to prevent.
+//
+// STILL NEEDED FROM OWNER: an explicit yes/no per commune — at minimum
+// Oued Zem, Boujniba, and Boulanouare — before any of them can move from
+// the 35 MAD "other" tier into this 15 MAD local list.
+export const LOCAL_DELIVERY_ZONE_CITIES = Object.freeze(['Khouribga']);
+
+function normalizeCityName(value) {
+    return String(value || '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '');
+}
+
+// Resolves a free-text city input to a delivery zone. Everything that is
+// not an explicitly verified local city (see LOCAL_DELIVERY_ZONE_CITIES)
+// falls into the "other Moroccan cities" tier — this is an intentional
+// two-tier partition already described by DELIVERY, not a guess about
+// which specific other cities are covered.
+export function resolveDeliveryZone(cityInput) {
+    const normalized = normalizeCityName(cityInput);
+    const isLocal = normalized.length > 0
+        && LOCAL_DELIVERY_ZONE_CITIES.some((city) => normalizeCityName(city) === normalized);
+    return isLocal
+        ? { zone: 'local', feeMAD: DELIVERY.local.feeMAD, area: DELIVERY.local.area }
+        : { zone: 'other', feeMAD: DELIVERY.other.feeMAD, area: DELIVERY.other.area };
+}
+
 // `active` reflects what the checkout actually offers today. `planned`
-// methods must never be presented as available on any public-facing page.
+// methods must never be presented as selectable on any public-facing page.
 export const PAYMENT = Object.freeze({
     active: Object.freeze(['cod']),
     planned: Object.freeze(['cmi', 'apple_pay'])
