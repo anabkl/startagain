@@ -25,6 +25,13 @@ export const TRUST_PAGE_ROUTES = Object.freeze([
     '/conditions-utilisation/'
 ]);
 
+// City/local landing pages. Kept separate from TRUST_PAGE_ROUTES because
+// these use their own dedicated builder (map, local FAQ, local JSON-LD)
+// instead of the generic prose trust-page template — see
+// scripts/generate-seo-pages.mjs's buildKhouribgaPage().
+export const KHOURIBGA_ROUTE = '/parapharmacie-khouribga/';
+export const LOCAL_LANDING_ROUTES = Object.freeze([KHOURIBGA_ROUTE]);
+
 export const CONSEILS_INDEX_ROUTE = '/conseils/';
 
 // Computed from js/articles-data.js so this list can never drift from what

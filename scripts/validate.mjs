@@ -5,6 +5,7 @@ import { categories, catalogProducts } from '../js/catalog-data.js';
 import {
   ARTICLE_ROUTES,
   categoryRoute,
+  LOCAL_LANDING_ROUTES,
   productRoute,
   RETURNS_ROUTE,
   TRUST_PAGE_ROUTES
@@ -50,6 +51,7 @@ const generatedRoutes = new Set([
   ...categories.map(categoryRoute),
   ...catalogProducts.map(productRoute),
   ...TRUST_PAGE_ROUTES,
+  ...LOCAL_LANDING_ROUTES,
   ...ARTICLE_ROUTES,
   RETURNS_ROUTE
 ]);

@@ -60,7 +60,26 @@ export const GEO = Object.freeze({ latitude: 32.880939, longitude: -6.8961967 })
 
 export const MAPS_URL = 'https://maps.app.goo.gl/TbTSUacj462VrfZv5';
 
+// Google's key-less embeddable Maps URL built from the same verified GEO
+// coordinates above. Do not swap this for an API-key embed without owner
+// sign-off on billing; do not change the coordinates without re-resolving
+// MAPS_URL per the note at the top of this file.
+export const MAPS_EMBED_URL = `https://www.google.com/maps?q=${GEO.latitude},${GEO.longitude}&z=16&output=embed`;
+
 export const SERVICE_AREA = 'Khouribga et les environs';
+
+// A real, owner-confirmed photo of the physical storefront (matches
+// OPERATOR.legalName signage exactly: "PHARMACIE TAWFIQ" over the shopfront
+// in assets/images/photopharamcie.png). This is a genuine photo, not a
+// stock or generic illustration, so it is safe to use as structured-data
+// `image` and as a real photo on public pages.
+export const STOREFRONT_PHOTO = Object.freeze({
+    path: '/assets/images/photopharamcie.png',
+    url: 'https://parapharmacie.me/assets/images/photopharamcie.png',
+    width: 577,
+    height: 433,
+    alt: `Façade de ${OPERATOR.legalName} à ${ADDRESS.addressLocality}, parapharmacie et matériel médical`
+});
 
 // Sunday is deliberately absent: it is closed, and schema.org's convention
 // for closed days is to omit them from openingHoursSpecification rather
@@ -135,6 +154,7 @@ export function pharmacySchema() {
         geo: { '@type': 'GeoCoordinates', latitude: GEO.latitude, longitude: GEO.longitude },
         hasMap: MAPS_URL,
         areaServed: SERVICE_AREA,
+        image: STOREFRONT_PHOTO.url,
         openingHoursSpecification: openingHoursSpecification()
     };
 }

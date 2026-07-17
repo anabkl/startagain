@@ -8,10 +8,21 @@ import {
     ARTICLE_ROUTES,
     CONSEILS_INDEX_ROUTE,
     categoryRoute,
+    KHOURIBGA_ROUTE,
+    LOCAL_LANDING_ROUTES,
     productRoute,
     SITE_ORIGIN,
     TRUST_PAGE_ROUTES
 } from '../js/seo-routes.js';
+import {
+    ADDRESS,
+    CONTACT,
+    GEO,
+    MAPS_URL,
+    OPENING_HOURS_DISPLAY,
+    OPERATOR,
+    SERVICE_AREA
+} from '../js/business-config.js';
 import legacySeoRedirect from '../netlify/edge-functions/legacy-seo-redirect.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -101,7 +112,7 @@ const sitemapFile = path.join(dist, 'sitemap.xml');
 const sitemap = await readFile(sitemapFile, 'utf8');
 const locations = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
 const lastmods = [...sitemap.matchAll(/<lastmod>([^<]+)<\/lastmod>/g)].map((match) => match[1]);
-const expectedCount = 2 + categories.length + catalogProducts.length + TRUST_PAGE_ROUTES.length + ARTICLE_ROUTES.length;
+const expectedCount = 2 + categories.length + catalogProducts.length + TRUST_PAGE_ROUTES.length + LOCAL_LANDING_ROUTES.length + ARTICLE_ROUTES.length;
 
 if (locations.length !== expectedCount) fail(`sitemap.xml: expected ${expectedCount} URLs, found ${locations.length}`);
 if (new Set(locations).size !== locations.length) fail('sitemap.xml: duplicate URLs found');
@@ -138,6 +149,7 @@ const expectedPaths = new Set([
     ...categories.map(categoryRoute),
     ...catalogProducts.map(productRoute),
     ...TRUST_PAGE_ROUTES,
+    ...LOCAL_LANDING_ROUTES,
     ...ARTICLE_ROUTES
 ]);
 for (const route of expectedPaths) {
@@ -317,6 +329,86 @@ for (const { from, label } of requiredHttpsRedirects) {
     }
     if (match.index < lastRedirectIndex) fail(`netlify.toml: ${label} redirect must not appear after a later HTTPS-consolidation rule (risk of a redirect chain)`);
     lastRedirectIndex = match.index;
+}
+
+// Regression guard: the Khouribga local landing page must visibly show the
+// owner-verified business identity, embed an accessible lazy-loaded map,
+// never present CMI/Apple Pay as selectable, and its JSON-LD must match
+// js/business-config.js exactly (not just "look right" to a human reviewer).
+const khouribgaFile = htmlFileForUrl(`${SITE_ORIGIN}${KHOURIBGA_ROUTE}`);
+if (!await exists(khouribgaFile)) {
+    fail(`${KHOURIBGA_ROUTE}: generated HTML file is missing`);
+} else {
+    const khouribgaRelative = path.relative(dist, khouribgaFile);
+    const khouribgaHtml = await readFile(khouribgaFile, 'utf8');
+
+    const h1 = matchOne(khouribgaHtml, /<h1(?:\s[^>]*)?>([\s\S]*?)<\/h1>/gi, 'H1', khouribgaRelative).replace(/<[^>]+>/g, '').trim();
+    if (h1 !== 'Votre parapharmacie à Khouribga') fail(`${khouribgaRelative}: H1 must be exactly "Votre parapharmacie à Khouribga", found "${h1}"`);
+
+    for (const visibleText of [OPERATOR.legalName, ADDRESS.full, CONTACT.phone.display, CONTACT.whatsapp.display, ...OPENING_HOURS_DISPLAY]) {
+        if (!khouribgaHtml.includes(visibleText)) fail(`${khouribgaRelative}: missing visible business text "${visibleText}"`);
+    }
+    if (!khouribgaHtml.includes(`href="${CONTACT.whatsapp.href}"`)) fail(`${khouribgaRelative}: missing a WhatsApp CTA using ${CONTACT.whatsapp.href}`);
+    if (!khouribgaHtml.includes(`href="${MAPS_URL}"`)) fail(`${khouribgaRelative}: missing a "Voir l’itinéraire" link to the verified Maps URL`);
+
+    // Map accessibility: lazy-loaded, titled, referrer-safe iframe embed.
+    const localMapFrameMatch = khouribgaHtml.match(/<div class="local-map__frame">\s*<iframe([^>]*)>/i);
+    if (!localMapFrameMatch) {
+        fail(`${khouribgaRelative}: missing the local-map iframe section`);
+    } else {
+        const iframeAttrs = localMapFrameMatch[1];
+        if (!/loading=["']lazy["']/i.test(iframeAttrs)) fail(`${khouribgaRelative}: local map iframe must use loading="lazy"`);
+        if (!/title=["'][^"']+["']/i.test(iframeAttrs)) fail(`${khouribgaRelative}: local map iframe must have a non-empty title`);
+        if (!/referrerpolicy=["'][^"']+["']/i.test(iframeAttrs)) fail(`${khouribgaRelative}: local map iframe must set a safe referrerpolicy`);
+        if (!/src=["']https:\/\/www\.google\.com\/maps\?q=/i.test(iframeAttrs)) fail(`${khouribgaRelative}: local map iframe src must be a Google Maps embed`);
+    }
+
+    // CMI / Apple Pay must be labelled "Bientôt" and never rendered as a
+    // clickable/selectable control (no surrounding <a> or <button>).
+    for (const method of ['CMI', 'Apple Pay']) {
+        const badgeMatch = khouribgaHtml.match(new RegExp(`<span class="payment-badge payment-badge--soon">[\\s\\S]*?${method}[\\s\\S]*?Bientôt[\\s\\S]*?</span>`));
+        if (!badgeMatch) fail(`${khouribgaRelative}: ${method} must be shown as a "Bientôt" (not-yet-active) badge`);
+        else if (/<a\s|<button/i.test(badgeMatch[0])) fail(`${khouribgaRelative}: ${method} must not be rendered as a clickable/selectable element`);
+    }
+    if (!/payment-badge--active[\s\S]{0,120}Paiement à la livraison/.test(khouribgaHtml)) {
+        fail(`${khouribgaRelative}: cash-on-delivery must be shown as the active payment method`);
+    }
+
+    // Schema consistency: JSON-LD on this page must match business-config.js
+    // exactly, not drift from the visible content above.
+    const khouribgaSchemas = collectJsonLd(khouribgaHtml, khouribgaRelative);
+    const graphNode = khouribgaSchemas.find((schema) => Array.isArray(schema['@graph']));
+    const pharmacyNode = graphNode?.['@graph']?.find((node) => node['@type'] === 'Pharmacy');
+    if (!pharmacyNode) {
+        fail(`${khouribgaRelative}: missing a Pharmacy node in the JSON-LD @graph`);
+    } else {
+        if (pharmacyNode.name !== OPERATOR.legalName) fail(`${khouribgaRelative}: Pharmacy JSON-LD name must be "${OPERATOR.legalName}"`);
+        if (pharmacyNode.telephone !== CONTACT.phone.e164) fail(`${khouribgaRelative}: Pharmacy JSON-LD telephone must be "${CONTACT.phone.e164}"`);
+        if (pharmacyNode.hasMap !== MAPS_URL) fail(`${khouribgaRelative}: Pharmacy JSON-LD hasMap must be "${MAPS_URL}"`);
+        if (pharmacyNode.areaServed !== SERVICE_AREA) fail(`${khouribgaRelative}: Pharmacy JSON-LD areaServed must be "${SERVICE_AREA}"`);
+        if (pharmacyNode.address?.streetAddress !== ADDRESS.streetAddress || pharmacyNode.address?.addressLocality !== ADDRESS.addressLocality || pharmacyNode.address?.postalCode !== ADDRESS.postalCode) {
+            fail(`${khouribgaRelative}: Pharmacy JSON-LD address does not match js/business-config.js`);
+        }
+        if (pharmacyNode.geo?.latitude !== GEO.latitude || pharmacyNode.geo?.longitude !== GEO.longitude) {
+            fail(`${khouribgaRelative}: Pharmacy JSON-LD geo does not match js/business-config.js`);
+        }
+    }
+    const khouribgaTypes = flattenSchemaTypes(khouribgaSchemas);
+    if (!khouribgaTypes.includes('FAQPage')) fail(`${khouribgaRelative}: missing FAQPage JSON-LD for the local FAQ`);
+    if (!khouribgaTypes.includes('WebSite')) fail(`${khouribgaRelative}: missing WebSite JSON-LD in the @graph`);
+}
+
+// Regression guard: the shared footer map (present on every generated page)
+// must also be an accessible, lazy-loaded, safely-referrer'd embed.
+const homepageFooterHtml = await readFile(path.join(dist, 'boutique', 'index.html'), 'utf8');
+const footerMapMatch = homepageFooterHtml.match(/<div class="footer__map">\s*<iframe([^>]*)>/i);
+if (!footerMapMatch) {
+    fail('boutique/index.html: missing the shared footer map iframe');
+} else {
+    const footerIframeAttrs = footerMapMatch[1];
+    if (!/loading=["']lazy["']/i.test(footerIframeAttrs)) fail('footer map iframe must use loading="lazy"');
+    if (!/title=["'][^"']+["']/i.test(footerIframeAttrs)) fail('footer map iframe must have a non-empty title');
+    if (!/referrerpolicy=["'][^"']+["']/i.test(footerIframeAttrs)) fail('footer map iframe must set a safe referrerpolicy');
 }
 
 if (errors.length) {

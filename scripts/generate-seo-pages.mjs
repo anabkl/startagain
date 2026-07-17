@@ -10,11 +10,14 @@ import {
     ADDRESS,
     CONTACT,
     DELIVERY,
+    MAPS_EMBED_URL,
     MAPS_URL,
     OPENING_HOURS_DISPLAY,
     OPERATOR,
+    PAYMENT,
     SERVICE_AREA,
     SOCIAL,
+    STOREFRONT_PHOTO,
     organizationSchema,
     pharmacySchema
 } from '../js/business-config.js';
@@ -25,6 +28,8 @@ import {
     CATEGORY_ROUTE_MAP,
     categoryRoute,
     CONSEILS_INDEX_ROUTE,
+    KHOURIBGA_ROUTE,
+    LOCAL_LANDING_ROUTES,
     productRoute,
     RETURNS_ROUTE,
     SITE_ORIGIN,
@@ -320,6 +325,7 @@ function footer() {
                     <a href="${CONSEILS_INDEX_ROUTE}">Conseils</a>
                     <a href="/livraison/">Commande et livraison</a>
                     <a href="${RETURNS_ROUTE}">Retours et remboursements</a>
+                    <a href="${KHOURIBGA_ROUTE}">Parapharmacie à Khouribga</a>
                     <a href="/confidentialite/">Confidentialité</a>
                     <a href="/conditions-utilisation/">Conditions d’utilisation</a>
                 </div>
@@ -332,6 +338,9 @@ function footer() {
                     <div class="footer__social">
                         <a href="${SOCIAL.instagram}" rel="noreferrer" aria-label="Instagram ${escapeHtml(OPERATOR.displayName)}"><i class="fa-brands fa-instagram"></i></a>
                         <a href="${SOCIAL.facebook}" rel="noreferrer" aria-label="Facebook ${escapeHtml(OPERATOR.displayName)}"><i class="fa-brands fa-facebook"></i></a>
+                    </div>
+                    <div class="footer__map">
+                        <iframe src="${MAPS_EMBED_URL}" title="Carte Google Maps — ${escapeHtml(OPERATOR.legalName)}, ${escapeHtml(ADDRESS.addressLocality)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" aria-label="Localisation de ${escapeHtml(OPERATOR.legalName)} sur Google Maps"></iframe>
                     </div>
                 </div>
             </div>
@@ -592,6 +601,150 @@ function buildTrustPage(page) {
         canonicalPath: page.route,
         content,
         schemas: [breadcrumbSchema(breadcrumbs)]
+    });
+}
+
+const khouribgaFaq = [
+    {
+        q: 'Livrez-vous en dehors de Khouribga ?',
+        a: `Oui. La livraison est proposée à ${DELIVERY.local.area} pour ${DELIVERY.local.feeMAD} MAD, et vers les ${DELIVERY.other.area.toLowerCase()} pour ${DELIVERY.other.feeMAD} MAD. Le délai exact est confirmé au moment de la commande.`
+    },
+    {
+        q: 'Quels moyens de paiement sont disponibles ?',
+        a: 'Le paiement à la livraison (espèces) est actuellement le seul mode actif. Le paiement en ligne par CMI et Apple Pay est prévu mais pas encore disponible.'
+    },
+    {
+        q: 'Le site correspond-il à un magasin physique à Khouribga ?',
+        a: `Oui. Parapharmacie.me est le catalogue en ligne de ${OPERATOR.legalName}, situé au ${ADDRESS.full}. Vous pouvez consulter les références en ligne puis confirmer votre commande par téléphone ou WhatsApp.`
+    },
+    {
+        q: 'Quels sont vos horaires d’ouverture ?',
+        a: `${OPENING_HOURS_DISPLAY.join(' ')}`
+    },
+    {
+        q: 'Comment confirmer la disponibilité d’un produit avant de commander ?',
+        a: 'Contactez-nous par téléphone ou WhatsApp en indiquant la référence souhaitée : nous confirmons la disponibilité et le prix final avant expédition.'
+    }
+];
+
+function buildKhouribgaPage() {
+    const route = KHOURIBGA_ROUTE;
+    const title = 'Parapharmacie à Khouribga | Parapharmacie.me';
+    const description = `Parapharmacie à Khouribga : ${OPERATOR.legalName} propose son catalogue en ligne, la livraison locale et le paiement à la livraison, avec adresse, horaires et WhatsApp pour confirmer votre commande.`;
+    const breadcrumbs = [{ name: 'Accueil', path: '/' }, { name: 'Parapharmacie à Khouribga', path: route }];
+
+    const popularCategorySlugs = ['visage', 'solaire', 'bebe-maman', 'complements-alimentaires', 'hygiene', 'sante'];
+    const popularCategories = categories.filter((category) => popularCategorySlugs.includes(category.slug));
+    const selectedProducts = catalogProducts.filter((product) => popularCategorySlugs.includes(product.categorySlug)).slice(0, 8);
+    const relatedArticles = ['comment-choisir-creme-solaire-maroc', 'hygiene-bebe-conseils']
+        .map((slug) => articles.find((article) => article.slug === slug))
+        .filter(Boolean);
+
+    const mapTitle = `Carte Google Maps — ${OPERATOR.legalName}, ${ADDRESS.addressLocality}`;
+
+    const content = `
+        <main>
+            <section class="page-hero"><div class="container page-hero__grid"><div>
+                <p class="eyebrow">Parapharmacie à Khouribga</p>
+                <h1>Votre parapharmacie à Khouribga</h1>
+                <p>Parapharmacie.me est le catalogue en ligne de ${escapeHtml(OPERATOR.legalName)}, votre parapharmacie à Khouribga. Comparez les références, préparez votre commande en ligne puis confirmez-la par téléphone ou WhatsApp, avec paiement à la livraison.</p>
+            </div><div class="page-hero__badge"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(ADDRESS.addressLocality)}, ${escapeHtml(ADDRESS.countryName)}</div></div></section>
+            <section class="section"><div class="container seo-prose">
+                ${visibleBreadcrumb(breadcrumbs)}
+
+                <div class="local-intro">
+                    <div>
+                        <h2>Une parapharmacie près de chez vous à Khouribga</h2>
+                        <p>${escapeHtml(OPERATOR.legalName)} est le magasin physique qui gère Parapharmacie.me, situé au ${escapeHtml(ADDRESS.full)}. Que vous cherchiez une parapharmacie près de chez vous ou une parapharmacie en ligne à Khouribga, vous pouvez consulter le catalogue ici puis commander via le site, par téléphone ou par WhatsApp.</p>
+                        <ul>
+                            <li><strong>Adresse :</strong> ${escapeHtml(ADDRESS.full)}</li>
+                            <li><strong>Téléphone :</strong> <a href="${CONTACT.phone.href}">${escapeHtml(CONTACT.phone.display)}</a></li>
+                            <li><strong>WhatsApp :</strong> <a href="${CONTACT.whatsapp.href}" rel="noreferrer">${escapeHtml(CONTACT.whatsapp.display)}</a></li>
+                        </ul>
+                        <div class="local-map__actions">
+                            <a class="btn btn--whatsapp" href="${CONTACT.whatsapp.href}" rel="noreferrer"><i class="fa-brands fa-whatsapp"></i> Commander sur WhatsApp</a>
+                            <a class="btn btn--secondary" href="${MAPS_URL}" target="_blank" rel="noreferrer"><i class="fa-solid fa-diamond-turn-right"></i> Voir l’itinéraire</a>
+                        </div>
+                    </div>
+                    <div class="local-intro__photo">
+                        <img src="${STOREFRONT_PHOTO.path}" alt="${escapeHtml(STOREFRONT_PHOTO.alt)}" width="${STOREFRONT_PHOTO.width}" height="${STOREFRONT_PHOTO.height}" loading="lazy" decoding="async">
+                    </div>
+                </div>
+
+                <h2>Horaires d’ouverture</h2>
+                <ul>
+                    ${OPENING_HOURS_DISPLAY.map((line) => `<li>${escapeHtml(line)}</li>`).join('')}
+                </ul>
+
+                <h2>Nous trouver sur la carte</h2>
+                <div class="local-map">
+                    <div class="local-map__frame">
+                        <iframe src="${MAPS_EMBED_URL}" title="${escapeHtml(mapTitle)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" aria-label="Localisation de ${escapeHtml(OPERATOR.legalName)} sur Google Maps"></iframe>
+                    </div>
+                    <div class="local-map__actions">
+                        <a class="btn btn--secondary" href="${MAPS_URL}" target="_blank" rel="noreferrer"><i class="fa-solid fa-diamond-turn-right"></i> Voir l’itinéraire</a>
+                    </div>
+                </div>
+
+                <h2>Comment commander</h2>
+                <div class="trust-strip__grid">
+                    <article class="trust-card"><i class="fa-solid fa-magnifying-glass"></i><h3>1. Choisissez vos références</h3><p>Parcourez les catégories populaires ou recherchez une marque dans le catalogue.</p></article>
+                    <article class="trust-card"><i class="fa-solid fa-bag-shopping"></i><h3>2. Confirmez votre commande</h3><p>Ajoutez au panier ou contactez-nous par téléphone ou WhatsApp avec votre sélection.</p></article>
+                    <article class="trust-card"><i class="fa-solid fa-truck-fast"></i><h3>3. Livraison ou retrait</h3><p>Prix, disponibilité et modalités de livraison sont confirmés avant expédition.</p></article>
+                </div>
+
+                <h2>Paiement et livraison</h2>
+                <div class="payment-methods">
+                    <span class="payment-badge payment-badge--active"><i class="fa-solid fa-money-bill-wave"></i> Paiement à la livraison — actif</span>
+                    <span class="payment-badge payment-badge--soon"><i class="fa-regular fa-credit-card"></i> CMI <span class="payment-badge__tag">Bientôt</span></span>
+                    <span class="payment-badge payment-badge--soon"><i class="fa-brands fa-apple-pay"></i> Apple Pay <span class="payment-badge__tag">Bientôt</span></span>
+                </div>
+                <ul>
+                    <li>${escapeHtml(DELIVERY.local.area)} : ${DELIVERY.local.feeMAD} MAD</li>
+                    <li>${escapeHtml(DELIVERY.other.area)} : ${DELIVERY.other.feeMAD} MAD</li>
+                </ul>
+                <p>Le délai de livraison précis est confirmé au moment de la commande. Nous n’affichons pas de promesse de livraison le jour même.</p>
+
+                <div class="section-header"><div><p class="eyebrow">Catégories populaires à Khouribga</p><h2>Ce que recherchent nos clients</h2></div><a class="section-header__link" href="/boutique/">Voir tout le catalogue <i class="fa-solid fa-arrow-right"></i></a></div>
+                <nav class="category-pills" aria-label="Catégories populaires à Khouribga">
+                    ${popularCategories.map((category) => `<a class="category-pill" href="${categoryRoute(category)}">${escapeHtml(category.name)}</a>`).join('')}
+                </nav>
+                <div class="products__grid">${selectedProducts.map(productCard).join('')}</div>
+
+                <h2>Aller plus loin</h2>
+                <div class="local-map__actions">
+                    <a class="btn btn--secondary" href="/boutique/">Boutique</a>
+                    <a class="btn btn--secondary" href="/contact/">Contact</a>
+                    <a class="btn btn--secondary" href="/livraison/">Livraison</a>
+                    <a class="btn btn--secondary" href="${RETURNS_ROUTE}">Retours et remboursements</a>
+                    ${relatedArticles.map((article) => `<a class="btn btn--secondary" href="${articleRoute(article)}">${escapeHtml(article.title)}</a>`).join('')}
+                </div>
+
+                ${articleFaqSection(khouribgaFaq)}
+            </div></section>
+        </main>`;
+
+    const graph = {
+        '@context': 'https://schema.org',
+        '@graph': [
+            {
+                '@type': 'WebSite',
+                '@id': `${SITE_ORIGIN}/#website`,
+                name: 'Parapharmacie.me',
+                url: `${SITE_ORIGIN}/`,
+                inLanguage: 'fr-MA'
+            },
+            organizationSchema(),
+            pharmacySchema()
+        ]
+    };
+
+    return documentHtml({
+        title,
+        description,
+        canonicalPath: route,
+        content,
+        schemas: [graph, breadcrumbSchema(breadcrumbs), faqSchema(khouribgaFaq)]
     });
 }
 
@@ -946,6 +1099,8 @@ export async function generateSeoPages({ outputDir = defaultOutputDir } = {}) {
     for (const page of trustPages) {
         await writeRoute(outputDir, page.route, buildTrustPage(page));
     }
+
+    await writeRoute(outputDir, KHOURIBGA_ROUTE, buildKhouribgaPage());
 
     await writeRoute(outputDir, CONSEILS_INDEX_ROUTE, buildConseilsIndexPage());
     for (const article of articles) {

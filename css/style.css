@@ -1439,6 +1439,96 @@ img {
     font-size: 1.1rem;
 }
 
+/* Local landing page (e.g. /parapharmacie-khouribga/) */
+.local-intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+    gap: 28px;
+    align-items: center;
+    margin: 26px 0;
+}
+
+.local-intro__photo img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 577 / 433;
+    object-fit: cover;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+}
+
+.local-map {
+    margin: 26px 0;
+}
+
+.local-map__frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    background: var(--surface-soft);
+}
+
+.local-map__frame iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.local-map__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.payment-methods {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 14px 0 0;
+}
+
+.payment-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border: 1px solid var(--line);
+    border-radius: var(--pill);
+    background: white;
+    color: var(--ink);
+    font-weight: 900;
+    font-size: 0.88rem;
+}
+
+.payment-badge--active {
+    border-color: var(--green-700);
+    color: var(--green-900);
+    background: var(--surface-soft);
+}
+
+.payment-badge--soon {
+    color: var(--muted);
+    cursor: not-allowed;
+}
+
+.payment-badge--soon .payment-badge__tag {
+    padding: 2px 8px;
+    border-radius: var(--pill);
+    background: var(--surface-soft);
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
 /* Conseils: article index */
 .article-grid {
     display: grid;
@@ -2209,6 +2299,23 @@ img {
 
 .footer__social a:hover {
     background: rgba(255, 255, 255, 0.16);
+}
+
+.footer__map {
+    margin-top: 14px;
+    max-width: 280px;
+    aspect-ratio: 16 / 9;
+    max-height: 140px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: var(--radius);
+}
+
+.footer__map iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
 }
 
 .footer__brand {
@@ -3069,7 +3176,8 @@ img {
     .product-detail,
     .cart-layout,
     .checkout-container,
-    .faq__layout {
+    .faq__layout,
+    .local-intro {
         grid-template-columns: 1fr;
     }
 
@@ -3272,6 +3380,10 @@ img {
 
     .footer__grid {
         grid-template-columns: 1fr;
+    }
+
+    .footer__map {
+        max-width: none;
     }
 
     .whatsapp-float {
