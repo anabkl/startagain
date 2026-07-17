@@ -382,6 +382,8 @@ if (!redirects.includes('/* /404.html 404')) fail('_redirects: missing real 404 
 const robots = await readFile(path.join(dist, 'robots.txt'), 'utf8');
 if (!/^User-agent: \*$/m.test(robots) || !/^Allow: \/$/m.test(robots)) fail('robots.txt: crawler access is not explicitly allowed');
 if (!robots.includes(`Sitemap: ${SITE_ORIGIN}/sitemap.xml`)) fail('robots.txt: canonical sitemap directive is missing');
+const oaiSearchBotGroup = robots.match(/User-agent:\s*OAI-SearchBot[\s\S]*?(?=\nUser-agent:|\nSitemap:|$)/i)?.[0] || '';
+if (/^Disallow:\s*\S+/im.test(oaiSearchBotGroup)) fail('robots.txt: OAI-SearchBot must not be blocked from public pages');
 
 const localLegacyResponse = await legacySeoRedirect(new Request(`${SITE_ORIGIN}/product.html?id=${catalogProducts[0].id}`));
 const apiLegacyResponse = await legacySeoRedirect(new Request(`${SITE_ORIGIN}/product.html?id=${catalogApiIdBySlug[catalogProducts[0].id]}`));

@@ -12,6 +12,7 @@
     "generate:seo": "node scripts/generate-seo-pages.mjs",
     "validate:catalog": "NODE_NO_WARNINGS=1 node scripts/validate-catalog.mjs",
     "validate:commerce": "node scripts/validate-commerce.mjs",
+    "validate:docs": "node scripts/validate-docs.mjs",
     "validate:seo": "node scripts/validate-seo.mjs",
     "preview": "vite preview --host 127.0.0.1"
   },
