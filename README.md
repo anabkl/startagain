@@ -10,15 +10,15 @@ The public catalogue uses descriptive local slugs as its canonical product ident
 
 - Responsive homepage with crawlable categories, factual catalogue signals, FAQ, and trust links.
 - Searchable/filterable shop catalogue with 93 references.
-- Pre-rendered product detail pages with factual product fields, quantity controls, add-to-cart, and WhatsApp confirmation CTA.
+- Pre-rendered product detail pages with factual product fields and a WhatsApp confirmation CTA; quantity/cart controls appear only when the price has current owner evidence.
 - Persistent localStorage cart with quantity increase/decrease, remove item, order summary, and empty state.
 - Checkout page optimized for Cash on Delivery.
 - WhatsApp order message with customer info, product names, quantities, totals, order id, and city.
 - Render API catalogue with a local fallback and stable public-slug reconciliation.
-- Unique titles, descriptions, H1s, canonicals, social metadata, breadcrumbs, Product/Offer data, and clean URLs.
+- Unique titles, descriptions, H1s, canonicals, social metadata, breadcrumbs, Product/Brand data, conditional Offer data, and clean URLs.
 - Generated sitemap containing only canonical, indexable commercial and informational pages.
 - Netlify 301 redirects from legacy category and product query URLs.
-- Catalog validation script for required fields, prices, categories, source URLs, duplicate IDs, image fallback, and sample product routes.
+- Catalog validation for required fields, fail-closed price/stock evidence, categories, source URLs, duplicate IDs, image fallback, and sample routes.
 - Image rights workflow that avoids competitor photos until commercial usage rights are verified.
 
 ## Tech Stack
@@ -78,9 +78,9 @@ The storefront requests the Render API first and falls back to the local catalog
 - API identifier bridge: `js/catalog-api-id-map.js`.
 - Canonical route helpers: `js/seo-routes.js`.
 - Core sources: public Moroccan parapharmacy pages, mainly `parapharma.ma`, plus Citymall Para for the exact Mustela 2en1 200ml example.
-- Every product includes `sourceUrl`, `priceMAD`, `stockStatus`, `tags`, `searchKeywords`, and `cityKeywords`.
+- Every product includes `sourceUrl`, a nullable `priceMAD`, neutral `stockStatus`, `tags`, `searchKeywords`, and `cityKeywords`.
 - Generated product copy is limited to catalogue fields and avoids medical claims.
-- Prices and availability are explicitly presented as requiring confirmation.
+- Current catalogue prices are null and shown as « Prix à confirmer » until a traceable owner source and a verification date no older than 30 days exist.
 - Ratings, reviews, numeric fallback stock, unsupported availability, and review schema are not generated.
 
 ## Image Rights

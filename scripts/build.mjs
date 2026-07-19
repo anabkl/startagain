@@ -13,9 +13,7 @@ const copyTargets = [
   'js',
   'admin.css',
   'favicon.svg',
-  'site.webmanifest',
-  'firestore.rules',
-  'storage.rules'
+  'site.webmanifest'
 ];
 
 const htmlFiles = [
@@ -29,10 +27,7 @@ const htmlFiles = [
   'register.html',
   'profile.html',
   'orders.html',
-  'admin.html',
-  'setup-admin.html',
-  'seed.html',
-  'seed-products.html'
+  'admin.html'
 ];
 
 await import(fileURLToPath(new URL('./validate.mjs', import.meta.url)));

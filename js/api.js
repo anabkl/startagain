@@ -4,7 +4,7 @@ const API_BASE_KEY = 'parapharmacie_api_base';
 
 export const API_BASE = window.API_BASE
     || localStorage.getItem(API_BASE_KEY)
-    || 'https://startagain.onrender.com/api/v1';
+    || '/api/v1';
 
 function parseJson(text, fallback = {}) {
     try {

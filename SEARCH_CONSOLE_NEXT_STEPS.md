@@ -1,10 +1,10 @@
 # Search Console et préparation aux moteurs de recherche assistés par IA
 
-Audit local et public en lecture seule du 17 juillet 2026. Aucun compte Search Console ou service tiers n’a été ouvert ou modifié. L’indexation et la visibilité ne sont jamais garanties.
+Audit local et public en lecture seule du 18 juillet 2026. Aucun compte Search Console ou service tiers n’a été ouvert ou modifié. L’indexation et la visibilité ne sont jamais garanties.
 
 ## État technique constaté
 
-| Contrôle | Résultat local | Contrôle public au 17 juillet 2026 | Conclusion/action |
+| Contrôle | Résultat local | Contrôle public au 18 juillet 2026 | Conclusion/action |
 |---|---|---|---|
 | `robots.txt` | `User-agent: *`, `Allow: /`, sitemap HTTPS | Même contenu public | Les pages publiques ne sont pas bloquées |
 | OAI-SearchBot | Aucun groupe `Disallow: /`; garde-fou dans `validate:seo` | Requête avec user-agent `OAI-SearchBot` : HTTP 200 sur l’accueil | Aucun blocage accidentel constaté; continuer à surveiller CDN/WAF |
@@ -86,7 +86,7 @@ Google précise que le test direct et une demande d’indexation ne garantissent
 ## 7. Données structurées et contenu visible
 
 - [ ] Contrôler les rapports d’améliorations disponibles et tester un produit, un article et la page locale.
-- [ ] Comparer systématiquement le nom, prix indicatif, marque, auteur et dates visibles avec le JSON-LD.
+- [ ] Comparer systématiquement le nom, l’état du prix (« vérifié » ou « à confirmer »), la marque, l’auteur et les dates visibles avec le JSON-LD.
 - [ ] Ne pas corriger un avertissement facultatif en inventant avis, note, stock, GTIN, image réelle, prix valide jusqu’à une date ou qualifications éditoriales.
 - [ ] Suivre [`PRODUCT_DATA_COMPLETION.md`](PRODUCT_DATA_COMPLETION.md) avant d’enrichir `Product`.
 - [ ] Pour une erreur après déploiement, corriger d’abord le code/source, déployer, tester l’URL publiée, puis utiliser **Valider la correction**.

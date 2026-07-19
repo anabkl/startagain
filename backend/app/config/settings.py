@@ -20,6 +20,7 @@ class Settings:
     MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
     MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "parapharmacie")
     REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+    RATE_LIMIT_STORAGE_URI = os.getenv("RATE_LIMIT_STORAGE_URI", REDIS_URL)
 
     CORS_ORIGINS = [
         o.strip()

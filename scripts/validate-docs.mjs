@@ -1,14 +1,9 @@
-import { access, readFile } from 'node:fs/promises';
+import { access, readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const documents = [
-    'MANUAL_LOCAL_SEO_CHECKLIST.md',
-    'BACKLINK_OUTREACH_MOROCCO.md',
-    'PRODUCT_DATA_COMPLETION.md',
-    'SEARCH_CONSOLE_NEXT_STEPS.md'
-];
+const documents = (await readdir(root)).filter((entry) => entry.endsWith('.md')).sort();
 const errors = [];
 
 function fail(file, message) {
@@ -27,11 +22,13 @@ for (const document of documents) {
 
     if (!markdown.startsWith('# ')) fail(document, 'must start with one H1');
     if (/\]\(http:\/\//i.test(markdown)) fail(document, 'documentation links must use HTTPS');
-    if (/example\.(?:com|org)|placeholder|TODO_LINK/i.test(markdown)) fail(document, 'contains a placeholder link');
-
     for (const match of markdown.matchAll(/\[[^\]]+\]\(([^)]+)\)/g)) {
         const target = match[1].trim();
         if (!target || target.startsWith('#') || target.startsWith('mailto:') || target.startsWith('tel:')) continue;
+        if (/example\.(?:com|org)|placeholder|TODO_LINK/i.test(target)) {
+            fail(document, `contains a placeholder link ${target}`);
+            continue;
+        }
         if (/^https:\/\//i.test(target)) {
             try {
                 new URL(target);
@@ -61,4 +58,4 @@ if (errors.length) {
     process.exit(1);
 }
 
-console.log(`Validated ${documents.length} owner playbooks and their Markdown links.`);
+console.log(`Validated all ${documents.length} root Markdown documents and their local/HTTPS links.`);

@@ -26,7 +26,7 @@ import {
     OPERATOR,
     SERVICE_AREA
 } from '../js/business-config.js';
-import { productAvailability } from '../js/product-schema.js';
+import { hasCurrentProductPrice, isProductOrderable, productAvailability, verifiedProductPrice } from '../js/product-schema.js';
 import legacySeoRedirect from '../netlify/edge-functions/legacy-seo-redirect.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -112,14 +112,30 @@ function inspectForbiddenSchemaClaims(value, file) {
     }
 }
 
+function rawProductBlocks(source) {
+    const start = source.indexOf('const rawProducts = [');
+    const end = source.indexOf('\n];', start);
+    if (start < 0 || end < 0) return [];
+    return source.slice(start, end).split('\n    {\n').slice(1).map((chunk) => chunk.split('\n    }')[0]);
+}
+
+function rawField(block, name) {
+    return block.match(new RegExp(`^\\s*${name}:\\s*([^,\\n]+)`, 'm'))?.[1]?.trim() || null;
+}
+
 const sitemapFile = path.join(dist, 'sitemap.xml');
 const sitemap = await readFile(sitemapFile, 'utf8');
 const locations = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
+const rootSitemap = await readFile(path.join(root, 'sitemap.xml'), 'utf8');
+const rootLocations = [...rootSitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
 const lastmods = [...sitemap.matchAll(/<lastmod>([^<]+)<\/lastmod>/g)].map((match) => match[1]);
 const expectedCount = 2 + categories.length + catalogProducts.length + TRUST_PAGE_ROUTES.length + LOCAL_LANDING_ROUTES.length + ARTICLE_ROUTES.length;
 
 if (locations.length !== expectedCount) fail(`sitemap.xml: expected ${expectedCount} URLs, found ${locations.length}`);
 if (new Set(locations).size !== locations.length) fail('sitemap.xml: duplicate URLs found');
+if (rootLocations.length !== locations.length || rootLocations.some((url) => !locations.includes(url))) {
+    fail(`root sitemap.xml: URL set (${rootLocations.length}) does not match the built sitemap (${locations.length})`);
+}
 if (lastmods.length !== locations.length) fail('sitemap.xml: every URL must have one lastmod');
 for (const lastmod of lastmods) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(lastmod)) fail(`sitemap.xml: invalid lastmod ${lastmod}`);
@@ -158,6 +174,27 @@ const expectedPaths = new Set([
 ]);
 for (const route of expectedPaths) {
     if (!locations.includes(new URL(route, `${SITE_ORIGIN}/`).href)) fail(`sitemap.xml: missing ${route}`);
+}
+
+// The browser receives this built module directly. An unverified amount must
+// therefore be absent from the shipped source, not merely hidden at render time.
+const builtCatalogSource = await readFile(path.join(dist, 'js/catalog-data.js'), 'utf8');
+const builtProductBlocks = rawProductBlocks(builtCatalogSource);
+if (builtProductBlocks.length !== catalogProducts.length) {
+    fail(`dist/js/catalog-data.js: found ${builtProductBlocks.length}/${catalogProducts.length} raw product records`);
+}
+for (const block of builtProductBlocks) {
+    const id = rawField(block, 'id')?.match(/^['"](.+)['"]$/)?.[1] || '';
+    const product = catalogProducts.find((item) => item.id === id);
+    const rawPrice = rawField(block, 'priceMAD');
+    const rawOldPrice = rawField(block, 'oldPriceMAD');
+    if (!product) {
+        fail(`dist/js/catalog-data.js: unknown raw product ${id || '(missing id)'}`);
+        continue;
+    }
+    if (!hasCurrentProductPrice(product) && (/^-?\d+(?:\.\d+)?$/.test(rawPrice || '') || /^-?\d+(?:\.\d+)?$/.test(rawOldPrice || ''))) {
+        fail(`dist/js/catalog-data.js: ${id} ships an exact amount without current price evidence`);
+    }
 }
 
 const titles = new Map();
@@ -202,6 +239,8 @@ for (const url of locations) {
         if (!value) fail(`${relative}: missing ${key}`);
     }
     if (metaContent(html, 'property', 'og:url') !== url) fail(`${relative}: og:url must match canonical`);
+    if (!/<button[^>]*id=["']menuToggle["'][^>]*aria-controls=["']mainNav["']/i.test(html)) fail(`${relative}: mobile menu toggle must reference #mainNav with aria-controls`);
+    if (!/<nav[^>]*id=["']mainNav["']/i.test(html)) fail(`${relative}: generated header is missing #mainNav`);
 
     const schemas = collectJsonLd(html, relative);
     const types = flattenSchemaTypes(schemas);
@@ -213,22 +252,38 @@ for (const url of locations) {
     }
 
     if (new URL(url).pathname.startsWith('/produits/')) {
-        if (!types.includes('Product') || !types.includes('Offer') || !types.includes('Brand')) fail(`${relative}: incomplete Product/Offer/Brand JSON-LD`);
+        if (!types.includes('Product') || !types.includes('Brand')) fail(`${relative}: incomplete Product/Brand JSON-LD`);
         const serialized = JSON.stringify(schemas);
-        if (!serialized.includes('"priceCurrency":"MAD"')) fail(`${relative}: Product Offer must use MAD`);
-
-        // Regression guard: availability may only appear when the matching
-        // catalog product has a verified stock source, and it must match
-        // exactly what productAvailability() computes for that product —
-        // never omitted-but-should-be-present, never present-but-guessed.
         const matchedProduct = catalogProducts.find((product) => `${SITE_ORIGIN}${productRoute(product)}` === url);
-        const expectedAvailability = matchedProduct ? productAvailability(matchedProduct) : null;
-        if (expectedAvailability) {
-            if (!serialized.includes(`"availability":"${expectedAvailability}"`)) {
-                fail(`${relative}: expected availability "${expectedAvailability}" for this verified-stock product`);
+        if (!matchedProduct) {
+            fail(`${relative}: generated product page has no matching catalogue product`);
+        } else if (isProductOrderable(matchedProduct)) {
+            const price = verifiedProductPrice(matchedProduct);
+            if (!types.includes('Offer')) fail(`${relative}: current verified price requires Product Offer JSON-LD`);
+            if (!serialized.includes('"priceCurrency":"MAD"')) fail(`${relative}: Product Offer must use MAD`);
+            if (!serialized.includes(`"price":"${Number(price).toFixed(2)}"`)) fail(`${relative}: Product Offer price must match the verified catalogue price`);
+            const expectedAvailability = productAvailability(matchedProduct);
+            if (expectedAvailability) {
+                if (!serialized.includes(`"availability":"${expectedAvailability}"`)) {
+                    fail(`${relative}: expected availability "${expectedAvailability}" for this verified-stock product`);
+                }
+            } else if (serialized.includes('"availability"')) {
+                fail(`${relative}: availability must be omitted until inventory is current and verified`);
             }
-        } else if (serialized.includes('"availability"')) {
-            fail(`${relative}: availability must be omitted until inventory is verified`);
+        } else {
+            if (types.includes('Offer') || serialized.includes('"offers"') || /"price(?:Currency)?"\s*:/.test(serialized)) {
+                fail(`${relative}: non-orderable product must not expose Offer, price, or priceCurrency structured data`);
+            }
+            if (!hasCurrentProductPrice(matchedProduct) && !html.includes('Prix à confirmer')) fail(`${relative}: unverified product must visibly state "Prix à confirmer"`);
+            const addButton = html.match(new RegExp(`<button[^>]*data-seo-add-product=["']${matchedProduct.id}["'][^>]*>`, 'i'))?.[0] || '';
+            if (!/\bdisabled\b/i.test(addButton) || !/aria-disabled=["']true["']/i.test(addButton)) {
+                fail(`${relative}: non-orderable product add-to-cart control must be disabled and aria-disabled`);
+            }
+            if (/data-static-qty(?:=|\s|>)/i.test(html)) fail(`${relative}: non-orderable product must not expose a quantity control`);
+            const priceBlock = html.match(/class=["']product-detail__price["'][^>]*>[\s\S]*?<strong>([\s\S]*?)<\/strong>/i)?.[1] || '';
+            if (!hasCurrentProductPrice(matchedProduct) && /\d+(?:[.,]\d+)?\s*(?:MAD|DH)\b/i.test(priceBlock.replace(/<[^>]+>/g, ' '))) {
+                fail(`${relative}: unverified product detail leaks an exact public amount`);
+            }
         }
     }
 
@@ -318,8 +373,8 @@ for (const file of allHtmlFiles) {
 // Regression guard: no generated page may link to the plain-HTTP or "www"
 // forms of the domain — every internal reference (links, canonical, OG,
 // JSON-LD, assets) must already point at the HTTPS apex domain.
-const insecureInternalLinkPattern = /(?:href|src|content)=["']http:\/\/(?:www\.)?parapharmacie\.me[^"']*["']/gi;
-const wwwDomainPattern = /www\.parapharmacie\.me/gi;
+const insecureInternalLinkPattern = /(?:href|src|content)=["']http:\/\/(?:www\.)?parapharmacie\.me[^"']*["']/i;
+const wwwDomainPattern = /www\.parapharmacie\.me/i;
 for (const file of allHtmlFiles) {
     const relative = path.relative(dist, file);
     const html = await readFile(file, 'utf8');
@@ -353,9 +408,6 @@ const transactionalPages = {
     'profile.html': 'noindex, follow',
     'orders.html': 'noindex, follow',
     'admin.html': 'noindex, nofollow',
-    'setup-admin.html': 'noindex, nofollow',
-    'seed.html': 'noindex, nofollow',
-    'seed-products.html': 'noindex, nofollow',
     'shop.html': 'noindex, follow',
     'product.html': 'noindex, follow',
     '404.html': 'noindex, follow'
@@ -364,6 +416,21 @@ for (const [relative, expected] of Object.entries(transactionalPages)) {
     const html = await readFile(path.join(dist, relative), 'utf8');
     const actual = metaContent(html, 'name', 'robots').toLowerCase();
     if (actual !== expected) fail(`${relative}: expected robots "${expected}", found "${actual || '(missing)'}"`);
+}
+
+for (const relative of [
+    'setup-admin.html',
+    'seed.html',
+    'seed-products.html',
+    'firestore.rules',
+    'storage.rules'
+]) {
+    try {
+        await access(path.join(dist, relative));
+        fail(`${relative}: development or repository configuration file must not ship in dist`);
+    } catch (error) {
+        if (error?.code !== 'ENOENT') throw error;
+    }
 }
 
 const redirects = await readFile(path.join(dist, '_redirects'), 'utf8');
@@ -380,10 +447,23 @@ for (const product of catalogProducts) {
 if (!redirects.includes('/* /404.html 404')) fail('_redirects: missing real 404 fallback rule');
 
 const robots = await readFile(path.join(dist, 'robots.txt'), 'utf8');
+const rootRobots = await readFile(path.join(root, 'robots.txt'), 'utf8');
+if (rootRobots !== robots) fail('root robots.txt does not match the built robots.txt');
 if (!/^User-agent: \*$/m.test(robots) || !/^Allow: \/$/m.test(robots)) fail('robots.txt: crawler access is not explicitly allowed');
 if (!robots.includes(`Sitemap: ${SITE_ORIGIN}/sitemap.xml`)) fail('robots.txt: canonical sitemap directive is missing');
-const oaiSearchBotGroup = robots.match(/User-agent:\s*OAI-SearchBot[\s\S]*?(?=\nUser-agent:|\nSitemap:|$)/i)?.[0] || '';
-if (/^Disallow:\s*\S+/im.test(oaiSearchBotGroup)) fail('robots.txt: OAI-SearchBot must not be blocked from public pages');
+let activeAgents = [];
+for (const line of robots.split(/\r?\n/)) {
+    const agent = line.match(/^User-agent:\s*(.+)$/i)?.[1]?.trim();
+    if (agent) {
+        activeAgents.push(agent.toLowerCase());
+        continue;
+    }
+    const disallow = line.match(/^Disallow:\s*(.*)$/i)?.[1]?.trim();
+    if (disallow && (activeAgents.includes('*') || activeAgents.includes('oai-searchbot'))) {
+        fail(`robots.txt: ${activeAgents.join(', ')} group must not block public paths (${disallow})`);
+    }
+    if (!line.trim()) activeAgents = [];
+}
 
 const localLegacyResponse = await legacySeoRedirect(new Request(`${SITE_ORIGIN}/product.html?id=${catalogProducts[0].id}`));
 const apiLegacyResponse = await legacySeoRedirect(new Request(`${SITE_ORIGIN}/product.html?id=${catalogApiIdBySlug[catalogProducts[0].id]}`));

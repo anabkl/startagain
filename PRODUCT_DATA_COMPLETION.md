@@ -1,6 +1,6 @@
 # Complétion responsable des données produit
 
-Audit local du 17 juillet 2026, fondé sur les 93 entrées normalisées de [`js/catalog-data.js`](js/catalog-data.js) et les garde-fous de [`js/product-schema.js`](js/product-schema.js). Ce document ne transforme aucune donnée indicative en donnée vérifiée.
+Audit local du 18 juillet 2026, fondé sur les 93 entrées normalisées de [`js/catalog-data.js`](js/catalog-data.js) et les garde-fous de [`js/product-schema.js`](js/product-schema.js). Les anciennes valeurs concurrentes ont été retirées : une donnée non vérifiée reste nulle.
 
 ## Résultat exact de l’audit
 
@@ -8,14 +8,14 @@ Audit local du 17 juillet 2026, fondé sur les 93 entrées normalisées de [`js/
 |---|---:|---:|---|
 | Stock vérifié | Aucun produit n’a `stockVerified: true` avec quantité et date | **93** | Afficher « Disponibilité à confirmer »; ne pas émettre `InStock`/`OutOfStock` |
 | EAN/GTIN | Aucun `ean` vérifié | **93** | Ne pas générer un code depuis le nom, l’URL ou le SKU |
-| SKU | Chaque produit utilise son identifiant catalogue comme SKU marchand | **0** | Le SKU interne est valide; ne le remplacer que si le propriétaire possède un référentiel marchand stable |
-| Prix courant vérifié | Aucun `priceVerifiedAt` | **93** | `priceMAD` reste un prix catalogue indicatif; confirmer avant commande |
+| SKU | Aucun SKU marchand vérifié; l’identifiant de route n’est pas une preuve de SKU | **93** | Saisir uniquement la référence du référentiel propriétaire, sans la déduire du slug |
+| Prix courant vérifié | Aucun couple `priceSource` / `priceVerifiedAt` courant | **93** | `priceMAD` reste `null`, la fiche indique « Prix à confirmer » et aucun `Offer` n’est émis |
 | Image produit réelle approuvée | Tous utilisent un fallback détenu par le site et restent `imageNeedsReview: true` | **93** | Le fallback est utilisable, mais ce n’est pas le packshot réel de la variante |
 | Taille/format | 73 noms permettent une extraction; 20 restent sans format structuré | **20** | Conserver `null` jusqu’à lecture d’un emballage ou document officiel exact |
 | Marque | Chaque entrée contient une marque | **0** | Champ présent; vérifier l’orthographe lors de la revue fabricant |
-| Éligibilité livraison vérifiée par produit | La valeur technique par défaut est `true`, sans preuve individuelle ni date | **93** | Confirmer les restrictions réelles avant d’en faire une promesse publique |
+| Éligibilité livraison vérifiée par produit | `deliveryEligible` est `null` pour les 93 références | **93** | `null` signifie inconnu, jamais « livrable » |
 
-Les cinq lacunes universelles — stock, EAN/GTIN, prix actuel, packshot réel et éligibilité livraison documentée — s’appliquent donc à **chaque identifiant produit du catalogue**, sans exception. Le SKU et la marque ne sont pas manquants.
+Les six lacunes universelles — stock, EAN/GTIN, SKU marchand, prix actuel, packshot réel et éligibilité livraison documentée — s’appliquent donc à **chaque identifiant produit du catalogue**, sans exception. La marque reste renseignée.
 
 ## Les 20 produits sans taille ou format structuré
 
@@ -48,13 +48,13 @@ Pour les coffrets, ne concaténer aucun format vu sur une autre édition : le co
 
 | Champ | Valeur attendue | Preuve acceptable | Champ catalogue cible |
 |---|---|---|---|
-| Identifiant interne | ID existant stable | Catalogue interne | `id` / `sku` |
+| Identifiant interne | ID existant stable | Catalogue interne | `id` uniquement; renseigner `sku` séparément après preuve propriétaire |
 | Nom et variante | Texte exact de la boîte destinée au Maroc | Photo réelle lisible ou fiche fabricant/distributeur autorisé | `name` |
 | Marque | Orthographe officielle | Emballage ou site officiel | `brand` |
 | Format | Valeur et unité exactes | Face avant/arrière de la boîte ou fiche officielle | `size` |
 | EAN/GTIN | 8, 12, 13 ou 14 chiffres | Code-barres photographié et vérifié deux fois | `ean` |
 | Prix actuel | MAD TTC réellement appliqué | Caisse/ERP ou facture fournisseur validée par le responsable | `priceMAD` |
-| Source/date du prix | Origine et date ISO | Référence interne consultable | `priceSource`, `priceVerifiedAt` |
+| Source/date du prix | Référence propriétaire et date ISO | `erp:REF`, `caisse:REF`, `facture:REF`, `fournisseur:REF` ou `catalogue-interne:REF` consultable | `priceSource`, `priceVerifiedAt` |
 | Stock | Quantité réelle ou zéro | ERP/inventaire à l’instant de la vérification | `stock`, `stockVerified`, `stockVerifiedAt` |
 | Image | Packshot de la variante exacte | Photo détenue ou fichier fourni avec droits ecommerce | `image`, `imageSource`, `imageRightsStatus`, `imageNeedsReview: false` |
 | Livraison | Oui/non et éventuelle restriction | Règle propriétaire documentée pour ce produit | `deliveryEligible` et future date de vérification |
@@ -64,8 +64,8 @@ Pour les coffrets, ne concaténer aucun format vu sur une autre édition : le co
 1. **Sélectionner un petit lot.** Commencer par 10 produits réellement vendus ou fréquemment demandés, pas par les 93 en une fois.
 2. **Identifier la variante.** Poser la boîte physique devant la fiche; comparer marque, nom, format et marché. Si deux variantes diffèrent, créer deux entrées seulement après avoir défini deux SKU stables.
 3. **Capturer les preuves.** Photographier face, dos, code-barres et format sans données client. Archiver les preuves dans un espace privé, pas dans Git si elles contiennent des informations commerciales.
-4. **Saisir deux fois l’EAN.** Une personne lit le code, une seconde le compare au code-barres. Ne jamais calculer un EAN à partir du nom.
-5. **Vérifier le prix.** Relever le prix réellement applicable, sa source et la date. Une ancienne page concurrente n’est pas une preuve de prix courant.
+4. **Saisir deux fois l’EAN.** Une personne lit le code, une seconde le compare au code-barres et le validateur contrôle longueur et clé GTIN. Ne jamais calculer un EAN à partir du nom.
+5. **Vérifier le prix.** Relever le prix réellement applicable, une référence propriétaire au format autorisé et la date ISO. Une ancienne page concurrente n’est pas une preuve de prix courant.
 6. **Vérifier le stock.** Utiliser l’inventaire/ERP; inscrire la quantité et l’heure. Une photo de rayon ne prouve pas le stock disponible à la vente.
 7. **Vérifier les droits image.** Conserver l’autorisation du photographe, fournisseur ou fabricant. Le fichier doit représenter exactement la variante et ne doit pas être copié depuis un concurrent.
 8. **Décider la livraison.** Confirmer poids, dimensions, fragilité, température, restriction réglementaire ou géographique. En cas de doute, garder « à confirmer ».
@@ -74,8 +74,8 @@ Pour les coffrets, ne concaténer aucun format vu sur une autre édition : le co
 
 ## Politique de fraîcheur recommandée
 
-- **Stock :** donnée opérationnelle; synchronisation ou confirmation avant chaque commande. Une date ancienne ne doit jamais alimenter `availability`.
-- **Prix :** revoir au minimum à chaque modification fournisseur et selon une cadence propriétaire définie. Si la date est dépassée, revenir à « prix à confirmer » plutôt que conserver une promesse.
+- **Stock :** le garde-fou public expire après 24 heures. Synchroniser ou confirmer avant chaque commande; une date plus ancienne n’alimente jamais `availability`.
+- **Prix :** le garde-fou public expire après 30 jours et à chaque modification fournisseur. Une date plus ancienne remet automatiquement le prix à `null` et la fiche à « Prix à confirmer ».
 - **Image, EAN, marque et format :** revoir lors d’un changement d’emballage, de marché, de variante ou de référence.
 - **Livraison :** revoir lors d’un changement de transporteur, de réglementation, d’emballage ou de zone desservie.
 

@@ -1,3 +1,5 @@
+import { hasCurrentStockVerification, verifiedProductPrice } from './product-schema.js';
+
 const PRODUCT_PLACEHOLDER = 'assets/products/product-placeholder.svg';
 
 export const localCityKeywords = [
@@ -5,9 +7,6 @@ export const localCityKeywords = [
     'parapharmacie tawfiq',
     'parapharmacie.me',
     'parapharmacie Khouribga',
-    'parapharmacie Oued Zem',
-    'parapharmacie Boujniba',
-    'parapharmacie Boulanouare',
     'parapharmacie Maroc',
     'livraison parapharmacie Maroc',
     'paiement a la livraison parapharmacie Maroc'
@@ -108,7 +107,7 @@ export const categories = [
         arabicName: 'عروض',
         icon: 'fa-tags',
         color: '#fff0e8',
-        description: 'Coffrets, offres temporaires et prix remises a confirmer avant expedition.'
+        description: 'Coffrets et offres dont les conditions commerciales restent à confirmer avant expédition.'
     }
 ];
 
@@ -161,7 +160,7 @@ const rawProducts = [
         name: 'AVÈNE Eau Thermale Cleanance Gel Nettoyant 400ml',
         brand: 'Avène',
         category: 'Visage',
-        priceMAD: 227,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/accueil/33930-avene-eau-thermale-cleanance-gel-nettoyant-400ml.html',
         tags: ['cleanance', 'gel nettoyant', 'peaux mixtes'],
         featured: true,
@@ -172,7 +171,7 @@ const rawProducts = [
         name: 'AVÈNE Cleanance Gel Nettoyant 200ml',
         brand: 'Avène',
         category: 'Visage',
-        priceMAD: 151,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/visage/246-avene-cleanance-gel-nettoyant-200ml-3282779349680.html',
         tags: ['cleanance', 'nettoyant visage']
     },
@@ -181,7 +180,7 @@ const rawProducts = [
         name: 'Avène Cleanance Hydra Crème Lavante Apaisante 200ml',
         brand: 'Avène',
         category: 'Visage',
-        priceMAD: 151,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/visage/245-avene-clean-ac-creme-lavante-200ml-3282770100921.html',
         tags: ['cleanance hydra', 'creme lavante']
     },
@@ -190,7 +189,7 @@ const rawProducts = [
         name: 'AVÈNE Tolérance Lotion Nettoyante Gélifiée 200ml',
         brand: 'Avène',
         category: 'Visage',
-        priceMAD: 142,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/visage/31233-avene-tolerance-lotion-nettoyante-gelifiee-200ml.html',
         tags: ['tolerance', 'nettoyant sans rincage']
     },
@@ -199,7 +198,7 @@ const rawProducts = [
         name: 'BIODERMA Sensibio Gel Moussant 200ml',
         brand: 'Bioderma',
         category: 'Visage',
-        priceMAD: 168,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/visage/14911-bioderma-sensibio-gel-moussant-nettoyant-douceur-peaux-sensibles-200-ml.html',
         tags: ['sensibio', 'gel moussant', 'peaux sensibles'],
         featured: true,
@@ -210,7 +209,7 @@ const rawProducts = [
         name: 'BIODERMA Sensibio H2O AR Anti-Rougeurs 250ml',
         brand: 'Bioderma',
         category: 'Visage',
-        priceMAD: 125,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/visage/9471-bioderma-sensibio-h2o-ar-anti-rougeurs-250-ml.html',
         tags: ['sensibio', 'eau micellaire']
     },
@@ -219,7 +218,7 @@ const rawProducts = [
         name: 'BIODERMA Sensibio Defensive Crème 40ml',
         brand: 'Bioderma',
         category: 'Visage',
-        priceMAD: 186,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/visage/24976-bioderma-sensibio-defensive-creme-40ml.html',
         tags: ['sensibio', 'creme visage']
     },
@@ -228,7 +227,7 @@ const rawProducts = [
         name: 'BIODERMA Sensibio Defensive Riche Crème 40ml',
         brand: 'Bioderma',
         category: 'Visage',
-        priceMAD: 186,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/visage/24975-bioderma-sensibio-defensive-riche-creme-40ml.html',
         tags: ['sensibio', 'creme riche']
     },
@@ -237,7 +236,7 @@ const rawProducts = [
         name: 'BIODERMA Sensibio AR Crème 40ml',
         brand: 'Bioderma',
         category: 'Visage',
-        priceMAD: 169,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/visage/20683-bioderma-sensibio-ar-creme-40ml-anti-rougeurs.html',
         tags: ['sensibio ar', 'creme visage']
     },
@@ -246,7 +245,7 @@ const rawProducts = [
         name: 'Bioderma Sensibio Mask Masque Apaisant 75ml',
         brand: 'Bioderma',
         category: 'Visage',
-        priceMAD: 157,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/visage/21852-bioderma-sensibio-mask-masque-apaisant-75-ml.html',
         tags: ['masque visage', 'sensibio']
     },
@@ -255,9 +254,9 @@ const rawProducts = [
         name: 'BIODERMA Sebium Pore Refiner Concentré 30ml + Sebium H2O 250ml offert',
         brand: 'Bioderma',
         category: 'Promotions',
-        priceMAD: 166,
-        oldPriceMAD: 298,
-        promoBadge: '-132 DHS',
+        priceMAD: null,
+        oldPriceMAD: null,
+        promoBadge: null,
         sourceUrl: 'https://parapharma.ma/visage/25724-bioderma-sebium-pore-refiner-concentre-30-ml-achete-bioderma-sebium-h2o-250ml-offert-.html',
         tags: ['sebium', 'promotion', 'offre visage'],
         featured: true
@@ -267,7 +266,7 @@ const rawProducts = [
         name: 'LA ROCHE-POSAY Toleriane Sensitive Riche 40ml',
         brand: 'La Roche-Posay',
         category: 'Visage',
-        priceMAD: 151,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/visage/191-la-roche-posay-toleriane-riche-40ml-creme-riche-protectrice-apaisante.html',
         tags: ['toleriane', 'creme visage']
     },
@@ -276,7 +275,7 @@ const rawProducts = [
         name: 'LA ROCHE-POSAY Toleriane Sensitive Soin Hydratant 40ml',
         brand: 'La Roche-Posay',
         category: 'Visage',
-        priceMAD: 151,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/visage/542-la-roche-posay-toleriane-creme-40ml-soin-protecteur-apaisant.html',
         tags: ['toleriane', 'hydratant']
     },
@@ -285,7 +284,7 @@ const rawProducts = [
         name: 'LA ROCHE-POSAY Toleriane Fluide Dermo-Nettoyant 200ml',
         brand: 'La Roche-Posay',
         category: 'Visage',
-        priceMAD: 140,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/visage/411-la-roche-posay-toleriane-fluide-dermo-nettoyant-200ml-nettoie-et-demaquille-le-visage-et-les-yeux.html',
         tags: ['demaquillant', 'toleriane']
     },
@@ -294,7 +293,7 @@ const rawProducts = [
         name: 'LA ROCHE-POSAY Cicaplast Baume B5+ 100ml',
         brand: 'La Roche-Posay',
         category: 'Corps',
-        priceMAD: 183,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/visage/7751-la-roche-posay-cicaplast-baume-b5-100ml.html',
         tags: ['cicaplast', 'baume']
     },
@@ -303,7 +302,7 @@ const rawProducts = [
         name: 'LA ROCHE-POSAY Cicaplast Lèvres 7,5ml',
         brand: 'La Roche-Posay',
         category: 'Visage',
-        priceMAD: 82,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/visage/18149-la-roche-posay-cicaplast-levres-75-ml.html',
         tags: ['levres', 'cicaplast']
     },
@@ -312,7 +311,7 @@ const rawProducts = [
         name: 'LA ROCHE-POSAY Hyalu B5 Sérum 30ml',
         brand: 'La Roche-Posay',
         category: 'Visage',
-        priceMAD: 361,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/visage/19117-la-roche-posay-hyalu-b5-serum-30ml.html',
         tags: ['serum', 'hyalu b5']
     },
@@ -321,7 +320,7 @@ const rawProducts = [
         name: 'LA ROCHE-POSAY Hydraphase HA Riche 50ml',
         brand: 'La Roche-Posay',
         category: 'Visage',
-        priceMAD: 228,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/visage/22208-la-roche-posay-hydraphase-ha-riche-50ml.html',
         tags: ['hydraphase', 'creme visage']
     },
@@ -330,7 +329,7 @@ const rawProducts = [
         name: 'La Roche-Posay Effaclar H Iso-Biome Soin 40ml',
         brand: 'La Roche-Posay',
         category: 'Visage',
-        priceMAD: 157,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/visage/25065-la-roche-posay-effaclar-h-iso-biome-soin-reparateur-apaisant-anti-marques-40-ml.html',
         tags: ['effaclar', 'soin visage']
     },
@@ -339,7 +338,7 @@ const rawProducts = [
         name: 'La Roche-Posay Lipikar Gel Lavant 400ml',
         brand: 'La Roche-Posay',
         category: 'Hygiène',
-        priceMAD: 128,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/visage/12219-la-roche-posay-lipikar-gel-lavant-400ml.html',
         tags: ['lipikar', 'gel lavant']
     },
@@ -348,7 +347,7 @@ const rawProducts = [
         name: 'LA ROCHE-POSAY Lipikar Lait Urea 10+ 400ml',
         brand: 'La Roche-Posay',
         category: 'Corps',
-        priceMAD: 242,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/corps/24456-la-roche-posay-lipikar-lait-urea-5-peau-sensible-tres-seche-400ml.html',
         tags: ['lipikar', 'lait corps']
     },
@@ -357,7 +356,7 @@ const rawProducts = [
         name: 'CeraVe Huile Lavante Moussante Hydratante 236ml',
         brand: 'CeraVe',
         category: 'Hygiène',
-        priceMAD: 104,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/visage/23213-cerave-huile-lavante-moussante-hydratante-236ml.html',
         tags: ['huile lavante', 'cerave'],
         featured: true
@@ -367,7 +366,7 @@ const rawProducts = [
         name: 'CeraVe Crème Hydratante Visage 52ml',
         brand: 'CeraVe',
         category: 'Visage',
-        priceMAD: 102,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/visage/21217-cerave-creme-hydratante-visage-52-ml.html',
         tags: ['creme visage', 'cerave'],
         featured: true
@@ -377,7 +376,7 @@ const rawProducts = [
         name: 'CeraVe Crème Hydratante Visage SPF50 40ml',
         brand: 'CeraVe',
         category: 'Solaire',
-        priceMAD: 115,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/visage/25202-cerave-creme-hydratante-visage-spf50-peaux-normales-a-seches-52ml.html',
         tags: ['spf50', 'cerave', 'solaire']
     },
@@ -386,7 +385,7 @@ const rawProducts = [
         name: 'SVR Ampoule B3 30ml',
         brand: 'SVR',
         category: 'Visage',
-        priceMAD: 360,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/visage/21621-svr-ampoule-b-30ml.html',
         tags: ['ampoule b3', 'serum'],
         bestseller: true
@@ -396,7 +395,7 @@ const rawProducts = [
         name: 'SVR Clairial Ampoule 30ml',
         brand: 'SVR',
         category: 'Visage',
-        priceMAD: 355,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/accueil/30473-svr-clairial-ampoule-30ml.html',
         tags: ['clairial', 'serum visage']
     },
@@ -405,7 +404,7 @@ const rawProducts = [
         name: 'SVR Topialyse Gel Lavant 1L',
         brand: 'SVR',
         category: 'Hygiène',
-        priceMAD: 263,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/maquillage/25651-svr-topialyse-gel-lavant-1l.html',
         tags: ['topialyse', 'format famille']
     },
@@ -414,7 +413,7 @@ const rawProducts = [
         name: 'ISDIN Acniben Gel Nettoyant Matifiant 400ml',
         brand: 'ISDIN',
         category: 'Visage',
-        priceMAD: 230,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/accueil/30471-isdin-acniben-1-gel-nettoyant-matifiant-400-ml.html',
         tags: ['acniben', 'gel nettoyant'],
         bestseller: true
@@ -424,7 +423,7 @@ const rawProducts = [
         name: 'CENTAUREA Crème Solaire Invisible SPF50+ 125ml',
         brand: 'Centaurea',
         category: 'Solaire',
-        priceMAD: 229,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/solaire/22424-centaurea-creme-solaire-invisible-spf50-125ml.html',
         tags: ['spf50', 'solaire']
     },
@@ -433,7 +432,7 @@ const rawProducts = [
         name: 'PHOTOWHITE Crème Solaire SPF50 Invisible 50ml',
         brand: 'Photowhite',
         category: 'Solaire',
-        priceMAD: 185,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/solaire/14941-photowhite-creme-solaire-invisible-50ml.html',
         tags: ['spf50', 'anti taches']
     },
@@ -442,7 +441,7 @@ const rawProducts = [
         name: 'DERMASKIN Crème Solaire SPF50+ Anti-Tache 50ml',
         brand: 'Dermaskin',
         category: 'Solaire',
-        priceMAD: 132,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/solaire/16146-dermaskin-creme-solaire-spf-50-anti-tache-50ml.html',
         tags: ['spf50', 'solaire visage']
     },
@@ -451,7 +450,7 @@ const rawProducts = [
         name: 'URIAGE Bariésun Fluide Ultra-Léger SPF50+ 30ml',
         brand: 'Uriage',
         category: 'Solaire',
-        priceMAD: 91,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/solaire/15065-uriage-solaire-bariesun-fluide-ultra-leger-spf50-30ml-30ml.html',
         tags: ['bariesun', 'spf50']
     },
@@ -460,7 +459,7 @@ const rawProducts = [
         name: 'Dermagor Crème Solaire Teintée SPF50+ 100ml',
         brand: 'Dermagor',
         category: 'Solaire',
-        priceMAD: 149,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/solaire/22206-dermagor-creme-solaire-teintee-tres-haute-protection-spf50-100-ml.html',
         tags: ['teinte', 'spf50']
     },
@@ -469,7 +468,7 @@ const rawProducts = [
         name: 'MESOESTETIC Mesoprotech Melan 130 SPF50+ 50ml',
         brand: 'Mesoestetic',
         category: 'Solaire',
-        priceMAD: 299,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/solaire/21570-mesoestetic-melan-130-pigment-control-50-ml.html',
         tags: ['mesoprotech', 'spf50']
     },
@@ -478,7 +477,7 @@ const rawProducts = [
         name: 'Château Rouge Fluide Solaire Anti-Tache SPF50+ 50ml',
         brand: 'Château Rouge',
         category: 'Solaire',
-        priceMAD: 198,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/solaire/25091-chateau-rouge-fluide-solaire-anti-tache-spf-50-50ml-3760065960455.html',
         tags: ['spf50', 'fluide solaire']
     },
@@ -487,7 +486,7 @@ const rawProducts = [
         name: 'DERMACARE PARASUN Crème Solaire SPF50+ Teintée 50ml',
         brand: 'Dermacare',
         category: 'Solaire',
-        priceMAD: 179,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/solaire/15135-dermacare-parasun-creme-solaire-spf-50-teintee-50-ml.html',
         tags: ['teinte', 'spf50']
     },
@@ -496,7 +495,7 @@ const rawProducts = [
         name: 'URIAGE Xémose Huile Lavante Apaisante 500ml',
         brand: 'Uriage',
         category: 'Corps',
-        priceMAD: 135,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/visage/6822-uriage-xemose-huile-nettoyante-apaisante-400ml.html',
         tags: ['xemose', 'huile lavante'],
         featured: true,
@@ -507,7 +506,7 @@ const rawProducts = [
         name: 'Uriage Huile Lavante 500ml',
         brand: 'Uriage',
         category: 'Hygiène',
-        priceMAD: 193,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/hygiene/29343-uriage-huile-lavante-500-ml-.html',
         tags: ['huile lavante', 'hygiene']
     },
@@ -516,7 +515,7 @@ const rawProducts = [
         name: 'URIAGE Xémose Syndet 200ml',
         brand: 'Uriage',
         category: 'Hygiène',
-        priceMAD: 142,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/visage/8899-uriage-xemose-syndet-200ml.html',
         tags: ['xemose', 'syndet']
     },
@@ -525,7 +524,7 @@ const rawProducts = [
         name: 'Uriage Xémose Baume Oléo-Apaisant 500ml',
         brand: 'Uriage',
         category: 'Corps',
-        priceMAD: 222,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/corps/19394-uriage-xemose-baume-oleo-apaisant-anti-grattage-500-ml.html',
         tags: ['xemose', 'baume corps']
     },
@@ -534,7 +533,7 @@ const rawProducts = [
         name: 'ROGÉ CAVAILLÈS Dermo-UHT Huile Lavante Surgras 500ml',
         brand: 'Rogé Cavaillès',
         category: 'Hygiène',
-        priceMAD: 159,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/hygiene/22009-roge-cavailles-dermo-uht-huile-lavante-surgras-500-ml.html',
         tags: ['huile lavante', 'surgras'],
         featured: true
@@ -544,7 +543,7 @@ const rawProducts = [
         name: 'ROGÉ CAVAILLÈS Dermo-UHT Crème Lavante Surgras 500ml',
         brand: 'Rogé Cavaillès',
         category: 'Hygiène',
-        priceMAD: 145,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/accueil/28854-roge-cavailles-dermo-uht-creme-lavante-surgras-500ml.html',
         tags: ['creme lavante', 'surgras']
     },
@@ -553,9 +552,9 @@ const rawProducts = [
         name: 'ROGÉ CAVAILLÈS Dermo-UHT Gel Lavant Surgras 500ml',
         brand: 'Rogé Cavaillès',
         category: 'Hygiène',
-        priceMAD: 149,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/hygiene/19612-roge-cavailles-dermo-uht-gel-lavant-surgras-500-ml.html',
-        promoBadge: 'Promotion',
+        promoBadge: null,
         tags: ['gel lavant', 'surgras']
     },
     {
@@ -563,7 +562,7 @@ const rawProducts = [
         name: 'Nuxe Body Rêve de Thé Gommage 150ml',
         brand: 'Nuxe',
         category: 'Corps',
-        priceMAD: 229,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/corps/24721-nuxe-body-reve-de-the-gommage-150ml-3264680022005.html',
         tags: ['gommage', 'corps']
     },
@@ -572,7 +571,7 @@ const rawProducts = [
         name: 'Arkopharma Forcapil Cheveux et Ongles 180 gélules + 60 offertes',
         brand: 'Arkopharma',
         category: 'Compléments alimentaires',
-        priceMAD: 356,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/accueil/32451-arkopharma-forcapil-cheveux-et-ongles-180-gelules-60-gelules-offert-.html',
         tags: ['forcapil', 'cheveux', 'ongles'],
         featured: true,
@@ -583,7 +582,7 @@ const rawProducts = [
         name: 'FORTÉ PHARMA Acérola Vitamine C B20 Effervescents',
         brand: 'Forté Pharma',
         category: 'Compléments alimentaires',
-        priceMAD: 95,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/accueil/34745-forte-pharma-acerola-vitamine-c-b20-effervescents.html',
         tags: ['vitamine c', 'acerola'],
         bestseller: true
@@ -593,7 +592,7 @@ const rawProducts = [
         name: 'FORTÉ PHARMA ImmuVit 4G Multivitamines 30 comprimés',
         brand: 'Forté Pharma',
         category: 'Compléments alimentaires',
-        priceMAD: 179,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/sante/29517-forte-pharma-immuvit4g-multivitamines-et-immunite-30-comprimes-3700221300275.html',
         tags: ['multivitamines', 'bien etre']
     },
@@ -602,7 +601,7 @@ const rawProducts = [
         name: 'Forté Pharma Spiruline Forte 1500mg 30 comprimés',
         brand: 'Forté Pharma',
         category: 'Compléments alimentaires',
-        priceMAD: 125,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/accueil/30610-forte-pharma-spiruline-forte-1500mg-30-comprimes-3700221317747.html',
         tags: ['spiruline', 'routine bien etre']
     },
@@ -611,7 +610,7 @@ const rawProducts = [
         name: 'Forté Pharma FortéBiotic+ ATB 10 gélules',
         brand: 'Forté Pharma',
         category: 'Compléments alimentaires',
-        priceMAD: 149,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/sante/24654-forte-pharma-fortebiotic-atb-10-gelules.html',
         tags: ['fortebiotic', 'microbiotiques']
     },
@@ -620,7 +619,7 @@ const rawProducts = [
         name: 'Forté Pharma Forte Gelée Royale 20 ampoules x 10ml',
         brand: 'Forté Pharma',
         category: 'Compléments alimentaires',
-        priceMAD: 215,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/accueil/32937-forte-pharma-forte-gelee-royale-20-ampoule-x-10ml-3700221312995.html',
         tags: ['gelee royale', 'ampoules']
     },
@@ -629,7 +628,7 @@ const rawProducts = [
         name: 'FORTÉ PHARMA Ultra Boost 4G Effervescent 20 comprimés',
         brand: 'Forté Pharma',
         category: 'Compléments alimentaires',
-        priceMAD: 145,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/sante/20843-forte-pharma-ultra-boost-4g-effer-20-comprimes-3700221313916.html',
         tags: ['effervescent', 'tonus']
     },
@@ -638,7 +637,7 @@ const rawProducts = [
         name: 'Forté Pharma Turbo Draine Agrumes 500ml',
         brand: 'Forté Pharma',
         category: 'Compléments alimentaires',
-        priceMAD: 189,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/sante/25541-forte-pharma-turbo-draine-agrumes-500ml.html',
         tags: ['draineur', 'agrumes']
     },
@@ -647,7 +646,7 @@ const rawProducts = [
         name: 'Forté Pharma Forte Detox 5 Organes 500ml',
         brand: 'Forté Pharma',
         category: 'Compléments alimentaires',
-        priceMAD: 205,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/accueil/30609-forte-pharma-forte-detox-5-organes-500ml-3700221313886.html',
         tags: ['detox', 'routine bien etre']
     },
@@ -656,7 +655,7 @@ const rawProducts = [
         name: 'MUSTELA Gel 2en1 Bébé 200ml',
         brand: 'Mustela',
         category: 'Bébé & Maman',
-        priceMAD: 80,
+        priceMAD: null,
         sourceUrl: 'https://citymall-para.ma/produit/mustela-gel-2en1-bebe-200ml/',
         tags: ['bebe', 'gel 2en1'],
         featured: true
@@ -666,7 +665,7 @@ const rawProducts = [
         name: 'MUSTELA Gel Lavant Doux 500ml',
         brand: 'Mustela',
         category: 'Bébé & Maman',
-        priceMAD: 149,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/bebe-maman/19129-mustela-gel-lavant-doux-500ml.html',
         tags: ['bebe', 'gel lavant'],
         bestseller: true
@@ -676,7 +675,7 @@ const rawProducts = [
         name: 'Mustela Musti Eau de Soin Parfumée 50ml',
         brand: 'Mustela',
         category: 'Bébé & Maman',
-        priceMAD: 109,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/bebe-maman/14015-mustela-musti-eau-de-soin-parfumee-50ml.html',
         tags: ['bebe', 'eau de soin']
     },
@@ -685,7 +684,7 @@ const rawProducts = [
         name: 'URIAGE Bébé 1ère Crème Lavante 500ml',
         brand: 'Uriage',
         category: 'Bébé & Maman',
-        priceMAD: 171,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/bebe-maman/17248-uriage-bebe-1ere-eau-creme-lavante-visage-corps-et-cuir-chevelu-500ml.html',
         tags: ['bebe', 'creme lavante']
     },
@@ -694,7 +693,7 @@ const rawProducts = [
         name: 'Uriage Bébé 1er Huile Lavante Apaisante 500ml',
         brand: 'Uriage',
         category: 'Bébé & Maman',
-        priceMAD: 174,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/bebe-maman/24269-uriage-bebe-1er-huile-lavante-apaisante-500ml.html',
         tags: ['bebe', 'huile lavante']
     },
@@ -703,7 +702,7 @@ const rawProducts = [
         name: 'URIAGE Bébé 1ère Crème Hydratante 40ml',
         brand: 'Uriage',
         category: 'Bébé & Maman',
-        priceMAD: 95,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/bebe-maman/8908-uriage-1ere-creme-nourrissons-bebes.html',
         tags: ['bebe', 'creme hydratante']
     },
@@ -712,7 +711,7 @@ const rawProducts = [
         name: 'Natessance Bébé Eau Nettoyante 500ml',
         brand: 'Natessance',
         category: 'Bébé & Maman',
-        priceMAD: 125,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/bebe-maman/23918-natessance-bebe-eau-nettoyante-500ml.html',
         tags: ['bebe', 'eau nettoyante']
     },
@@ -721,7 +720,7 @@ const rawProducts = [
         name: 'Jerraflore Huile Douceur Bébé / Maman 150ml',
         brand: 'Jerraflore',
         category: 'Bébé & Maman',
-        priceMAD: 112,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/accueil/30947-jerraflore-huile-douceur-bebe-maman-150ml.html',
         tags: ['bebe', 'maman', 'huile douceur']
     },
@@ -730,7 +729,7 @@ const rawProducts = [
         name: 'DODIE Lait de Toilette 3 en 1 500ml',
         brand: 'Dodie',
         category: 'Bébé & Maman',
-        priceMAD: 129,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/bebe-maman/17023-dodie-lait-de-toilette-3-en-1-500ml.html',
         tags: ['dodie', 'lait de toilette']
     },
@@ -739,7 +738,7 @@ const rawProducts = [
         name: 'DODIE Biberon Sensation+ 270ml Jardin',
         brand: 'Dodie',
         category: 'Bébé & Maman',
-        priceMAD: 103,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/bebe-maman/25368-dodie-biberon-sensation-270ml-jardin-.html',
         tags: ['dodie', 'biberon']
     },
@@ -748,7 +747,7 @@ const rawProducts = [
         name: 'DODIE Biberon Col Étroit Verre 240ml Bleu Lagoon',
         brand: 'Dodie',
         category: 'Bébé & Maman',
-        priceMAD: 98,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/bebe-maman/28836-dodie-biberon-col-etroit-verre-240ml-bleu-lagoon.html',
         tags: ['dodie', 'biberon verre']
     },
@@ -757,7 +756,7 @@ const rawProducts = [
         name: 'DODIE Sucette Anatomique A71 +18m Duo Girly',
         brand: 'Dodie',
         category: 'Bébé & Maman',
-        priceMAD: 95,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/bebe-maman/25309-dodie-sucette-anatomique-71-18m-duo-girly-.html',
         tags: ['dodie', 'sucette']
     },
@@ -766,7 +765,7 @@ const rawProducts = [
         name: 'DODIE Porte Biberon Isotherme',
         brand: 'Dodie',
         category: 'Bébé & Maman',
-        priceMAD: 260,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/bebe-maman/25286-dodie-porte-biberon-isotherme.html',
         tags: ['dodie', 'accessoire bebe']
     },
@@ -775,9 +774,9 @@ const rawProducts = [
         name: 'WELEDA Bébé Duo Crème Lavante Corps & Cheveux Bio 200ml',
         brand: 'Weleda',
         category: 'Bio',
-        priceMAD: 150,
-        oldPriceMAD: 193,
-        promoBadge: '-43 DHS',
+        priceMAD: null,
+        oldPriceMAD: null,
+        promoBadge: null,
         sourceUrl: 'https://parapharma.ma/bio/21131-weleda-bebe-creme-lavante-corps-cheveux-bio-200ml-achete-1-offert-.html',
         tags: ['bio', 'bebe', 'weleda']
     },
@@ -786,7 +785,7 @@ const rawProducts = [
         name: 'Ecosnug Liquide Vaisselle Écologique pour Bébé 500ml',
         brand: 'Ecosnug',
         category: 'Bio',
-        priceMAD: 60,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/',
         tags: ['eco', 'bebe', 'maison']
     },
@@ -795,7 +794,7 @@ const rawProducts = [
         name: 'ECOLUNES Lessive Bébé Écologique et Hypoallergénique 1L',
         brand: 'Ecolunes',
         category: 'Bio',
-        priceMAD: 120,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/',
         tags: ['lessive bebe', 'eco']
     },
@@ -804,7 +803,7 @@ const rawProducts = [
         name: 'VICHY Homme Mousse à Raser Anti-Irritations 200ml',
         brand: 'Vichy',
         category: 'Homme',
-        priceMAD: 129,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/homme/2602-vichy-homme-mousse-a-raser-anti-irritations-200ml.html',
         tags: ['rasage', 'homme']
     },
@@ -813,7 +812,7 @@ const rawProducts = [
         name: 'VICHY Homme Gel de Rasage Anti-Irritations 150ml',
         brand: 'Vichy',
         category: 'Homme',
-        priceMAD: 142,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/homme/2601-vichy-homme-gel-de-rasage-anti-irritations-150ml.html',
         tags: ['rasage', 'homme']
     },
@@ -822,7 +821,7 @@ const rawProducts = [
         name: 'VICHY Homme Sensi-Baume Mineral CA 75ml',
         brand: 'Vichy',
         category: 'Homme',
-        priceMAD: 185,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/homme/2582-vichy-homme-sensi-baume-mineral-ca-75ml.html',
         tags: ['apres rasage', 'homme']
     },
@@ -831,7 +830,7 @@ const rawProducts = [
         name: 'NUXE Men Gel de Rasage Anti-Irritations 150ml',
         brand: 'Nuxe',
         category: 'Homme',
-        priceMAD: 149,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/15-homme',
         tags: ['nuxe men', 'rasage']
     },
@@ -840,7 +839,7 @@ const rawProducts = [
         name: 'ECRINAL Lotion ANP Homme 200ml',
         brand: 'Ecrinal',
         category: 'Homme',
-        priceMAD: 260,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/homme/2618-ecrinal-lotion-anp-homme-200ml.html',
         tags: ['cheveux homme', 'lotion']
     },
@@ -849,7 +848,7 @@ const rawProducts = [
         name: 'GUM Gratte-Langue Double Action',
         brand: 'GUM',
         category: 'Hygiène',
-        priceMAD: 46,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/16-hygiene',
         tags: ['dentaire', 'gum']
     },
@@ -858,7 +857,7 @@ const rawProducts = [
         name: 'GUM Kit de Voyage Ref 156',
         brand: 'GUM',
         category: 'Hygiène',
-        priceMAD: 89,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/16-hygiene',
         tags: ['dentaire', 'voyage']
     },
@@ -867,9 +866,9 @@ const rawProducts = [
         name: 'GUM Dentifrice Menthe',
         brand: 'GUM',
         category: 'Promotions',
-        priceMAD: 102,
-        oldPriceMAD: 140,
-        promoBadge: '-38 DHS',
+        priceMAD: null,
+        oldPriceMAD: null,
+        promoBadge: null,
         sourceUrl: 'https://www.parapharma.ma/508-journee-des-gratuits',
         tags: ['dentaire', 'promotion']
     },
@@ -878,9 +877,9 @@ const rawProducts = [
         name: 'Vitis Gingival Dentifrice',
         brand: 'Vitis',
         category: 'Promotions',
-        priceMAD: 125,
-        oldPriceMAD: 157,
-        promoBadge: '-32 DHS',
+        priceMAD: null,
+        oldPriceMAD: null,
+        promoBadge: null,
         sourceUrl: 'https://www.parapharma.ma/',
         tags: ['dentaire', 'promotion']
     },
@@ -889,7 +888,7 @@ const rawProducts = [
         name: 'Accu-Chek Instant Bandelettes x50',
         brand: 'Accu-Chek',
         category: 'Para-médical',
-        priceMAD: 188,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/para-medical/21476-accu-check-instant-bandelettes-x50.html',
         tags: ['glycemie', 'bandelettes'],
         bestseller: true
@@ -899,7 +898,7 @@ const rawProducts = [
         name: 'Releveur de Pied 4731HD',
         brand: 'Para-médical',
         category: 'Para-médical',
-        priceMAD: 506,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/para-medical/13680-releveur-de-pied-4731hd.html',
         tags: ['orthese', 'confort']
     },
@@ -908,7 +907,7 @@ const rawProducts = [
         name: 'Test de Grossesse',
         brand: 'Parapharma',
         category: 'Santé',
-        priceMAD: 15,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/bebe-maman/7753-test-de-grossesse.html',
         tags: ['test', 'grossesse']
     },
@@ -917,7 +916,7 @@ const rawProducts = [
         name: 'Gilbert Elletest Test de Grossesse - 1 test',
         brand: 'Gilbert',
         category: 'Santé',
-        priceMAD: 22,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/accueil/32799-gilbert-elletest-test-de-grossesse-1-test.html',
         tags: ['test', 'grossesse']
     },
@@ -926,7 +925,7 @@ const rawProducts = [
         name: 'Tensiomètre Électronique à Brassard 767S',
         brand: 'Para-médical',
         category: 'Para-médical',
-        priceMAD: 760,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/accueil/28697-tensiometre-electronique-a-brassard-767s-0095tb76.html',
         tags: ['tensiometre', 'mesure']
     },
@@ -935,7 +934,7 @@ const rawProducts = [
         name: 'THUASNE Ceinture de Soutien Lombaire 361',
         brand: 'Thuasne',
         category: 'Para-médical',
-        priceMAD: 540,
+        priceMAD: null,
         sourceUrl: 'https://parapharma.ma/accueil/28577-thuasne-ceinture-de-soutien-lombaire-361.html',
         tags: ['ceinture lombaire', 'orthese']
     },
@@ -944,8 +943,8 @@ const rawProducts = [
         name: 'NUXE Coffret Prodigieux Glow en Rose',
         brand: 'Nuxe',
         category: 'Promotions',
-        priceMAD: 468,
-        promoBadge: 'Coffret',
+        priceMAD: null,
+        promoBadge: null,
         sourceUrl: 'https://parapharma.ma/',
         tags: ['coffret', 'nuxe', 'glow'],
         featured: true
@@ -955,9 +954,9 @@ const rawProducts = [
         name: 'NUXE Coffret Nuxuriance Ultra Routine Anti-Âge Global',
         brand: 'Nuxe',
         category: 'Promotions',
-        priceMAD: 765,
-        oldPriceMAD: 850,
-        promoBadge: '-10%',
+        priceMAD: null,
+        oldPriceMAD: null,
+        promoBadge: null,
         sourceUrl: 'https://www.parapharma.ma/visage/33952-nuxe-coffret-nuxuriance-ultra-la-routine-anti-age-global.html',
         tags: ['coffret', 'nuxe']
     },
@@ -966,9 +965,9 @@ const rawProducts = [
         name: 'NUXE Coffret Fragrance Iconique',
         brand: 'Nuxe',
         category: 'Promotions',
-        priceMAD: 378,
-        oldPriceMAD: 420,
-        promoBadge: '-10%',
+        priceMAD: null,
+        oldPriceMAD: null,
+        promoBadge: null,
         sourceUrl: 'https://www.parapharma.ma/maquillage/33944-nuxe-coffret-fragrance-iconique.html',
         tags: ['coffret', 'parfum']
     },
@@ -977,9 +976,9 @@ const rawProducts = [
         name: 'CAUDALIE Coffret La Solution Fermeté',
         brand: 'Caudalie',
         category: 'Promotions',
-        priceMAD: 567,
-        oldPriceMAD: 630,
-        promoBadge: '-10%',
+        priceMAD: null,
+        oldPriceMAD: null,
+        promoBadge: null,
         sourceUrl: 'https://parapharma.ma/accueil/33550-caudalie-coffret-la-solution-fermete.html',
         tags: ['coffret', 'caudalie'],
         featured: true
@@ -989,9 +988,9 @@ const rawProducts = [
         name: 'CAUDALIE Coffret Premier Cru Yeux',
         brand: 'Caudalie',
         category: 'Promotions',
-        priceMAD: 536,
-        oldPriceMAD: 595,
-        promoBadge: '-10%',
+        priceMAD: null,
+        oldPriceMAD: null,
+        promoBadge: null,
         sourceUrl: 'https://www.parapharma.ma/accueil/33549-caudalie-coffret-premier-cru-yeux-.html',
         tags: ['coffret', 'caudalie']
     },
@@ -1000,9 +999,9 @@ const rawProducts = [
         name: 'EUCERIN Anti-Pigment Sérum Duo 30ml + Fluide SPF50 offert',
         brand: 'Eucerin',
         category: 'Promotions',
-        priceMAD: 529,
-        oldPriceMAD: 785,
-        promoBadge: '-256 DHS',
+        priceMAD: null,
+        oldPriceMAD: null,
+        promoBadge: null,
         sourceUrl: 'https://www.parapharma.ma/accueil/27757-eucerin-anti-pigment-serum-duo-30ml-achete-hydro-protect-fluide-ultra-leger-spf-50-offert.html',
         tags: ['eucerin', 'serum', 'offre']
     },
@@ -1011,9 +1010,9 @@ const rawProducts = [
         name: 'EUCERIN Écran Anti-Pigment',
         brand: 'Eucerin',
         category: 'Promotions',
-        priceMAD: 169,
-        oldPriceMAD: 209,
-        promoBadge: '-19%',
+        priceMAD: null,
+        oldPriceMAD: null,
+        promoBadge: null,
         sourceUrl: 'https://www.parapharma.ma/508-journee-des-gratuits',
         tags: ['eucerin', 'solaire', 'promotion']
     },
@@ -1022,9 +1021,9 @@ const rawProducts = [
         name: 'Baby Nooz Seringue Nasale',
         brand: 'Baby Nooz',
         category: 'Promotions',
-        priceMAD: 30,
-        oldPriceMAD: 60,
-        promoBadge: '-50%',
+        priceMAD: null,
+        oldPriceMAD: null,
+        promoBadge: null,
         sourceUrl: 'https://www.parapharma.ma/',
         tags: ['bebe', 'promotion']
     },
@@ -1033,7 +1032,7 @@ const rawProducts = [
         name: 'Perfectil Triple Action',
         brand: 'Perfectil',
         category: 'Compléments alimentaires',
-        priceMAD: 158,
+        priceMAD: null,
         sourceUrl: 'https://www.parapharma.ma/',
         tags: ['cheveux', 'ongles', 'peau']
     }
@@ -1052,27 +1051,35 @@ function extractSizeFromName(name) {
 
 function createProduct(product) {
     const categorySlug = categorySlugByName[product.category];
-    const hasPromo = Boolean(product.oldPriceMAD && product.oldPriceMAD > product.priceMAD);
+    const priceMAD = verifiedProductPrice(product);
+    const oldPriceCandidate = Number(product.oldPriceMAD);
+    const hasPromo = priceMAD !== null
+        && Number.isFinite(oldPriceCandidate)
+        && oldPriceCandidate > priceMAD;
+    const oldPriceMAD = hasPromo ? oldPriceCandidate : null;
     const fallbackImage = productImageFallbacks[categorySlug] || PRODUCT_PLACEHOLDER;
     const image = product.image || fallbackImage;
     const usesGeneratedFallback = !product.image;
-    const hasVerifiedStock = Number.isFinite(product.stock) && product.stock >= 0;
-    const stock = hasVerifiedStock ? product.stock : null;
-    const stockStatus = product.stockStatus
-        || (stock === 0 ? 'Rupture de stock' : 'Disponibilité à confirmer');
+    const hasVerifiedStock = hasCurrentStockVerification(product);
+    const stock = hasVerifiedStock ? Number(product.stock) : null;
+    const stockStatus = hasVerifiedStock
+        ? (product.stockStatus || (stock === 0 ? 'Rupture de stock' : 'En stock'))
+        : 'Disponibilité à confirmer';
 
     return {
         ...product,
         slug: product.slug || product.id,
         categorySlug,
-        oldPriceMAD: product.oldPriceMAD || null,
-        promoBadge: product.promoBadge || (hasPromo ? 'Promo' : null),
+        // Public price fields stay null unless a positive price carries an
+        // explicit traceable source and a non-future verification date no
+        // older than 30 days. Historical competitor values are not shipped.
+        priceMAD,
+        oldPriceMAD,
+        promoBadge: hasPromo ? (product.promoBadge || 'Promo') : null,
         stockStatus,
         stock,
         stockVerified: hasVerifiedStock,
-        // Only meaningful once stockVerified is true; never backfilled with
-        // "now" just because a stock number happens to be present.
-        stockVerifiedAt: hasVerifiedStock ? (product.stockVerifiedAt || null) : null,
+        stockVerifiedAt: hasVerifiedStock ? product.stockVerifiedAt : null,
         image,
         imageUrl: image,
         imageNeedsReview: product.imageNeedsReview ?? true,
@@ -1081,25 +1088,18 @@ function createProduct(product) {
         imageReplacementNote: product.imageReplacementNote || 'Replace with an owned, distributor-supplied, or brand-approved ecommerce packshot before production launch.',
         shortDescription: product.shortDescription || descriptionByCategory[product.category],
         description: product.shortDescription || descriptionByCategory[product.category],
-        // Our own catalog identifier used as our merchant-specific SKU
-        // (schema.org's `sku` does not require a manufacturer code). `ean`
-        // is left null — it is never generated, only ever set from a real
-        // verified barcode.
-        sku: product.sku || product.id,
+        // Route/catalog IDs are not merchant SKU evidence. Both SKU and EAN
+        // stay null until the owner supplies the actual identifier.
+        sku: product.sku || null,
         ean: product.ean || null,
         size: product.size || extractSizeFromName(product.name),
-        // No product has a verified delivery restriction today, so this
-        // stays true for the whole catalog — a scaffold for a future,
-        // explicitly owner-confirmed restriction (e.g. an oversized
-        // para-medical device), not a currently-enforced rule.
-        deliveryEligible: product.deliveryEligible !== false,
-        // priceSource defaults to the existing sourceUrl (where priceMAD
-        // was originally sourced from) rather than duplicating the value.
-        // priceVerifiedAt stays null: it means "re-confirmed against a
-        // live source on this date," which has not happened yet for any
-        // catalog product in this session.
-        priceSource: product.priceSource || product.sourceUrl || null,
-        priceVerifiedAt: product.priceVerifiedAt || null,
+        // Eligibility is unknown until the owner confirms the rule for this
+        // product. Null must not be interpreted as eligible.
+        deliveryEligible: typeof product.deliveryEligible === 'boolean'
+            ? product.deliveryEligible
+            : null,
+        priceSource: priceMAD !== null ? product.priceSource : null,
+        priceVerifiedAt: priceMAD !== null ? product.priceVerifiedAt : null,
         tags: [
             product.category,
             product.brand,
@@ -1113,9 +1113,11 @@ function createProduct(product) {
             ...commonSearchKeywords
         ],
         cityKeywords: [...localCityKeywords],
-        price: product.oldPriceMAD || product.priceMAD,
-        promoPrice: hasPromo ? product.priceMAD : null,
-        badge: product.promoBadge || (hasPromo ? 'Promo' : product.featured ? 'Selection Tawfiq' : null)
+        price: oldPriceMAD || priceMAD,
+        promoPrice: hasPromo ? priceMAD : null,
+        badge: hasPromo
+            ? (product.promoBadge || 'Promo')
+            : (product.featured ? 'Selection Tawfiq' : null)
     };
 }
 

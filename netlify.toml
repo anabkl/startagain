@@ -32,6 +32,14 @@
   status = 301
   force = true
 
+# Keep browser API requests same-origin. Netlify proxies the public path to
+# Render; Docker/Nginx proxies the same path to the Compose backend.
+[[redirects]]
+  from = "/api/v1/*"
+  to = "https://startagain.onrender.com/api/v1/:splat"
+  status = 200
+  force = true
+
 [[headers]]
   for = "/*"
   [headers.values]
@@ -47,12 +55,12 @@
 [[headers]]
   for = "/css/*"
   [headers.values]
-    Cache-Control = "public, max-age=86400"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/js/*"
   [headers.values]
-    Cache-Control = "public, max-age=86400"
+    Cache-Control = "public, max-age=0, must-revalidate"
 
 [[headers]]
   for = "/cart.html"

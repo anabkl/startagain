@@ -1,6 +1,11 @@
 import { getCart, saveCart } from './main.js';
-import { getProductImage } from './catalog.js';
-import { buildWhatsAppOrderMessage, saveOrder } from './order-service.js';
+import { getEffectivePrice as getCatalogEffectivePrice, getProductImage, isProductUnavailable } from './catalog.js';
+import {
+    clearOrderRequestId,
+    getOrCreateOrderRequestId,
+    saveOrder,
+    saveOrderReceipt
+} from './order-service.js';
 import { getCurrentUser } from './auth.js';
 import { showToast, formatCurrency, renderStatusBanner } from './utils.js';
 import { resolveDeliveryZone } from './business-config.js';
@@ -23,11 +28,12 @@ function sanitizeHtml(value) {
 }
 
 function getEffectivePrice(item) {
-    return Number(item.effectivePrice || item.priceMAD || item.promoPrice || item.discountPrice || item.price || 0);
+    return getCatalogEffectivePrice(item);
 }
 
 function getCartTotal(cart) {
-    return cart.reduce((sum, item) => sum + getEffectivePrice(item) * (item.quantity || 1), 0);
+    if (cart.some((item) => getEffectivePrice(item) === null)) return null;
+    return cart.reduce((sum, item) => sum + (getEffectivePrice(item) * (item.quantity || 1)), 0);
 }
 
 // Returns null while no city has been entered yet — the fee must not be
@@ -42,14 +48,19 @@ function updateDeliveryAndTotal() {
     const cart = getCart();
     const subtotal = getCartTotal(cart);
     const delivery = getDeliveryInfo();
-    const total = subtotal + (delivery?.feeMAD || 0);
+    const canCalculateDelivery = Number.isFinite(delivery?.feeMAD);
+    const total = subtotal === null || !canCalculateDelivery ? null : subtotal + delivery.feeMAD;
 
     if (subtotalEl) subtotalEl.textContent = formatCurrency(subtotal);
-    if (deliveryFeeAmountEl) deliveryFeeAmountEl.textContent = delivery ? formatCurrency(delivery.feeMAD) : '—';
+    if (deliveryFeeAmountEl) deliveryFeeAmountEl.textContent = canCalculateDelivery ? formatCurrency(delivery.feeMAD) : '—';
     if (deliveryFeeNoteEl) {
-        deliveryFeeNoteEl.textContent = delivery
-            ? `${delivery.area} · confirmé avant expédition`
-            : 'Ville requise pour calculer les frais';
+        deliveryFeeNoteEl.textContent = !delivery
+            ? 'Ville requise pour calculer les frais'
+            : delivery.coverageConfirmed
+                ? `${delivery.area} · couverture locale confirmée`
+                : delivery.calculable
+                    ? `${delivery.area} · demande soumise sous réserve de couverture`
+                    : delivery.area;
     }
     if (orderTotalEl) orderTotalEl.textContent = formatCurrency(total);
 
@@ -57,7 +68,13 @@ function updateDeliveryAndTotal() {
 }
 
 function renderOrderSummary() {
-    const cart = getCart();
+    const storedCart = getCart();
+    const cart = storedCart.filter((item) => !isProductUnavailable(item));
+
+    if (cart.length !== storedCart.length) {
+        saveCart(cart);
+        showToast('Les références sans prix, livraison ou disponibilité confirmés ont été retirées avant le paiement.', 'error');
+    }
 
     if (cart.length === 0) {
         showToast('Votre panier est vide. Redirection vers la boutique.', 'error');
@@ -171,6 +188,11 @@ async function processOrder(event) {
         unlockButtons();
         return;
     }
+    if (cart.some((item) => isProductUnavailable(item))) {
+        showToast('Impossible de commander une référence dont le prix, la livraison ou la disponibilité ne sont pas confirmés.', 'error');
+        unlockButtons();
+        return;
+    }
 
     const firstName = getFormValue('firstName');
     const lastName = getFormValue('lastName');
@@ -200,12 +222,23 @@ async function processOrder(event) {
         unit_price: getEffectivePrice(item),
         effectivePrice: getEffectivePrice(item),
         priceMAD: getEffectivePrice(item),
+        priceSource: item.priceSource,
+        priceVerifiedAt: item.priceVerifiedAt,
+        stock: item.stock,
+        stockVerified: item.stockVerified,
+        stockVerifiedAt: item.stockVerifiedAt,
+        deliveryEligible: item.deliveryEligible,
         name: item.name,
         image: getProductImage(item)
     }));
 
     const subtotal = getCartTotal(cart);
     const delivery = resolveDeliveryZone(city);
+    if (!delivery.calculable || !Number.isFinite(delivery.feeMAD)) {
+        showToast('Saisissez un nom de ville valide. La sélection est conservée.', 'error');
+        unlockButtons();
+        return;
+    }
     const deliveryFee = delivery.feeMAD;
     const total = subtotal + deliveryFee;
     const orderPayload = {
@@ -222,8 +255,10 @@ async function processOrder(event) {
         subtotal,
         deliveryFee,
         deliveryLabel: `${formatCurrency(deliveryFee)} (${delivery.area})`,
+        deliveryCoverageStatus: delivery.coverageConfirmed ? 'confirmed_local' : 'pending_confirmation',
         total
     };
+    orderPayload.requestId = getOrCreateOrderRequestId(orderPayload);
 
     renderStatusBanner(checkoutStatus, {
         state: 'pending',
@@ -235,15 +270,17 @@ async function processOrder(event) {
         const orderId = savedOrder.id;
         const source = savedOrder.source || 'local';
         const normalizedOrder = savedOrder.order || orderPayload;
-        const waMessage = buildWhatsAppOrderMessage(normalizedOrder, orderId, formatCurrency);
-        const waUrl = `https://wa.me/212675698351?text=${encodeURIComponent(waMessage)}`;
-
-        localStorage.setItem('parapharmacie_last_whatsapp_url', waUrl);
-        localStorage.setItem('parapharmacie_last_order_id', orderId);
-        localStorage.setItem('parapharmacie_last_order_source', source);
-        saveCart([]);
+        saveOrderReceipt({ ...normalizedOrder, id: orderId, source });
+        clearOrderRequestId();
+        try {
+            saveCart([]);
+        } catch (storageError) {
+            console.info('La demande serveur est enregistrée; le panier local n’a pas pu être vidé.', storageError?.message || storageError);
+        }
         renderStatusBanner(checkoutStatus, { state: 'idle' });
-        showToast('Commande enregistree avec succes.', 'success');
+        showToast(delivery.coverageConfirmed
+            ? 'Demande de commande enregistrée.'
+            : 'Demande enregistrée; la couverture de livraison reste à confirmer.', 'success');
 
         setTimeout(() => {
             window.location.href = `success.html?order=${encodeURIComponent(orderId)}&source=${encodeURIComponent(source)}`;

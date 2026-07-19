@@ -33,3 +33,11 @@ def ensure_indexes(db: Database) -> None:
     db.products.create_index([("category", ASCENDING)], name="idx_products_category")
     db.orders.create_index([("created_at", DESCENDING)], name="idx_orders_created_at")
     db.orders.create_index([("status", ASCENDING)], name="idx_orders_status")
+    # Sparse preserves legacy rows while making browser retry keys atomic
+    # across every Gunicorn worker and application restart.
+    db.orders.create_index(
+        [("request_id", ASCENDING)],
+        unique=True,
+        sparse=True,
+        name="uniq_orders_request_id",
+    )

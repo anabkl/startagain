@@ -71,10 +71,10 @@ export const growthArticles = [
         slug: 'creme-solaire-maroc-prix',
         title: 'Crème solaire au Maroc : comprendre les prix avant d’acheter',
         description: 'Formats, textures et vérification du prix : une méthode transparente pour comparer une crème solaire au Maroc.',
-        directAnswer: 'Pour comparer le prix d’une crème solaire au Maroc, rapportez toujours le montant au format exact et vérifiez qu’il s’agit de la même variante. Nos prix catalogue étant indicatifs et non datés comme vérifiés, le prix final doit être confirmé avant commande.',
+        directAnswer: 'Pour comparer le prix d’une crème solaire au Maroc, rapportez toujours le montant au format exact et vérifiez qu’il s’agit de la même variante. Sans preuve propriétaire datée de moins de 30 jours, Parapharmacie.me ne publie aucun montant et demande une confirmation avant commande.',
         category: 'Protection solaire', categorySlug: 'solaire',
         sections: [
-            { heading: 'Pourquoi aucun prix exact n’est publié dans ce guide', body: 'Un prix sans date de vérification peut induire en erreur. Ce guide ne reprend donc aucun montant : les fiches affichent un prix catalogue indicatif et invitent à confirmer le prix final et la disponibilité.' },
+            { heading: 'Pourquoi aucun prix exact n’est publié dans ce guide', body: 'Un prix sans date de vérification peut induire en erreur. Ce guide ne reprend donc aucun montant : les fiches indiquent « Prix à confirmer » en l’absence de preuve courante.' },
             { heading: 'Comparer le même produit et le même format', body: 'Deux noms proches peuvent désigner des volumes, textures ou variantes différents. Vérifiez le nom complet et le nombre de millilitres sur la fiche puis sur l’emballage ; ne comparez pas directement un fluide visage de 30 ml et une crème corps de 125 ml.' },
             { heading: 'Ne pas choisir uniquement sur le montant', body: 'Vérifiez aussi la protection UVA/UVB, les conditions d’utilisation et la résistance à l’eau indiquées par le fabricant. L’OMS et la FDA rappellent qu’un solaire complète les vêtements, l’ombre et les autres mesures de protection.' },
             { heading: 'Parcourir les références solaires disponibles', body: 'La page <a href="/protection-solaire/">solaires du catalogue</a> permet de comparer les noms et formats actuellement listés. Notre article sur le <a href="/conseils/difference-spf-30-spf-50/">SPF 30 et le SPF 50</a> explique aussi pourquoi un indice plus élevé ne remplace pas une bonne application.' },
@@ -102,12 +102,12 @@ export const growthArticles = [
         slug: 'parapharmacie-en-ligne-livraison-maroc',
         title: 'Parapharmacie en ligne et livraison au Maroc : mode d’emploi',
         description: 'Comment commander, faire confirmer le prix et connaître les frais de livraison Parapharmacie.me au Maroc.',
-        directAnswer: 'Sur Parapharmacie.me, choisissez des références dans le catalogue puis faites confirmer prix et disponibilité avant expédition. Les frais publiés sont de 15 MAD pour Khouribga et environs et de 35 MAD pour les autres villes marocaines desservies.',
+        directAnswer: 'Sur Parapharmacie.me, choisissez des références dans le catalogue puis faites confirmer prix et disponibilité avant expédition. Les frais publiés sont de 15 MAD pour Khouribga; toute zone proche doit être confirmée explicitement. Le tarif est de 35 MAD pour les autres villes marocaines desservies.',
         category: 'Achat et livraison', categorySlug: 'hygiene',
         sections: [
-            { heading: 'Parcourir le catalogue sans ambiguïté', body: 'La <a href="/boutique/">boutique en ligne</a> présente les références par catégorie, avec des prix catalogue indicatifs. Une fiche ne garantit pas le stock : la confirmation intervient avant la commande.' },
-            { heading: 'Faire confirmer la référence et le prix', body: 'Ajoutez les produits au panier ou envoyez le nom exact via <a href="/contact/">téléphone ou WhatsApp</a>. L’équipe confirme le produit, la variante, le montant final et la possibilité de livraison.' },
-            { heading: 'Comprendre les frais annoncés', body: 'Les <a href="/livraison/">modalités de livraison</a> indiquent 15 MAD pour Khouribga et environs, et 35 MAD pour les autres villes du Maroc desservies. Le délai précis est communiqué lors de la confirmation ; aucune livraison le jour même n’est promise.' },
+            { heading: 'Parcourir le catalogue sans ambiguïté', body: 'La <a href="/boutique/">boutique en ligne</a> présente les références par catégorie. Sans preuve courante, aucun montant n’est affiché et une fiche ne garantit pas le stock.' },
+            { heading: 'Faire confirmer la référence et le prix', body: 'Envoyez le nom exact ou le lien de la fiche via <a href="/contact/">téléphone ou WhatsApp</a>. L’équipe confirme le produit, la variante, le montant final et la possibilité de livraison.' },
+            { heading: 'Comprendre les frais annoncés', body: 'Les <a href="/livraison/">modalités de livraison</a> indiquent 15 MAD pour Khouribga; toute zone proche doit être confirmée explicitement. Le tarif est de 35 MAD pour les autres villes du Maroc desservies. Le délai précis est communiqué lors de la confirmation ; aucune livraison le jour même n’est promise.' },
             { heading: 'Paiement et disponibilité des moyens', body: 'Le paiement à la livraison est actif. CMI et Apple Pay sont signalés comme bientôt disponibles et ne doivent pas être considérés comme des moyens actifs au moment de la commande.' },
             { heading: 'Vérifier avant de valider', body: 'Relisez le nom, le format, la quantité, l’adresse et les frais confirmés. Pour un service de proximité, consultez la page <a href="/parapharmacie-khouribga/">Parapharmacie à Khouribga</a>.' }
         ], sources: [DELIVERY_SOURCE, CONTACT_SOURCE], relatedProductSlugs: [],
@@ -122,7 +122,7 @@ export const growthArticles = [
         category: 'Visage', categorySlug: 'visage',
         sections: [
             { heading: 'Les références présentes, sans variante inventée', body: 'Les fiches liées ci-dessous correspondent aux trois identifiants réels du catalogue. Le format fait partie du nom : vérifiez-le pour éviter de confondre le gel 200 ml, le gel 400 ml et la crème lavante Hydra 200 ml.' },
-            { heading: 'Pourquoi le guide ne donne pas de prix exact', body: 'Les montants du catalogue sont indicatifs et aucune date de vérification courante n’est renseignée. Nous ne transformons donc pas ces valeurs en affirmation de prix : <a href="/contact/">contactez l’équipe</a> pour le montant final.' },
+            { heading: 'Pourquoi le guide ne donne pas de prix exact', body: 'Aucune date de vérification courante n’est renseignée. Aucun montant n’est donc publié : <a href="/contact/">contactez l’équipe</a> pour faire confirmer le prix.' },
             { heading: 'Ce que confirme la documentation officielle', body: 'La page officielle Avène consultée confirme l’existence du gel nettoyant Cleanance et ses formats 100, 200 et 400 ml. Ce guide ne reprend ni promesse commerciale ni composition ; l’emballage de la référence vendue reste prioritaire.' },
             { heading: 'Choisir selon le type de produit, pas selon une promesse', body: 'Un gel nettoyant et une crème lavante ne sont pas interchangeables par leur seul nom. Lisez le type de produit, le format et le mode d’emploi, puis consultez notre guide sur le <a href="/conseils/comment-choisir-nettoyant-visage/">choix d’un nettoyant</a>.' },
             { heading: 'Commander la bonne variante', body: 'Envoyez le lien exact de la fiche, pas seulement « Cleanance ». Le prix, le stock et les conditions de <a href="/livraison/">livraison au Maroc</a> sont confirmés avant expédition.' }
@@ -177,12 +177,12 @@ export const growthArticles = [
     article({
         slug: 'comparer-prix-parapharmacie-maroc',
         title: 'Comparer les prix de parapharmacie au Maroc sans se tromper',
-        description: 'Une méthode pour comparer format, variante, disponibilité et livraison quand les prix catalogue restent indicatifs.',
-        directAnswer: 'Comparez toujours la même marque, la même variante et le même format, puis ajoutez les frais de livraison. Sur Parapharmacie.me, un prix catalogue n’est pas un prix final vérifié : demandez une confirmation avant de commander.',
+        description: 'Une méthode pour comparer format, variante, disponibilité et livraison quand les prix ne sont pas encore vérifiés.',
+        directAnswer: 'Comparez toujours la même marque, la même variante et le même format, puis ajoutez les frais de livraison. Parapharmacie.me ne publie aucun montant sans preuve propriétaire datée de moins de 30 jours : demandez une confirmation avant de commander.',
         category: 'Achat et livraison', categorySlug: 'hygiene',
         sections: [
             { heading: 'Comparer des références strictement identiques', body: 'Notez le nom complet, le volume, la quantité et toute mention de variante. Une différence de format peut expliquer un écart apparent et rend une comparaison directe trompeuse.' },
-            { heading: 'Séparer prix catalogue et prix confirmé', body: 'Les fiches du site présentent des montants indicatifs. Faute de date de vérification actuelle, ils ne doivent pas être repris comme une promesse ; le prix final est communiqué avant expédition.' },
+            { heading: 'Distinguer prix inconnu et prix confirmé', body: 'Faute de date de vérification actuelle, les fiches indiquent « Prix à confirmer » au lieu de publier un montant. Le prix applicable est communiqué avant expédition.' },
             { heading: 'Intégrer la livraison à la comparaison', body: 'Les frais publiés sont détaillés sur la page <a href="/livraison/">Livraison</a>. Vérifiez la ville desservie, le montant confirmé et le délai annoncé pour votre commande.' },
             { heading: 'Contrôler disponibilité et mode de paiement', body: 'Une référence visible peut être indisponible. Le paiement à la livraison est actif ; CMI et Apple Pay sont seulement annoncés pour plus tard. Ne validez jamais sur la base d’un moyen non actif.' },
             { heading: 'Conserver une confirmation claire', body: 'Envoyez les liens exacts des fiches via <a href="/contact/">WhatsApp ou téléphone</a> et relisez le récapitulatif. Pour Khouribga, la page locale rassemble aussi l’adresse, les horaires et l’itinéraire.' }
@@ -197,10 +197,10 @@ export const growthArticles = [
         directAnswer: 'À Khouribga, parcourez le catalogue, envoyez les références choisies à Pharmacie Tawfiq et attendez la confirmation du prix et du stock. La livraison locale publiée coûte 15 MAD ; le délai précis est communiqué avant validation.',
         category: 'Khouribga', categorySlug: 'hygiene',
         sections: [
-            { heading: 'Choisir les références dans le catalogue', body: 'Parcourez la <a href="/boutique/">boutique</a> par catégorie et ouvrez chaque fiche utile. Les noms et formats servent à identifier le produit ; les prix affichés restent indicatifs.' },
+            { heading: 'Choisir les références dans le catalogue', body: 'Parcourez la <a href="/boutique/">boutique</a> par catégorie et ouvrez chaque fiche utile. Les noms et formats servent à identifier le produit ; sans preuve courante, le prix reste à confirmer.' },
             { heading: 'Envoyer une demande précise', body: 'Utilisez les coordonnées publiées sur la page <a href="/contact/">Contact</a> et transmettez les liens, formats et quantités. Cette étape permet de confirmer la bonne variante et d’éviter une substitution implicite.' },
             { heading: 'Faire confirmer le prix et le stock', body: 'Une fiche indexable ne constitue pas une garantie de disponibilité. Attendez la confirmation explicite du stock, du prix final et du récapitulatif avant de considérer la commande comme validée.' },
-            { heading: 'Comprendre la livraison locale', body: 'Les frais publiés sont de 15 MAD pour Khouribga et environs. Le délai est confirmé au cas par cas et le site ne promet pas une livraison le jour même. Consultez les <a href="/livraison/">modalités complètes</a>.' },
+            { heading: 'Comprendre la livraison locale', body: 'Les frais publiés sont de 15 MAD pour Khouribga. Une zone proche ne relève jamais automatiquement de ce tarif et doit être confirmée explicitement. Le délai est confirmé au cas par cas et le site ne promet pas une livraison le jour même. Consultez les <a href="/livraison/">modalités complètes</a>.' },
             { heading: 'Retrouver le magasin physique', body: 'La page <a href="/parapharmacie-khouribga/">Parapharmacie à Khouribga</a> affiche l’adresse vérifiée de Pharmacie Tawfiq, ses horaires, son téléphone, WhatsApp et l’itinéraire Google Maps.' }
         ], sources: [DELIVERY_SOURCE, CONTACT_SOURCE], relatedProductSlugs: [],
         relatedArticleSlugs: ['parapharmacie-en-ligne-livraison-maroc', 'comparer-prix-parapharmacie-maroc'],

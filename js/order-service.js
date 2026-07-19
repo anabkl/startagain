@@ -1,7 +1,11 @@
 import { apiFetch, apiFetchWithTimeout, getAccessToken } from './auth.js';
 import { isApiMode, isFirebaseEnabled } from './runtime-config.js';
+import { hasCurrentProductPrice, hasCurrentStockVerification, isProductOrderable, verifiedProductPrice } from './product-schema.js';
 
 export const LOCAL_ORDERS_KEY = 'parapharmacie_orders';
+const ORDER_ATTEMPT_KEY = 'parapharmacie_order_attempt';
+const ORDER_RECEIPT_KEY = 'parapharmacie_order_receipt';
+const RECEIPT_TTL_MS = 30 * 60 * 1000;
 export const DEFAULT_ORDER_STATUS = 'في الانتظار';
 export const ORDER_STATUSES = [
     'في الانتظار',
@@ -17,6 +21,13 @@ function createLocalOrderId() {
     crypto.getRandomValues(bytes);
     const random = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
     return `PM-${Date.now().toString(36).toUpperCase()}-${random.slice(0, 8)}`;
+}
+
+function createRequestId() {
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    const random = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+    return `web-${random}`;
 }
 
 function getNowIso() {
@@ -61,7 +72,7 @@ function maskPhone(value) {
 
 function safeParseOrders() {
     try {
-        const orders = JSON.parse(localStorage.getItem(LOCAL_ORDERS_KEY)) || [];
+        const orders = JSON.parse(sessionStorage.getItem(LOCAL_ORDERS_KEY)) || [];
         return Array.isArray(orders) ? orders : [];
     } catch {
         return [];
@@ -69,7 +80,89 @@ function safeParseOrders() {
 }
 
 function writeLocalOrders(orders) {
-    localStorage.setItem(LOCAL_ORDERS_KEY, JSON.stringify(orders));
+    sessionStorage.setItem(LOCAL_ORDERS_KEY, JSON.stringify(orders));
+}
+
+function attemptFingerprint(orderData) {
+    return JSON.stringify({
+        items: (orderData.items || []).map((item) => ({
+            product_id: String(item.apiId || item.product_id || item.id),
+            quantity: Number(item.quantity || 1)
+        })),
+        firstName: orderData.firstName || '',
+        lastName: orderData.lastName || '',
+        email: orderData.email || '',
+        whatsapp: orderData.phoneNormalized || orderData.whatsapp || orderData.phoneOriginal || '',
+        city: orderData.city || '',
+        address: orderData.address || '',
+        paymentMethod: String(orderData.paymentMethod || 'cod').toLowerCase()
+    });
+}
+
+let volatileAttempt = null;
+
+export function getOrCreateOrderRequestId(orderData) {
+    const fingerprint = attemptFingerprint(orderData);
+    let stored = volatileAttempt;
+    try {
+        stored = JSON.parse(sessionStorage.getItem(ORDER_ATTEMPT_KEY)) || stored;
+    } catch {
+        // Privacy/storage settings may disable sessionStorage. The in-memory
+        // key still protects retries while this page remains loaded.
+    }
+    if (stored?.fingerprint === fingerprint && stored?.requestId) return stored.requestId;
+
+    volatileAttempt = { fingerprint, requestId: createRequestId() };
+    try {
+        sessionStorage.setItem(ORDER_ATTEMPT_KEY, JSON.stringify(volatileAttempt));
+    } catch {
+        // Best effort only; the server remains authoritative.
+    }
+    return volatileAttempt.requestId;
+}
+
+export function clearOrderRequestId() {
+    volatileAttempt = null;
+    try {
+        sessionStorage.removeItem(ORDER_ATTEMPT_KEY);
+    } catch {
+        // Best effort after a server-confirmed request.
+    }
+}
+
+export function saveOrderReceipt(order) {
+    const receipt = {
+        id: order.id,
+        source: order.source || 'api',
+        items: (order.items || []).map((item) => ({
+            name: item.name || 'Produit',
+            quantity: Number(item.quantity || 1)
+        })),
+        subtotal: order.subtotal,
+        deliveryFee: order.deliveryFee,
+        deliveryLabel: order.deliveryLabel || 'À confirmer',
+        total: order.total,
+        expiresAt: Date.now() + RECEIPT_TTL_MS
+    };
+    try {
+        sessionStorage.setItem(ORDER_RECEIPT_KEY, JSON.stringify(receipt));
+    } catch {
+        // The success route can still render the order id from its URL.
+    }
+    return receipt;
+}
+
+function readOrderReceipt(orderId) {
+    try {
+        const receipt = JSON.parse(sessionStorage.getItem(ORDER_RECEIPT_KEY));
+        if (!receipt || receipt.id !== orderId || Number(receipt.expiresAt) < Date.now()) {
+            sessionStorage.removeItem(ORDER_RECEIPT_KEY);
+            return null;
+        }
+        return receipt;
+    } catch {
+        return null;
+    }
 }
 
 function pickArray(payload) {
@@ -78,6 +171,38 @@ function pickArray(payload) {
     if (Array.isArray(payload?.results)) return payload.results;
     if (Array.isArray(payload?.items)) return payload.items;
     return [];
+}
+
+function orderItemPriceEvidence(item = {}) {
+    return {
+        priceMAD: item.priceMAD ?? item.effectivePrice ?? item.unit_price,
+        priceSource: item.priceSource ?? item.price_source,
+        priceVerifiedAt: item.priceVerifiedAt ?? item.price_verified_at
+    };
+}
+
+export function assertOrderPricesVerified(orderData) {
+    const items = Array.isArray(orderData?.items) ? orderData.items : [];
+    if (!items.length) throw new Error('La commande ne contient aucune référence.');
+
+    for (const item of items) {
+        const orderableItem = { ...item, ...orderItemPriceEvidence(item) };
+        if (!hasCurrentProductPrice(orderableItem)) {
+            throw new Error(`Prix non vérifié pour ${item.name || item.id || 'une référence'}.`);
+        }
+        if (item.deliveryEligible !== true) {
+            throw new Error(`Livraison non confirmée pour ${item.name || item.id || 'une référence'}.`);
+        }
+        if (!hasCurrentStockVerification(item)) {
+            throw new Error(`Stock non vérifié ou périmé pour ${item.name || item.id || 'une référence'}.`);
+        }
+        if (Number(item.stock) <= 0) {
+            throw new Error(`Stock indisponible pour ${item.name || item.id || 'une référence'}.`);
+        }
+        if (!isProductOrderable(orderableItem)) {
+            throw new Error(`Commande en ligne non autorisée pour ${item.name || item.id || 'une référence'}.`);
+        }
+    }
 }
 
 function getOrderTimestamp(order) {
@@ -102,10 +227,19 @@ function normalizeOrder(orderData = {}, id = null, source = orderData.source || 
         || ''
     ).trim();
     const phoneNormalized = orderData.phoneNormalized || normalizePhone(phoneOriginal);
-    const subtotal = Number(orderData.subtotal ?? orderData.total ?? 0);
-    const deliveryFee = Number(orderData.deliveryFee || orderData.delivery_fee || 0);
-    const total = Number(orderData.total ?? subtotal + deliveryFee);
+    const subtotalValue = orderData.subtotal ?? orderData.total;
+    const deliveryFeeValue = orderData.deliveryFee ?? orderData.delivery_fee;
+    const totalValue = orderData.total;
+    const subtotal = Number.isFinite(Number(subtotalValue)) ? Number(subtotalValue) : null;
+    const deliveryFee = Number.isFinite(Number(deliveryFeeValue)) ? Number(deliveryFeeValue) : null;
+    const calculatedTotal = subtotal !== null && deliveryFee !== null ? subtotal + deliveryFee : null;
+    const total = Number.isFinite(Number(totalValue)) ? Number(totalValue) : calculatedTotal;
     const status = normalizeStatus(orderData.status);
+    const deliveryCoverageStatus = orderData.delivery_service_confirmed === true
+        ? 'confirmed_local'
+        : orderData.delivery_service_confirmed === false
+            ? 'pending_confirmation'
+            : orderData.deliveryCoverageStatus || orderData.delivery_coverage_status || 'pending_confirmation';
 
     return {
         id: String(id || orderData._id || orderData.id || ''),
@@ -133,6 +267,8 @@ function normalizeOrder(orderData = {}, id = null, source = orderData.source || 
         subtotal,
         deliveryFee,
         deliveryLabel: orderData.deliveryLabel || orderData.delivery_label || 'A confirmer',
+        deliveryCoverageStatus,
+        deliveryNotice: orderData.deliveryNotice || orderData.delivery_notice || '',
         total,
         status,
         statusHistory: Array.isArray(orderData.statusHistory) && orderData.statusHistory.length
@@ -166,15 +302,6 @@ function saveOrderLocally(orderData) {
     return order;
 }
 
-function cacheOrderLocally(orderData) {
-    const order = normalizeOrder(orderData, orderData.id, orderData.source || 'api');
-    if (!order.id) return order;
-    const orders = safeParseOrders().filter((item) => item.id !== order.id);
-    orders.unshift(order);
-    writeLocalOrders(orders);
-    return order;
-}
-
 async function saveOrderToFirebase(orderData) {
     const { db, firestore } = await getFirestoreApi();
     const docRef = firestore.doc(firestore.collection(db, 'orders'));
@@ -190,6 +317,8 @@ async function saveOrderToFirebase(orderData) {
 }
 
 export function toApiOrderPayload(orderData) {
+    assertOrderPricesVerified(orderData);
+    const email = String(orderData.email || '').trim();
     return {
         items: (orderData.items || []).map((item) => ({
             product_id: String(item.apiId || item.product_id || item.id),
@@ -198,12 +327,14 @@ export function toApiOrderPayload(orderData) {
         shipping_address: {
             first_name: orderData.firstName || '',
             last_name: orderData.lastName || '',
-            email: orderData.email || '',
             whatsapp: orderData.phoneNormalized || orderData.whatsapp || orderData.phoneOriginal || '',
             city: orderData.city || '',
-            address: orderData.address || ''
+            address: orderData.address || '',
+            country_code: 'MA',
+            ...(email ? { email } : {})
         },
-        payment_method: String(orderData.paymentMethod || 'cod').toLowerCase()
+        payment_method: String(orderData.paymentMethod || 'cod').toLowerCase(),
+        request_id: orderData.requestId || getOrCreateOrderRequestId(orderData)
     };
 }
 
@@ -213,38 +344,43 @@ async function saveOrderToApi(orderData) {
         body: JSON.stringify(toApiOrderPayload(orderData))
     }, 15000, { requiresAuth: Boolean(getAccessToken()) });
 
+    const serverReceipt = payload?.order || payload || {};
+    const serverFee = Number(serverReceipt.delivery_fee);
+    const serverCoverageConfirmed = serverReceipt.delivery_service_confirmed === true;
     const normalized = normalizeOrder({
         ...orderData,
-        ...(payload?.order || payload || {}),
-        items: payload?.items || payload?.order?.items || orderData.items,
-        total: payload?.total ?? payload?.order?.total ?? orderData.total
-    }, payload?._id || payload?.id || payload?.order?._id || payload?.order?.id, 'api');
+        ...serverReceipt,
+        // Once the API accepts the request, display its server-priced lines.
+        // Browser evidence remains only a preflight guard, never the receipt.
+        items: serverReceipt.items || [],
+        subtotal: serverReceipt.subtotal,
+        deliveryFee: serverReceipt.delivery_fee,
+        deliveryLabel: Number.isFinite(serverFee)
+            ? `${serverFee.toFixed(2)} DH${serverCoverageConfirmed ? ' (Khouribga)' : ' (couverture à confirmer)'}`
+            : 'À confirmer',
+        deliveryNotice: serverReceipt.delivery_notice || '',
+        deliveryCoverageStatus: serverCoverageConfirmed ? 'confirmed_local' : 'pending_confirmation',
+        total: serverReceipt.total
+    }, serverReceipt._id || serverReceipt.id, 'api');
 
     return normalized;
 }
 
 export async function saveOrder(orderData) {
+    assertOrderPricesVerified(orderData);
     if (isFirebaseEnabled()) {
-        try {
-            const order = await saveOrderToFirebase(orderData);
-            return { id: order.id, source: 'firebase', order };
-        } catch (error) {
-            console.info('Order saved locally for demo mode:', error?.message || error);
-        }
+        const order = await saveOrderToFirebase(orderData);
+        return { id: order.id, source: 'firebase', order };
     }
 
     if (isApiMode()) {
-        try {
-            const order = await saveOrderToApi(orderData);
-            if (order.id) {
-                cacheOrderLocally(order);
-                return { id: order.id, source: 'api', order };
-            }
-        } catch (error) {
-            console.info('Order saved locally after API fallback:', error?.message || error);
-        }
+        const order = await saveOrderToApi(orderData);
+        if (!order.id) throw new Error('Le service de commande n’a pas confirmé l’enregistrement.');
+        return { id: order.id, source: 'api', order };
     }
 
+    // Local persistence is an explicit mock/demo backend mode only. A
+    // configured remote rejection must propagate so checkout preserves cart.
     const order = saveOrderLocally(orderData);
     return { id: order.id, source: 'local', order };
 }
@@ -303,6 +439,9 @@ export async function listMyOrders() {
 
 export async function getOrderById(orderId, source = null) {
     if (!orderId) return null;
+
+    const receipt = readOrderReceipt(orderId);
+    if (receipt) return normalizeOrder(receipt, receipt.id, receipt.source || source || 'api');
 
     const localOrder = safeParseOrders().find((item) => item.id === orderId);
     if (source === 'local' || localOrder) {
@@ -397,9 +536,18 @@ export async function deleteOrder(orderId) {
 export function buildWhatsAppOrderMessage(order, orderId, formatCurrency) {
     const itemsList = (order.items || []).map((item, index) => {
         const quantity = item.quantity || 1;
-        const price = item.effectivePrice || item.priceMAD || item.promoPrice || item.price || 0;
-        return `${index + 1}. ${item.name} x ${quantity} = ${formatCurrency(price * quantity)}`;
+        const serverPrice = Number(item.price);
+        const verifiedPrice = verifiedProductPrice(orderItemPriceEvidence(item));
+        const price = Number.isFinite(serverPrice) && serverPrice > 0 ? serverPrice : verifiedPrice;
+        const serverSubtotal = Number(item.subtotal);
+        const lineSubtotal = Number.isFinite(serverSubtotal) && serverSubtotal > 0
+            ? serverSubtotal
+            : price === null ? null : price * quantity;
+        return `${index + 1}. ${item.name} x ${quantity} = ${formatCurrency(lineSubtotal)}`;
     }).join('\n');
+
+    const subtotal = Number(order.subtotal);
+    const total = Number(order.total);
 
     return `Nouvelle commande - parapharmacie.me
 
@@ -412,9 +560,9 @@ Adresse: ${order.address}
 Produits:
 ${itemsList}
 
-Sous-total: ${formatCurrency(order.subtotal || order.total || 0)}
+Sous-total: ${formatCurrency(Number.isFinite(subtotal) && subtotal > 0 ? subtotal : null)}
 Livraison: ${order.deliveryLabel || 'A confirmer'}
-Total: ${formatCurrency(order.total || 0)}
+Total: ${formatCurrency(Number.isFinite(total) && total > 0 ? total : null)}
 Paiement: Paiement a la livraison
 Statut: ${order.status || DEFAULT_ORDER_STATUS}
 Commande: #${String(orderId).slice(0, 12)}

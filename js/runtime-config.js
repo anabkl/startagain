@@ -12,6 +12,11 @@ export function isLocalPreview() {
 export function getBackendMode() {
     if (typeof window === 'undefined') return 'api';
 
+    // Mock/Firebase persistence is a local QA facility. Query parameters and
+    // pre-seeded localStorage must never turn a production checkout into a
+    // browser-only success with no server order.
+    if (!isLocalPreview()) return 'api';
+
     const backend = getBackendParam();
     if (backend === 'firebase' || backend === 'mock' || backend === 'api') return backend;
 
@@ -24,6 +29,7 @@ export function isApiMode() {
 
 export function isFirebaseEnabled() {
     if (typeof window === 'undefined') return false;
+    if (!isLocalPreview()) return false;
 
     const backend = getBackendParam();
     if (backend === 'firebase') return true;

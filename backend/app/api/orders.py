@@ -3,6 +3,7 @@ from __future__ import annotations
 from flask import Blueprint, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
+from app.extensions import limiter
 from app.middleware.authz import admin_required
 from app.services.order_service import OrderService
 from app.utils.response import success_response
@@ -17,6 +18,8 @@ def get_order_service() -> OrderService:
 
 
 @orders_bp.post("")
+@limiter.limit("10 per minute")
+@limiter.limit("100 per day")
 @jwt_required(optional=True)
 def create_order():
     payload = validate_json(CreateOrderInput, request)
@@ -25,8 +28,10 @@ def create_order():
         items=[item.model_dump() for item in payload.items],
         shipping_address=payload.shipping_address.model_dump(),
         payment_method=payload.payment_method,
+        request_id=payload.request_id,
     )
-    return success_response(data=order, message="Order created", status=201)
+    status = 200 if order.get("idempotent_replay") else 201
+    return success_response(data=order, message="Order request recorded", status=status)
 
 
 @orders_bp.get("/me")

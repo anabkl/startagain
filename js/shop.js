@@ -32,7 +32,9 @@ function addToCart(productId, quantity = 1) {
 
     if (!product) return;
     if (isProductUnavailable(product)) {
-        showToast('Ce produit est actuellement indisponible.', 'error');
+        showToast(getEffectivePrice(product) === null
+            ? 'Le prix de cette référence doit être confirmé avant toute commande.'
+            : 'La commande en ligne de cette référence est indisponible.', 'error');
         return;
     }
 
@@ -100,13 +102,13 @@ function renderProductCard(product) {
                 </div>
                 <a href="${productRoute(product)}" class="product-card__title">${escapeHtml(product.name)}</a>
                 <p class="product-card__brand">${escapeHtml(product.brand || 'parapharmacie.me')}</p>
-                <p class="product-card__description">Prix catalogue indicatif ; disponibilité à confirmer avant commande.</p>
+                <p class="product-card__description">Prix et disponibilité à confirmer sans preuve courante.</p>
                 <div class="product-card__footer">
                     <div class="product-card__price">
                         <strong>${formatCurrency(price)}</strong>
-                        <small>prix indicatif</small>
+                        <small>${price === null ? 'confirmation requise' : 'prix vérifié'}</small>
                     </div>
-                    <button class="icon-btn add-to-cart-btn" type="button" data-product-id="${escapeHtml(product.id)}" ${unavailable ? 'disabled' : ''} aria-label="Ajouter ${escapeHtml(product.name)} au panier">
+                    <button class="icon-btn add-to-cart-btn" type="button" data-product-id="${escapeHtml(product.id)}" ${unavailable ? 'disabled aria-disabled="true"' : ''} aria-label="${unavailable ? `Commande en ligne indisponible pour ${escapeHtml(product.name)}; prix, stock ou livraison à confirmer` : `Ajouter ${escapeHtml(product.name)} au panier`}">
                         <i class="fa-solid fa-cart-plus"></i>
                     </button>
                 </div>

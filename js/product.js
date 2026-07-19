@@ -54,7 +54,9 @@ function addProductToCart(event) {
 }
 
 function getWhatsAppUrl() {
-    const message = `Bonjour parapharmacie.me, je souhaite commander ou demander la disponibilite de: ${currentProduct?.name || ''}\nQuantite: ${quantity}\nPrix indicatif: ${formatCurrency(getEffectivePrice(currentProduct || {}))}\nLien: ${window.location.href}`;
+    const price = getEffectivePrice(currentProduct || {});
+    const priceLine = price === null ? 'Prix: a confirmer' : `Prix verifie: ${formatCurrency(price)}`;
+    const message = `Bonjour parapharmacie.me, je souhaite commander ou demander la disponibilite de: ${currentProduct?.name || ''}\nQuantite: ${quantity}\n${priceLine}\nLien: ${window.location.href}`;
     return `https://wa.me/212675698351?text=${encodeURIComponent(message)}`;
 }
 
@@ -91,7 +93,12 @@ function upsertJsonLd(id, data) {
 }
 
 function updateProductSeo(product, price) {
-    const description = `${product.name} par ${product.brand}, référence ${product.category} à ${formatCurrency(price)} à titre indicatif. Disponibilité et prix final à confirmer.`;
+    const hasVerifiedPrice = price !== null;
+    const canOrder = !isProductUnavailable(product);
+    const availabilityLabel = getProductAvailabilityLabel(product);
+    const description = hasVerifiedPrice
+        ? `${product.name} par ${product.brand}, référence ${product.category} à ${formatCurrency(price)}, prix vérifié. ${availabilityLabel}.`
+        : `${product.name} par ${product.brand}, référence ${product.category}. Prix et disponibilité à confirmer.`;
     const title = `${product.name} | Parapharmacie.me`;
     const productUrl = absoluteSiteUrl(productRoute(product));
     const imageUrl = product.imageNeedsReview
@@ -115,25 +122,27 @@ function updateProductSeo(product, price) {
         '@type': 'Product',
         name: product.name,
         description,
-        sku: product.sku || product.id,
+        ...(product.sku ? { sku: product.sku } : {}),
         brand: {
             '@type': 'Brand',
             name: product.brand
         },
         category: product.category,
         url: productUrl,
-        offers: {
-            '@type': 'Offer',
-            price: Number(price).toFixed(2),
-            priceCurrency: 'MAD',
-            url: productUrl,
-            seller: {
-                '@type': 'Organization',
-                name: 'Parapharmacie.me',
-                url: 'https://parapharmacie.me/'
-            },
-            ...(availability ? { availability } : {})
-        }
+        ...(canOrder ? {
+            offers: {
+                '@type': 'Offer',
+                price: Number(price).toFixed(2),
+                priceCurrency: 'MAD',
+                url: productUrl,
+                seller: {
+                    '@type': 'Organization',
+                    name: 'Parapharmacie.me',
+                    url: 'https://parapharmacie.me/'
+                },
+                ...(availability ? { availability } : {})
+            }
+        } : {})
     };
 
     if (gtin) productSchema.gtin = gtin;
@@ -196,16 +205,16 @@ function renderProduct(product) {
             <div class="product-detail__price">
                 <strong>${formatCurrency(price)}</strong>
             </div>
-            <p class="product-detail__stock ${unavailable ? 'out' : ''}">Prix catalogue indicatif · ${escapeHtml(getProductAvailabilityLabel(product))}</p>
+            <p class="product-detail__stock ${unavailable ? 'out' : ''}">${price === null ? 'Prix à confirmer' : 'Prix vérifié'} · ${escapeHtml(getProductAvailabilityLabel(product))}</p>
             <div class="product-detail__purchase">
-                <div class="qty-control product-detail__qty" aria-label="Quantite">
+                ${unavailable ? '' : `<div class="qty-control product-detail__qty" aria-label="Quantite">
                     <button class="qty-control__btn" type="button" data-qty="-1" aria-label="Diminuer la quantite">-</button>
                     <span class="qty-control__value" id="qty-val">1</span>
                     <button class="qty-control__btn" type="button" data-qty="1" aria-label="Augmenter la quantite">+</button>
-                </div>
+                </div>`}
                 <button class="btn btn--primary ${unavailable ? 'is-disabled' : ''}" id="btn-add-cart" type="button" data-product-action="add-to-cart" ${unavailable ? 'aria-disabled="true" disabled' : ''}>
                     <i class="fa-solid fa-cart-plus"></i>
-                    ${unavailable ? 'Indisponible' : 'Ajouter au panier'}
+                    ${unavailable ? 'Commande en ligne indisponible' : 'Ajouter au panier'}
                 </button>
                 <a class="btn btn--whatsapp" href="${getWhatsAppUrl()}" target="_blank" rel="noreferrer" data-product-action="whatsapp">
                     <i class="fa-brands fa-whatsapp"></i>
@@ -214,8 +223,8 @@ function renderProduct(product) {
             </div>
             <p class="product-detail__description">${escapeHtml(product.name)} est une référence ${escapeHtml(product.category)} de la marque ${escapeHtml(product.brand)}. Le prix final et la disponibilité sont confirmés avant commande.</p>
             <div class="product-detail__trust">
-                <span><i class="fa-solid fa-tag"></i> Prix indicatif en MAD</span>
-                <span><i class="fa-solid fa-circle-check"></i> Disponibilité à confirmer</span>
+                <span><i class="fa-solid fa-tag"></i> ${price === null ? 'Prix à confirmer' : 'Prix vérifié en MAD'}</span>
+                <span><i class="fa-solid fa-circle-check"></i> ${escapeHtml(getProductAvailabilityLabel(product))}</span>
                 <span><i class="fa-solid fa-notes-medical"></i> Information non médicale</span>
             </div>
             <div class="product-detail__note">

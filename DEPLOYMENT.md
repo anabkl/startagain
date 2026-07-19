@@ -27,6 +27,18 @@ This project is a static-first storefront with pre-rendered SEO pages and a Rend
 2. Upload the contents of `dist/` to the host.
 3. Confirm `sitemap.xml`, `robots.txt`, HTML pages, and assets are available at the root.
 
+### Docker Compose
+
+Nginx mounts `dist/` only. Build that public artifact before starting either Compose configuration:
+
+```bash
+npm ci
+npm run build
+docker compose up --build
+```
+
+Do not change the mount back to the repository root: source files, documentation and local configuration are not public assets. Repeat `npm run build` after every storefront change before restarting Nginx.
+
 ## Environment and Backend
 
 - Production requests the Render API first and falls back to the local catalogue.
@@ -40,9 +52,10 @@ This project is a static-first storefront with pre-rendered SEO pages and a Rend
 - Domain `parapharmacie.me` points to the production host.
 - API origin and CORS configuration are intentionally chosen and documented.
 - WhatsApp number is the final business number.
-- Delivery cities are confirmed: Khouribga, Oued Zem, Boujniba, Boulanouare, and national delivery rules.
+- Khouribga is the only confirmed local 15 MAD city. The owner must document the exact other supported cities before treating Oued Zem, Boujniba, Boulanouare or any other city as served.
 - Product image rights are approved or products remain `imageNeedsReview: true`.
-- Prices and stock are checked against the pharmacy/distributor before launch.
+- No exact product price is published unless it has a traceable owner-controlled source and a non-future verification date no older than 30 days.
+- No stock state is published unless `stockVerified: true`, a finite quantity and a non-future `stockVerifiedAt` no older than 24 hours are all present.
 - Analytics and Search Console are installed.
 - `sitemap.xml` is submitted in Search Console.
 - `robots.txt` points to `https://parapharmacie.me/sitemap.xml`.
@@ -55,6 +68,8 @@ This project is a static-first storefront with pre-rendered SEO pages and a Rend
 npm run generate:images
 npm run generate:sitemap
 npm run validate:catalog
+npm run validate:commerce
+npm run validate:docs
 npm run lint
 npm run build
 npm run validate:seo

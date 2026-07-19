@@ -7,19 +7,19 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
     <link rel="manifest" href="site.webmanifest">
-    <meta name="description" content="Parapharmacie en ligne au Maroc : 93 références classées par catégorie avec prix indicatifs en MAD, livraison partout au Maroc et paiement à la livraison. Disponibilité confirmée avant expédition.">
+    <meta name="description" content="Catalogue de 93 références de parapharmacie au Maroc. Les prix non vérifiés restent à confirmer ; paiement à la livraison et livraison dans les villes marocaines desservies.">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://parapharmacie.me/">
     <meta property="og:locale" content="fr_MA">
     <meta property="og:site_name" content="Parapharmacie.me">
     <meta property="og:title" content="Parapharmacie en ligne au Maroc | Parapharmacie.me">
-    <meta property="og:description" content="93 références classées par catégorie, prix indicatifs en MAD, livraison au Maroc et paiement à la livraison.">
+    <meta property="og:description" content="93 références classées par catégorie. Prix à confirmer sans preuve courante, livraison dans les villes desservies et paiement à la livraison.">
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://parapharmacie.me/.netlify/images?url=/assets/images/photopharamcie.png&amp;w=1200&amp;h=630&amp;fit=cover&amp;fm=webp&amp;q=80">
     <meta property="og:url" content="https://parapharmacie.me/">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Parapharmacie en ligne au Maroc | Parapharmacie.me">
-    <meta name="twitter:description" content="93 références avec prix indicatifs en MAD, livraison au Maroc et paiement à la livraison.">
+    <meta name="twitter:description" content="93 références avec prix à confirmer sans preuve courante, livraison dans les villes desservies et paiement à la livraison.">
     <meta name="twitter:image" content="https://parapharmacie.me/.netlify/images?url=/assets/images/photopharamcie.png&amp;w=1200&amp;h=630&amp;fit=cover&amp;fm=webp&amp;q=80">
     <meta name="theme-color" content="#0f7f64">
     <!-- seo:jsonld:start -->
@@ -67,7 +67,7 @@
                 },
                 "geo": { "@type": "GeoCoordinates", "latitude": 32.880939, "longitude": -6.8961967 },
                 "hasMap": "https://maps.app.goo.gl/TbTSUacj462VrfZv5",
-                "areaServed": "Khouribga et les environs",
+                "areaServed": "Khouribga",
                 "openingHoursSpecification": [
                     { "@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "opens": "09:00", "closes": "12:30" },
                     { "@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], "opens": "15:30", "closes": "20:00" },
@@ -89,7 +89,7 @@
     <header class="site-header">
         <div class="header__top-bar">
             <div class="container">
-                <span><i class="fa-solid fa-tag"></i> Prix affichés en MAD</span>
+                <span><i class="fa-solid fa-tag"></i> Prix datés ou à confirmer</span>
                 <span><i class="fa-solid fa-circle-check"></i> Disponibilité confirmée avant commande</span>
                 <span><i class="fa-solid fa-notes-medical"></i> Information non médicale</span>
             </div>
@@ -122,7 +122,7 @@
                         <span class="header__cart-count" id="cart-count">0</span>
                         <span>Panier</span>
                     </a>
-                    <button class="header__mobile-toggle" id="menuToggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false">
+                    <button class="header__mobile-toggle" id="menuToggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mainNav">
                         <span></span>
                         <span></span>
                         <span></span>
@@ -152,13 +152,13 @@
         <section class="hero hero--premium">
             <div class="container hero__grid">
                 <div class="hero__content" data-reveal>
-                    <p class="eyebrow">Catalogue parapharmacie • Prix en MAD</p>
+                    <p class="eyebrow">Catalogue parapharmacie • Données responsables</p>
                     <h1>Parapharmacie en ligne au Maroc</h1>
-                    <p>Comparez 93 références classées par catégorie, avec leur marque, leur format lorsqu’il est indiqué et un prix catalogue transparent. Livraison partout au Maroc et paiement à la livraison actuellement disponible ; la disponibilité et le prix final sont confirmés avant commande.</p>
+                    <p>Comparez 93 références classées par catégorie, avec leur marque et leur format lorsqu’il est indiqué. Un montant ne s’affiche que s’il a une source propriétaire vérifiée depuis moins de 30 jours ; sinon, prix et disponibilité restent à confirmer. Le paiement à la livraison est actif dans les villes marocaines desservies.</p>
                     <div class="hero__actions">
                         <a href="/boutique/" class="btn btn--primary">
                             <i class="fa-solid fa-store"></i>
-                            Acheter maintenant
+                            Consulter le catalogue
                         </a>
                         <a href="https://wa.me/212675698351" target="_blank" rel="noreferrer" class="btn btn--secondary">
                             <i class="fa-brands fa-whatsapp"></i>
@@ -168,7 +168,7 @@
                     <dl class="hero__stats" aria-label="Données du catalogue">
                         <div><dt>93</dt><dd>Références catalogue</dd></div>
                         <div><dt>38</dt><dd>Marques nommées</dd></div>
-                        <div><dt>MAD</dt><dd>Prix indicatifs</dd></div>
+                        <div><dt>30 j</dt><dd>Fraîcheur prix maximale</dd></div>
                     </dl>
                 </div>
                 <div class="hero__visual" data-reveal>
@@ -216,7 +216,7 @@
                 <div class="promo-showcase__content" data-reveal>
                     <p class="eyebrow">Catalogue transparent</p>
                     <h2>Des fiches lisibles, sans promesse inventée.</h2>
-                    <p>Chaque page produit reprend uniquement le nom, la marque, la catégorie, le format présent dans l’intitulé et le prix catalogue. Les données absentes ne sont pas complétées artificiellement.</p>
+                    <p>Chaque page produit reprend uniquement le nom, la marque, la catégorie et le format présent dans l’intitulé. Sans preuve de prix courante, elle affiche « Prix à confirmer ». Les données absentes ne sont pas complétées artificiellement.</p>
                     <a href="/a-propos/" class="btn btn--primary">Comprendre notre démarche</a>
                 </div>
                 <div class="promo-showcase__panel" data-reveal>
@@ -254,8 +254,8 @@
                 </div>
                 <div class="promo-showcase__panel" data-reveal>
                     <span>Zone de service</span>
-                    <strong>Khouribga et les environs</strong>
-                    <p>Livraison également proposée vers d’autres villes marocaines desservies.</p>
+                    <strong>Khouribga</strong>
+                    <p>Une zone proche n’est locale qu’après confirmation explicite. La livraison est aussi proposée vers d’autres villes marocaines effectivement desservies.</p>
                 </div>
             </div>
         </section>
@@ -269,8 +269,8 @@
                     </div>
                 </div>
                 <div class="trust-strip__grid">
-                    <article class="trust-card"><i class="fa-solid fa-magnifying-glass"></i><h3>1. Comparer</h3><p>Consultez les catégories, les marques, les formats et les prix indicatifs.</p></article>
-                    <article class="trust-card"><i class="fa-solid fa-bag-shopping"></i><h3>2. Préparer</h3><p>Ajoutez les références souhaitées au panier sans perdre votre sélection.</p></article>
+                    <article class="trust-card"><i class="fa-solid fa-magnifying-glass"></i><h3>1. Comparer</h3><p>Consultez les catégories, les marques et les formats renseignés.</p></article>
+                    <article class="trust-card"><i class="fa-solid fa-bag-shopping"></i><h3>2. Préparer</h3><p>Notez les références souhaitées ou transmettez leurs liens par téléphone ou WhatsApp.</p></article>
                     <article class="trust-card"><i class="fa-solid fa-circle-check"></i><h3>3. Confirmer</h3><p>Vérifiez la disponibilité, le prix final et les modalités avant expédition.</p></article>
                 </div>
             </div>
@@ -286,18 +286,17 @@
                 <div class="faq__list" id="faq-list"></div>
             </div>
         </section>
-    </main>
-
-    <section class="section" aria-labelledby="home-conseils-title">
-        <div class="container">
-            <div class="section-header"><div><p class="eyebrow">Conseils pratiques</p><h2 id="home-conseils-title">Bien choisir avant de commander</h2></div><a class="section-header__link" href="/conseils/">Voir tous les Conseils <i class="fa-solid fa-arrow-right"></i></a></div>
-            <div class="related-grid">
-                <a class="related-card" href="/conseils/comment-choisir-creme-solaire-maroc/"><span>Protection solaire</span><strong>Choisir une crème solaire au Maroc</strong></a>
-                <a class="related-card" href="/conseils/comment-choisir-nettoyant-visage/"><span>Visage</span><strong>Comparer les nettoyants visage</strong></a>
-                <a class="related-card" href="/conseils/parapharmacie-en-ligne-livraison-maroc/"><span>Livraison</span><strong>Commander et se faire livrer au Maroc</strong></a>
+        <section class="section" aria-labelledby="home-conseils-title">
+            <div class="container">
+                <div class="section-header"><div><p class="eyebrow">Conseils pratiques</p><h2 id="home-conseils-title">Bien choisir avant de commander</h2></div><a class="section-header__link" href="/conseils/">Voir tous les Conseils <i class="fa-solid fa-arrow-right"></i></a></div>
+                <div class="related-grid">
+                    <a class="related-card" href="/conseils/comment-choisir-creme-solaire-maroc/"><span>Protection solaire</span><strong>Choisir une crème solaire au Maroc</strong></a>
+                    <a class="related-card" href="/conseils/comment-choisir-nettoyant-visage/"><span>Visage</span><strong>Comparer les nettoyants visage</strong></a>
+                    <a class="related-card" href="/conseils/parapharmacie-en-ligne-livraison-maroc/"><span>Livraison</span><strong>Commander et se faire livrer au Maroc</strong></a>
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
+    </main>
 
     <footer class="footer">
         <div class="container footer__grid">
@@ -306,7 +305,7 @@
                     <img src="assets/images/logo-head.png" alt="Parapharmacie.me" width="56" height="57">
                     <span>parapharmacie.me</span>
                 </a>
-                <p>Catalogue de parapharmacie au Maroc. Prix en MAD et disponibilité à confirmer avant commande.</p>
+                <p>Catalogue de parapharmacie au Maroc. Prix et disponibilité à confirmer lorsqu’ils ne sont pas vérifiés.</p>
             </div>
             <div>
                 <h3>Boutique</h3>

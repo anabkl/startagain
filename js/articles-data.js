@@ -88,7 +88,7 @@ const existingArticles = [
             },
             {
                 heading: 'SPF 30 contre SPF 50 : la différence en pratique',
-                body: 'En théorie, un SPF 30 filtre environ 97 % des rayons UVB et un SPF 50 environ 98 %. L’écart entre les deux indices est donc plus faible qu’il n’y paraît au premier regard sur les chiffres. Aucun indice, même élevé, ne filtre 100 % des rayons UV.'
+                body: 'Un indice SPF plus élevé indique une protection UVB supérieure dans les conditions normalisées du test, mais le chiffre ne se traduit ni par un pourcentage simple ni par un temps d’exposition sans risque. Aucun écran solaire ne bloque tous les rayons UV : il faut suivre l’étiquette et associer ombre, vêtements et réapplication.'
             },
             {
                 heading: 'Quand privilégier un indice plus élevé',
@@ -106,7 +106,7 @@ const existingArticles = [
         faq: [
             {
                 q: 'Un SPF 100 protège-t-il deux fois plus qu’un SPF 50 ?',
-                a: 'Non. La différence de filtration entre ces deux indices est marginale en pourcentage ; aucun produit ne filtre la totalité des rayons UV.'
+                a: 'Le nombre ne permet pas de conclure à une protection réelle deux fois supérieure. Aucun écran solaire ne bloque tous les UV et les consignes d’application restent indispensables.'
             }
         ],
         sources: [OMS_SOURCE, FDA_SOLAR_SOURCE],
@@ -163,15 +163,15 @@ const existingArticles = [
         sections: [
             {
                 heading: 'Qu’est-ce qu’une peau sensible',
-                body: 'Une peau sensible réagit plus facilement par des rougeurs, des tiraillements ou des picotements face à certains produits, au changement de température ou à des frottements. Cette sensibilité peut être permanente ou apparaître ponctuellement selon les périodes.'
+                body: 'La tolérance à un produit varie d’une personne à l’autre. Une réaction persistante ou importante ne doit pas être auto-diagnostiquée à partir d’un article : demandez un avis professionnel adapté.'
             },
             {
                 heading: 'Identifier les facteurs déclenchants',
-                body: 'Le vent, le soleil, l’eau très chaude, certains textiles ou parfums, ainsi que des changements de produits trop fréquents peuvent accentuer l’inconfort. Tenir un repère simple des produits utilisés aide à mieux identifier ce qui convient ou non à sa peau.'
+                body: 'Notez le nom du produit, la zone testée, les dates et la réaction observée. Ce suivi factuel aide à éviter de réintroduire plusieurs nouveautés en même temps, sans prétendre identifier une allergie.'
             },
             {
-                heading: 'Choisir des produits formulés pour peaux sensibles',
-                body: 'Des formules à la liste d’ingrédients courte, sans parfum ajouté, sont souvent mieux tolérées. La mention « peau sensible » ou « hypoallergénique » sur un emballage indique une formulation pensée pour limiter les risques d’inconfort, sans garantir une tolérance individuelle absolue.'
+                heading: 'Ne pas traiter une mention comme une garantie',
+                body: 'Une mention « peau sensible » ou « hypoallergénique » ne prouve pas qu’un produit sera toléré par chaque personne. Lisez l’étiquette et vérifiez la tolérance selon les instructions de la source citée.'
             },
             {
                 heading: 'Tester avant d’adopter un nouveau produit',
@@ -179,7 +179,7 @@ const existingArticles = [
             },
             {
                 heading: 'Construire une routine minimaliste',
-                body: 'Limiter le nombre de produits utilisés, introduire les nouveautés une par une, et espacer les changements de routine aide à mieux comprendre les réactions de sa peau et à réduire les sources d’irritation.'
+                body: 'Introduire une nouveauté à la fois permet d’identifier plus clairement une éventuelle réaction. Cette précaution générale ne remplace pas l’évaluation d’un dermatologue en cas de problème persistant.'
             }
         ],
         faq: [
@@ -194,7 +194,7 @@ const existingArticles = [
     {
         slug: 'comment-choisir-nettoyant-visage',
         title: 'Comment choisir son nettoyant visage selon son type de peau',
-        description: 'Gel, mousse, huile ou lait démaquillant : les critères pour choisir un nettoyant visage adapté et respectueux de la peau.',
+        description: 'Les repères soutenus par la source : nettoyant doux, geste non abrasif, eau tiède et fréquence raisonnable.',
         category: 'Visage',
         categorySlug: 'visage',
         heroImage: '/assets/products/category-fallback-visage.webp',
@@ -205,23 +205,23 @@ const existingArticles = [
         sections: [
             {
                 heading: 'Le rôle du nettoyant dans une routine',
-                body: 'Le nettoyant retire les impuretés, l’excès de sébum et les résidus de la journée (pollution, protection solaire, maquillage) sans nécessairement décaper la peau. C’est la première étape, et souvent la plus déterminante, d’une routine de soin.'
+                body: 'Pour une peau à tendance acnéique, l’American Academy of Dermatology recommande un nettoyant doux et non abrasif. Le choix doit rester compatible avec les instructions du produit et la tolérance individuelle.'
             },
             {
-                heading: 'Gel, mousse, huile, lait : quelle texture pour quel type de peau',
-                body: 'Un gel moussant convient souvent aux peaux mixtes à grasses. Un lait ou une huile démaquillante est généralement mieux toléré par les peaux sèches ou sensibles. Les eaux micellaires offrent une option douce pour un nettoyage rapide, notamment le matin.'
+                heading: 'Ne pas déduire la tolérance de la seule texture',
+                body: 'La source citée ne permet pas d’attribuer universellement un gel, une mousse, une huile ou un lait à un type de peau. Vérifiez plutôt l’étiquette, introduisez un produit à la fois et cessez son utilisation en cas de réaction.'
             },
             {
-                heading: 'pH et douceur : ce qu’il faut regarder',
-                body: 'La peau a naturellement un pH légèrement acide. Un nettoyant trop alcalin peut fragiliser cette barrière protectrice. Les mentions « pH physiologique » ou « surgras » signalent des formules pensées pour respecter cet équilibre.'
+                heading: 'Privilégier un geste doux',
+                body: 'Appliquez le nettoyant avec le bout des doigts, sans accessoire abrasif, puis rincez à l’eau tiède. Une mention marketing ne garantit pas à elle seule qu’un produit conviendra à chaque personne.'
             },
             {
                 heading: 'Fréquence de nettoyage recommandée',
-                body: 'Un nettoyage matin et soir suffit dans la majorité des cas. Un nettoyage trop fréquent peut au contraire fragiliser la peau et accentuer les tiraillements ou, à l’inverse, la production de sébum.'
+                body: 'Pour une peau à tendance acnéique, la source recommande de limiter le lavage à deux fois par jour et après avoir transpiré. Une situation différente peut nécessiter un conseil personnalisé.'
             },
             {
                 heading: 'Les erreurs à éviter',
-                body: 'Frotter énergiquement, utiliser une eau très chaude, ou superposer plusieurs nettoyants différents la même routine sont des habitudes qui fragilisent inutilement la peau. Un geste doux, suivi d’un rinçage à l’eau tiède, reste la base la plus sûre.'
+                body: 'Évitez de frotter la peau et d’utiliser un produit abrasif. Si les lésions persistent, deviennent douloureuses ou s’aggravent, demandez un avis professionnel plutôt que de multiplier les nettoyants.'
             }
         ],
         faq: [],
@@ -316,11 +316,11 @@ const existingArticles = [
         sections: [
             {
                 heading: 'Les bases de l’hygiène quotidienne du bébé',
-                body: 'La peau du bébé est plus fine et plus sensible que celle d’un adulte. Une hygiène simple, avec des gestes doux et des produits adaptés, suffit dans la majorité des cas : il n’est pas nécessaire de multiplier les produits.'
+                body: 'Le NHS recommande une routine simple. Pendant le premier mois, l’eau seule est la meilleure option pour la peau du bébé ; les gestes doivent rester doux et l’enfant ne doit jamais être laissé seul dans le bain.'
             },
             {
                 heading: 'Choisir des produits doux et adaptés',
-                body: 'Des produits spécifiquement formulés pour les nourrissons, sans parfum ajouté et au pH adapté, sont généralement recommandés pour limiter le risque d’irritation. La mention « dès la naissance » ou « nourrisson » sur l’emballage aide à identifier ces formules.'
+                body: 'La source conseille d’éviter lotions et huiles pendant au moins le premier mois. Ensuite, suivez les instructions de l’emballage et demandez conseil en cas de doute ; une mention « dès la naissance » ne remplace pas ces précautions.'
             },
             {
                 heading: 'La routine du change et la prévention de l’irritation',
@@ -394,11 +394,11 @@ const existingArticles = [
             },
             {
                 heading: 'Adapter le nettoyant à son type de peau',
-                body: 'Un gel moussant convient souvent aux peaux grasses ou mixtes, tandis qu’un lait ou une huile démaquillante est généralement mieux toléré par les peaux sèches ou sensibles. Le détail des textures est développé dans notre guide sur le <a href="/conseils/comment-choisir-nettoyant-visage/">choix du nettoyant visage</a>.'
+                body: 'Il n’existe pas de règle universelle attribuant une texture à chaque type de peau. Vérifiez le mode d’emploi et les indications du fabricant, privilégiez un nettoyage doux et observez la tolérance individuelle. Le <a href="/conseils/comment-choisir-nettoyant-visage/">guide du nettoyant visage</a> détaille ces repères sans transformer la texture en diagnostic.'
             },
             {
                 heading: 'Adapter l’hydratation',
-                body: 'Une texture légère et non comédogène convient aux peaux grasses ou mixtes ; une texture plus riche, associant ingrédients humectants et occlusifs, est souvent recherchée pour les peaux sèches. Voir notre article dédié à l’<a href="/conseils/hydratation-peau-seche/">hydratation des peaux sèches</a>.'
+                body: 'Le choix d’un hydratant dépend de la tolérance, du mode d’emploi et de la situation individuelle ; les sources citées ne justifient pas une correspondance universelle entre texture et type de peau. Introduisez un produit à la fois et demandez conseil en cas d’irritation persistante. Voir aussi les repères prudents sur l’<a href="/conseils/hydratation-peau-seche/">hydratation des peaux sèches</a>.'
             },
             {
                 heading: 'Ne pas oublier la protection solaire',
@@ -406,7 +406,7 @@ const existingArticles = [
             },
             {
                 heading: 'Récapitulatif : une routine de base par type de peau',
-                body: 'Dans tous les cas, une routine simple et régulière (nettoyant adapté, hydratation, protection solaire) donne de meilleurs résultats sur la durée qu’une accumulation de produits changés trop souvent. En cas de doute sur son type de peau ou en cas de réaction, l’avis d’un pharmacien reste la meilleure orientation.'
+                body: 'Gardez une routine lisible, suivez les instructions de chaque produit et évitez de déduire une recommandation personnalisée d’une simple étiquette de « type de peau ». En cas de doute, de réaction ou de problème persistant, demandez l’avis d’un professionnel qualifié.'
             }
         ],
         faq: [],

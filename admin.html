@@ -63,8 +63,14 @@
             <input type="text" name="name" placeholder="مثال: كريم مرطب للبشرة" required />
           </div>
           <div class="form-group">
-            <label>صورة المنتج</label>
-            <input type="file" name="image" accept="image/*" required />
+            <label>رابط صورة المنتج الموافق عليها — اختياري</label>
+            <input type="url" name="image_url" placeholder="https://…" />
+            <small style="color: #757575;">رفع الملفات غير مفعّل هنا. اتركه فارغاً حتى يتوفر رابط وصلاحية استخدام موثّقان.</small>
+          </div>
+          <div class="form-group">
+            <label>SKU المورّد/التاجر — اختياري</label>
+            <input type="text" name="sku" maxlength="64" placeholder="رمز موجود في نظام المالك أو الفاتورة" />
+            <small style="color: #757575;">لا يتم إنشاء SKU تلقائياً.</small>
           </div>
           <div class="form-group">
             <label>الوصف</label>
@@ -90,7 +96,13 @@
               <input type="text" name="brand" placeholder="مثال: Bioderma" required />
             </div>
           </div>
+          <div class="form-group">
+            <label>الكمية الفعلية في المخزون</label>
+            <input type="number" name="stock" step="1" min="0" placeholder="أدخل الكمية بعد الجرد" required />
+            <small style="color: #757575;">لا تُدخل قيمة تقديرية؛ استخدم الكمية الموجودة فعلياً في الجرد.</small>
+          </div>
           <button type="submit" class="btn-submit"><i class="fas fa-save"></i> حفظ المنتج</button>
+          <p class="admin-muted">قد يظهر المرجع بمعلوماته الأساسية، لكن السعر والمخزون والطلب تبقى معطلة حتى استكمال الأدلة وأهلية التوصيل.</p>
           <p id="productStatus" class="status-msg"></p>
         </form>
       </div>
@@ -106,8 +118,9 @@
             <input type="text" name="name" placeholder="مثال: عرض الصيف — باك عناية كاملة" required />
           </div>
           <div class="form-group">
-            <label>صورة الباك</label>
-            <input type="file" name="image" accept="image/*" required />
+            <label>رابط صورة الباك الموافق عليها — اختياري</label>
+            <input type="url" name="image_url" placeholder="https://…" />
+            <small style="color: #757575;">رفع الملفات غير مفعّل هنا؛ لا تضف صورة بلا مصدر وحقوق استخدام موثّقة.</small>
           </div>
           <div class="form-group">
             <label>الوصف</label>
@@ -126,13 +139,29 @@
               </select>
             </div>
           </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>الماركة/الجهة صاحبة الباك</label>
+              <input type="text" name="brand" placeholder="الاسم الحقيقي كما هو موثّق" required />
+            </div>
+            <div class="form-group">
+              <label>SKU المورّد/التاجر — اختياري</label>
+              <input type="text" name="sku" maxlength="64" placeholder="لا يتم إنشاؤه تلقائياً" />
+            </div>
+          </div>
           <div class="form-group" id="endTimeGroup">
             <label>تاريخ ووقت انتهاء العرض</label>
             <input type="datetime-local" name="endTime" id="endTimeInput" />
             <small style="color: #757575;">اترك هذا الحقل فارغاً إذا لم يكن للعرض تاريخ انتهاء.</small>
           </div>
+          <div class="form-group">
+            <label>الكمية الفعلية للباك في المخزون</label>
+            <input type="number" name="stock" step="1" min="0" placeholder="أدخل الكمية بعد الجرد" required />
+            <small style="color: #757575;">لا تُدخل قيمة تقديرية؛ استخدم الكمية الموجودة فعلياً في الجرد.</small>
+          </div>
 
           <button type="submit" class="btn-submit"><i class="fas fa-save"></i> حفظ الباك / البانر</button>
+          <p class="admin-muted">قد يظهر المرجع بمعلوماته الأساسية، لكن السعر والمخزون والطلب تبقى معطلة حتى استكمال الأدلة والحقوق.</p>
           <p id="packStatus" class="status-msg"></p>
         </form>
       </div>
@@ -143,7 +172,7 @@
         <div class="admin-card__header">
           <div>
             <h2>إدارة المنتجات</h2>
-            <p class="admin-muted">تعديل سريع للكتالوغ المحلي: إخفاء، تفعيل، تغيير السعر، الحالة والوصف.</p>
+            <p class="admin-muted">تعديل سريع للكتالوغ المحلي. لا يُنشر السعر إلا بمرجع داخلي قابل للتتبع وتاريخ تحقق حديث.</p>
           </div>
           <span class="admin-mode" id="adminBackendMode">Local</span>
         </div>
@@ -171,11 +200,21 @@
           <div class="form-row">
             <div class="form-group">
               <label>السعر الحالي (DH)</label>
-              <input type="number" id="editPrice" step="0.01" min="0" required>
+              <input type="number" id="editPrice" step="0.01" min="0.01" placeholder="À confirmer">
             </div>
             <div class="form-group">
               <label>السعر القديم (اختياري)</label>
               <input type="number" id="editOldPrice" step="0.01" min="0">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>مرجع تحقق السعر</label>
+              <input type="text" id="editPriceSource" placeholder="caisse:TICKET-123">
+            </div>
+            <div class="form-group">
+              <label>تاريخ ووقت التحقق</label>
+              <input type="datetime-local" id="editPriceVerifiedAt">
             </div>
           </div>
           <div class="form-row">
@@ -186,6 +225,7 @@
             <div class="form-group">
               <label>حالة المخزون</label>
               <select id="editStockStatus">
+                <option value="Disponibilité à confirmer">Disponibilité à confirmer</option>
                 <option value="En stock">En stock</option>
                 <option value="Stock limite">Stock limite</option>
                 <option value="Rupture de stock">Rupture de stock</option>

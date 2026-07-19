@@ -66,7 +66,7 @@ export const MAPS_URL = 'https://maps.app.goo.gl/TbTSUacj462VrfZv5';
 // MAPS_URL per the note at the top of this file.
 export const MAPS_EMBED_URL = `https://www.google.com/maps?q=${GEO.latitude},${GEO.longitude}&z=16&output=embed`;
 
-export const SERVICE_AREA = 'Khouribga et les environs';
+export const SERVICE_AREA = 'Khouribga';
 
 // A real, owner-confirmed photo of the physical storefront (matches
 // OPERATOR.legalName signage exactly: "PHARMACIE TAWFIQ" over the shopfront
@@ -97,8 +97,8 @@ export const OPENING_HOURS_DISPLAY = Object.freeze([
 ]);
 
 export const DELIVERY = Object.freeze({
-    local: Object.freeze({ area: 'Khouribga et les environs proches', feeMAD: 15 }),
-    other: Object.freeze({ area: 'Autres villes marocaines desservies', feeMAD: 35 })
+    local: Object.freeze({ area: 'Khouribga uniquement; toute zone proche doit être confirmée explicitement', feeMAD: 15 }),
+    other: Object.freeze({ area: 'Autres villes marocaines si desservies; couverture à confirmer', feeMAD: 35 })
 });
 
 // The ONLY city explicitly confirmed by the owner for the 15 MAD local
@@ -123,18 +123,33 @@ function normalizeCityName(value) {
         .replace(/[̀-ͯ]/g, '');
 }
 
-// Resolves a free-text city input to a delivery zone. Everything that is
-// not an explicitly verified local city (see LOCAL_DELIVERY_ZONE_CITIES)
-// falls into the "other Moroccan cities" tier — this is an intentional
-// two-tier partition already described by DELIVERY, not a guess about
-// which specific other cities are covered.
+function isPlausibleCityName(value) {
+    const city = String(value || '').trim();
+    return city.length >= 2
+        && city.length <= 80
+        && /^[\p{L}\p{M}][\p{L}\p{M}\s'’.-]*$/u.test(city)
+        && (city.match(/[\p{L}]/gu) || []).length >= 2;
+}
+
+// The 35 MAD tier is a quoted fee for a pending delivery request, not a
+// promise that an arbitrary city is served. Only Khouribga has confirmed
+// local coverage; every other plausible city keeps coverage pending.
 export function resolveDeliveryZone(cityInput) {
+    if (!isPlausibleCityName(cityInput)) {
+        return {
+            zone: 'confirmation-required',
+            feeMAD: null,
+            area: 'Ville valide requise; couverture à confirmer',
+            coverageConfirmed: false,
+            calculable: false
+        };
+    }
     const normalized = normalizeCityName(cityInput);
     const isLocal = normalized.length > 0
         && LOCAL_DELIVERY_ZONE_CITIES.some((city) => normalizeCityName(city) === normalized);
     return isLocal
-        ? { zone: 'local', feeMAD: DELIVERY.local.feeMAD, area: DELIVERY.local.area }
-        : { zone: 'other', feeMAD: DELIVERY.other.feeMAD, area: DELIVERY.other.area };
+        ? { zone: 'local', feeMAD: DELIVERY.local.feeMAD, area: DELIVERY.local.area, coverageConfirmed: true, calculable: true }
+        : { zone: 'other', feeMAD: DELIVERY.other.feeMAD, area: DELIVERY.other.area, coverageConfirmed: false, calculable: true };
 }
 
 // `active` reflects what the checkout actually offers today. `planned`

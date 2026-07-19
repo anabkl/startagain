@@ -2,6 +2,7 @@ import { catalogProducts } from './catalog-data.js';
 import { catalogApiIdBySlug } from './catalog-api-id-map.js';
 import { getCart, saveCart } from './main.js';
 import { showToast } from './utils.js';
+import { isProductOrderable, verifiedProductPrice } from './product-schema.js';
 
 let selectedQuantity = 1;
 
@@ -20,6 +21,10 @@ function addProduct(productId, quantity = 1) {
         showToast('Cette référence est introuvable dans le catalogue.', 'error');
         return;
     }
+    if (!isProductOrderable(product)) {
+        showToast('Prix, livraison et disponibilité doivent être confirmés avant toute commande en ligne.', 'error');
+        return;
+    }
 
     const cart = getCart();
     const existing = cart.find((item) => item.id === product.id);
@@ -29,7 +34,7 @@ function addProduct(productId, quantity = 1) {
     } else {
         cart.push({
             ...product,
-            effectivePrice: Number(product.priceMAD || product.price || 0),
+            effectivePrice: verifiedProductPrice(product),
             quantity
         });
     }

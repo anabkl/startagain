@@ -5,6 +5,7 @@ from typing import Any
 
 from bson import ObjectId
 from bson.errors import InvalidId
+from pymongo import ReturnDocument
 
 from app.config.db import get_db
 
@@ -16,7 +17,10 @@ class ProductsRepository:
     def list_paginated(
         self, *, page: int, per_page: int, category: str | None, search: str | None, sort: str
     ):
-        query: dict[str, Any] = {"isPublished": {"$ne": False}}
+        # Public catalogue reads fail closed. Legacy rows without an explicit
+        # publication decision remain available to authenticated write/admin
+        # paths through get_by_id(), but are never exposed as public products.
+        query: dict[str, Any] = {"isPublished": True}
         if category:
             query["category"] = category
         if search:
@@ -52,6 +56,7 @@ class ProductsRepository:
             "imageRightsStatus": 1,
             "priceVerifiedAt": 1,
             "priceSource": 1,
+            "stockVerified": 1,
             "stockVerifiedAt": 1,
             "deliveryEligible": 1,
         }
@@ -73,6 +78,17 @@ class ProductsRepository:
             pass
         return self.col.find_one(query)
 
+    def get_public_by_id(self, product_id: str):
+        query: dict[str, Any] = {
+            "isPublished": True,
+            "$or": [{"id": product_id}, {"slug": product_id}],
+        }
+        try:
+            query["$or"].append({"_id": ObjectId(product_id)})
+        except (InvalidId, TypeError):
+            pass
+        return self.col.find_one(query)
+
     def create(self, payload: dict[str, Any]):
         now = datetime.now(timezone.utc)
         payload["created_at"] = now
@@ -81,11 +97,14 @@ class ProductsRepository:
         return self.get_by_id(str(result.inserted_id))
 
     def update(self, product_id: str, updates: dict[str, Any]):
-        updates["updated_at"] = datetime.now(timezone.utc)
+        updates = {**updates, "updated_at": datetime.now(timezone.utc)}
         query: dict[str, Any] = {"$or": [{"id": product_id}, {"slug": product_id}]}
         try:
             query["$or"].append({"_id": ObjectId(product_id)})
         except (InvalidId, TypeError):
             pass
-        self.col.update_one(query, {"$set": updates})
-        return self.get_by_id(product_id)
+        return self.col.find_one_and_update(
+            query,
+            {"$set": updates},
+            return_document=ReturnDocument.AFTER,
+        )

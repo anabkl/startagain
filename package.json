@@ -16,9 +16,6 @@
     "validate:seo": "node scripts/validate-seo.mjs",
     "preview": "vite preview --host 127.0.0.1"
   },
-  "dependencies": {
-    "stripe": "^14.0.0"
-  },
   "devDependencies": {
     "vite": "^8.0.10"
   }
