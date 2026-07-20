@@ -27,21 +27,52 @@ function initMobileNavigation() {
 
     if (!menuToggle || !mainNav) return;
 
-    menuToggle.addEventListener('click', () => {
-        const isOpen = mainNav.classList.toggle('open');
+    const mobileNavigation = window.matchMedia('(max-width: 860px)');
+    if (mainNav.id) menuToggle.setAttribute('aria-controls', mainNav.id);
+
+    function setNavigationState(open) {
+        const isOpen = mobileNavigation.matches && open;
+
+        mainNav.classList.toggle('open', isOpen);
         menuToggle.classList.toggle('active', isOpen);
         menuToggle.setAttribute('aria-expanded', String(isOpen));
         menuToggle.setAttribute('aria-label', isOpen ? 'Fermer le menu' : 'Ouvrir le menu');
+
+        // A max-height-only menu is still exposed to assistive technology
+        // and its invisible links remain keyboard-focusable. Keep the
+        // collapsed mobile navigation out of both interaction paths, while
+        // restoring the normal landmark as soon as the desktop layout returns.
+        const collapsed = mobileNavigation.matches && !isOpen;
+        mainNav.toggleAttribute('inert', collapsed);
+        if (collapsed) mainNav.setAttribute('aria-hidden', 'true');
+        else mainNav.removeAttribute('aria-hidden');
+    }
+
+    menuToggle.addEventListener('click', () => {
+        setNavigationState(!mainNav.classList.contains('open'));
     });
 
     mainNav.querySelectorAll('a').forEach((link) => {
         link.addEventListener('click', () => {
-            mainNav.classList.remove('open');
-            menuToggle.classList.remove('active');
-            menuToggle.setAttribute('aria-expanded', 'false');
-            menuToggle.setAttribute('aria-label', 'Ouvrir le menu');
+            setNavigationState(false);
         });
     });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape' || !mainNav.classList.contains('open')) return;
+        event.preventDefault();
+        setNavigationState(false);
+        menuToggle.focus();
+    });
+
+    const resetForBreakpoint = () => setNavigationState(false);
+    if (typeof mobileNavigation.addEventListener === 'function') {
+        mobileNavigation.addEventListener('change', resetForBreakpoint);
+    } else {
+        mobileNavigation.addListener(resetForBreakpoint);
+    }
+
+    setNavigationState(false);
 }
 
 function initHeaderSearch() {

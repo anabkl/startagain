@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, follow">
-    <title>Checkout paiement a la livraison | parapharmacie.me Tawfiq</title>
-    <meta name="description" content="Checkout parapharmacie.me Tawfiq avec paiement a la livraison, informations de livraison au Maroc, resume de commande et confirmation WhatsApp.">
+    <title>Checkout paiement a la livraison | Parapharmacie.me</title>
+    <meta name="description" content="Checkout Parapharmacie.me avec paiement a la livraison, informations de livraison au Maroc, resume de commande et confirmation WhatsApp.">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
     <link rel="manifest" href="site.webmanifest">
@@ -75,6 +75,18 @@
                                 <span>Paiement a la livraison</span>
                                 <small>Option affichée par le site, sous réserve de confirmation.</small>
                             </label>
+                            <label class="payment-method payment-method--soon">
+                                <input type="radio" name="paymentMethod" value="CMI" disabled aria-disabled="true">
+                                <i class="fa-regular fa-credit-card"></i>
+                                <span>CMI <span class="payment-method__tag">Bientôt</span></span>
+                                <small>Paiement en ligne par carte, pas encore disponible.</small>
+                            </label>
+                            <label class="payment-method payment-method--soon">
+                                <input type="radio" name="paymentMethod" value="APPLE_PAY" disabled aria-disabled="true">
+                                <i class="fa-brands fa-apple-pay"></i>
+                                <span>Apple Pay <span class="payment-method__tag">Bientôt</span></span>
+                                <small>Paiement en ligne, pas encore disponible.</small>
+                            </label>
                         </div>
 
                         <button type="submit" class="btn btn--primary btn-confirm checkout-card__submit">
@@ -90,15 +102,15 @@
                     <div id="summary-items-list" class="summary-products"></div>
                     <div class="summary-item">
                         <span>Sous-total</span>
-                        <strong id="order-subtotal-amount">0.00 DH</strong>
+                        <strong id="order-subtotal-amount">Prix à confirmer</strong>
                     </div>
-                    <div class="summary-item">
-                        <span>Livraison</span>
-                        <strong>A confirmer</strong>
+                    <div class="summary-item delivery-fee-row">
+                        <span>Livraison<br><small id="delivery-fee-note">Ville requise pour calculer les frais</small></span>
+                        <strong id="delivery-fee-amount">—</strong>
                     </div>
                     <div class="summary-total">
                         <span>Total</span>
-                        <strong id="order-total-amount">0.00 DH</strong>
+                        <strong id="order-total-amount">Prix à confirmer</strong>
                     </div>
                     <button type="submit" form="checkout-form" class="btn btn--primary btn-confirm">
                         <i class="fa-solid fa-check"></i>

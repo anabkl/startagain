@@ -7,6 +7,7 @@ import {
     setLocalProductActive
 } from './catalog.js';
 import { categories } from './catalog-data.js';
+import { hasCurrentProductPrice, verifiedProductPrice } from './product-schema.js';
 
 const pageContent = document.getElementById('pageContent');
 const logoutBtn = document.getElementById('logoutBtn');
@@ -79,6 +80,20 @@ function initTabs() {
     });
 }
 
+function readOwnerEnteredStock(data) {
+    const rawStock = data.get('stock');
+    const stock = Number(rawStock);
+    if (rawStock === null || rawStock === '' || !Number.isInteger(stock) || stock < 0) {
+        throw new Error('أدخل كمية المخزون الفعلية كعدد صحيح يساوي صفراً أو أكثر.');
+    }
+    return stock;
+}
+
+function readOptionalText(data, field) {
+    const value = String(data.get(field) || '').trim();
+    return value || null;
+}
+
 // 📦 إضافة منتج جديد لقاعدة بيانات MongoDB
 async function saveMongoProduct(form, statusEl, button) {
     const data = new FormData(form);
@@ -90,9 +105,15 @@ async function saveMongoProduct(form, statusEl, button) {
         price: Number(data.get('price')),
         promoPrice: data.get('promoPrice') ? Number(data.get('promoPrice')) : null,
         description: data.get('description').trim(),
-        stock: 100,
-        image_url: null,
-        sku: "PROD-" + Date.now()
+        stock: readOwnerEnteredStock(data),
+        image_url: readOptionalText(data, 'image_url'),
+        sku: readOptionalText(data, 'sku'),
+        isPublished: true,
+        priceVerifiedAt: null,
+        priceSource: null,
+        stockVerified: null,
+        stockVerifiedAt: null,
+        deliveryEligible: null
     };
 
     await apiFetch('/products', {
@@ -100,7 +121,7 @@ async function saveMongoProduct(form, statusEl, button) {
         body: JSON.stringify(newProduct)
     }, { requiresAuth: true });
 
-    showStatus(statusEl, 'تم حفظ المنتج بنجاح فـ MongoDB!', 'success');
+    showStatus(statusEl, 'تم حفظ المرجع. يبقى السعر والمخزون غير موثّقين والطلب معطلاً حتى استكمال الأدلة.', 'success');
     form.reset();
     button.disabled = false;
 }
@@ -114,10 +135,16 @@ async function saveMongoPack(form, statusEl, button) {
         description: data.get('description').trim(),
         price: Number(data.get('promoPrice')),
         category: "Promotions",
-        brand: "Parapharmacie",
-        stock: 50,
-        image_url: null,
-        sku: "PACK-" + Date.now()
+        brand: data.get('brand').trim(),
+        stock: readOwnerEnteredStock(data),
+        image_url: readOptionalText(data, 'image_url'),
+        sku: readOptionalText(data, 'sku'),
+        isPublished: true,
+        priceVerifiedAt: null,
+        priceSource: null,
+        stockVerified: null,
+        stockVerifiedAt: null,
+        deliveryEligible: null
     };
 
     await apiFetch('/products', {
@@ -125,7 +152,7 @@ async function saveMongoPack(form, statusEl, button) {
         body: JSON.stringify(newPack)
     }, { requiresAuth: true });
 
-    showStatus(statusEl, 'تم حفظ العرض بنجاح فـ MongoDB!', 'success');
+    showStatus(statusEl, 'تم حفظ المرجع. يبقى السعر والمخزون غير موثّقين والطلب معطلاً حتى استكمال الأدلة.', 'success');
     form.reset();
     button.disabled = false;
 }
@@ -172,7 +199,7 @@ function normalizeText(value) {
 }
 
 function getProductPrice(product) {
-    return Number(product.priceMAD || product.promoPrice || product.price || 0);
+    return verifiedProductPrice(product);
 }
 
 function refreshEditableProducts() {
@@ -196,7 +223,7 @@ function renderProductsList() {
                 <span>${escapeHtml(product.brand)} · ${escapeHtml(product.category)}</span>
                 <small>${escapeHtml(product.id)}</small>
             </div>
-            <div class="admin-product-price">${getProductPrice(product).toFixed(2)} DH</div>
+            <div class="admin-product-price">${getProductPrice(product) === null ? 'À confirmer' : `${getProductPrice(product).toFixed(2)} DH`}</div>
             <span class="admin-product-state ${product.active === false ? 'off' : 'on'}">${product.active === false ? 'مخفي' : 'ظاهر'}</span>
             <div class="admin-product-actions">
                 <button type="button" data-product-action="edit" data-product-id="${escapeHtml(product.id)}">تعديل</button>
@@ -223,9 +250,11 @@ function editProduct(productId) {
     document.getElementById('editProductId').value = product.id;
     document.getElementById('editName').value = product.name || '';
     document.getElementById('editBrand').value = product.brand || '';
-    document.getElementById('editPrice').value = getProductPrice(product);
+    document.getElementById('editPrice').value = getProductPrice(product) ?? '';
     document.getElementById('editOldPrice').value = product.oldPriceMAD || '';
-    document.getElementById('editStockStatus').value = product.stockStatus || 'En stock';
+    document.getElementById('editPriceSource').value = product.priceSource || '';
+    document.getElementById('editPriceVerifiedAt').value = product.priceVerifiedAt ? new Date(product.priceVerifiedAt).toISOString().slice(0, 16) : '';
+    document.getElementById('editStockStatus').value = product.stockStatus || 'Disponibilité à confirmer';
     document.getElementById('editImage').value = product.image || product.imageUrl || '';
     document.getElementById('editDescription').value = product.shortDescription || product.description || '';
     document.getElementById('editActive').checked = product.active !== false;
@@ -234,7 +263,16 @@ function editProduct(productId) {
 }
 
 function readProductEditor() {
-    const priceMAD = Number(document.getElementById('editPrice').value);
+    const priceInput = document.getElementById('editPrice').value.trim();
+    const priceSource = document.getElementById('editPriceSource').value.trim();
+    const verifiedAtInput = document.getElementById('editPriceVerifiedAt').value;
+    const candidate = {
+        priceMAD: priceInput ? Number(priceInput) : null,
+        priceSource: priceSource || null,
+        priceVerifiedAt: verifiedAtInput ? new Date(verifiedAtInput).toISOString() : null
+    };
+    const priceVerified = hasCurrentProductPrice(candidate);
+    const priceMAD = priceVerified ? candidate.priceMAD : null;
     const oldPriceMAD = Number(document.getElementById('editOldPrice').value) || null;
     const image = document.getElementById('editImage').value.trim();
 
@@ -242,7 +280,9 @@ function readProductEditor() {
         name: document.getElementById('editName').value.trim(),
         brand: document.getElementById('editBrand').value.trim(),
         priceMAD,
-        oldPriceMAD: oldPriceMAD && oldPriceMAD > priceMAD ? oldPriceMAD : null,
+        priceSource: priceVerified ? candidate.priceSource : null,
+        priceVerifiedAt: priceVerified ? candidate.priceVerifiedAt : null,
+        oldPriceMAD: priceVerified && oldPriceMAD && oldPriceMAD > priceMAD ? oldPriceMAD : null,
         category: document.getElementById('editCategory').value,
         stockStatus: document.getElementById('editStockStatus').value,
         image,

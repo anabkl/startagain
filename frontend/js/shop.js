@@ -39,7 +39,9 @@ function addToCart(productId, quantity = 1) {
 
     if (!product) return;
     if (isProductUnavailable(product)) {
-        showToast('Ce produit est actuellement indisponible.', 'error');
+        showToast(getEffectivePrice(product) === null
+            ? 'Le prix de cette référence doit être confirmé avant toute commande.'
+            : 'La commande en ligne de cette référence est indisponible.', 'error');
         return;
     }
 
@@ -92,9 +94,7 @@ function renderProductCard(product) {
     const oldPriceValue = getOldPrice(product);
     const oldPrice = oldPriceValue ? `<span class="product-card__old-price">${formatCurrency(oldPriceValue)}</span>` : '';
     const unavailable = isProductUnavailable(product);
-    const stockLabel = unavailable
-        ? '<span class="product-card__stock out">Rupture</span>'
-        : `<span class="product-card__stock">${escapeHtml(product.stockStatus || 'En stock')}</span>`;
+    const stockLabel = `<span class="product-card__stock">${escapeHtml(product.stockStatus || 'Disponibilité à confirmer')}</span>`;
     const badge = product.promoBadge || (discount ? `-${discount}%` : product.badge || product.category || 'Parapharmacie');
     const imageReviewLabel = getProductImageReviewLabel(product);
 
@@ -113,16 +113,12 @@ function renderProductCard(product) {
                 <a href="product.html?id=${encodeURIComponent(product.id)}" class="product-card__title">${escapeHtml(product.name)}</a>
                 <p class="product-card__brand">${escapeHtml(product.brand || 'parapharmacie.me')}</p>
                 <p class="product-card__description">${escapeHtml(product.shortDescription || product.description || '')}</p>
-                <div class="product-card__rating" aria-label="Note ${product.rating || 4.7} sur 5">
-                    <i class="fa-solid fa-star"></i>
-                    <span>${product.rating || '4.7'} (${product.reviews || 12})</span>
-                </div>
                 <div class="product-card__footer">
                     <div class="product-card__price">
                         <strong>${formatCurrency(price)}</strong>
                         ${oldPrice}
                     </div>
-                    <button class="icon-btn add-to-cart-btn" type="button" data-product-id="${escapeHtml(product.id)}" ${unavailable ? 'disabled' : ''} aria-label="Ajouter ${escapeHtml(product.name)} au panier">
+                    <button class="icon-btn add-to-cart-btn" type="button" data-product-id="${escapeHtml(product.id)}" ${unavailable ? 'disabled aria-disabled="true"' : ''} aria-label="${unavailable ? `Commande en ligne indisponible pour ${escapeHtml(product.name)}; prix, stock ou livraison à confirmer` : `Ajouter ${escapeHtml(product.name)} au panier`}">
                         <i class="fa-solid fa-cart-plus"></i>
                     </button>
                 </div>

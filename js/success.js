@@ -7,9 +7,8 @@ const orderItemsEl = document.getElementById('success-order-items');
 const orderTotalEl = document.getElementById('success-order-total');
 const params = new URLSearchParams(window.location.search);
 
-const orderId = params.get('order') || localStorage.getItem('parapharmacie_last_order_id');
-const source = params.get('source') || localStorage.getItem('parapharmacie_last_order_source') || 'local';
-const savedWhatsAppUrl = localStorage.getItem('parapharmacie_last_whatsapp_url');
+const orderId = params.get('order');
+const source = params.get('source') || 'local';
 
 function escapeHtml(value) {
     const div = document.createElement('div');
@@ -46,8 +45,9 @@ async function renderOrderSummary() {
     }
 }
 
-if (whatsappLink && savedWhatsAppUrl) {
-    whatsappLink.href = savedWhatsAppUrl;
+if (whatsappLink && orderId) {
+    const message = `Bonjour, je souhaite confirmer la demande #${String(orderId).slice(0, 12)} enregistrée sur Parapharmacie.me.`;
+    whatsappLink.href = `https://wa.me/212675698351?text=${encodeURIComponent(message)}`;
 }
 
 renderOrderSummary();

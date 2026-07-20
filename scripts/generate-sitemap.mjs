@@ -9,6 +9,7 @@ import {
     absoluteSiteUrl,
     ARTICLE_ROUTES,
     categoryRoute,
+    LOCAL_LANDING_ROUTES,
     productRoute,
     TRUST_PAGE_ROUTES
 } from '../js/seo-routes.js';
@@ -64,6 +65,7 @@ export async function generateSitemap({ outputDir = root } = {}) {
     ]);
     const trustLastmod = await latestFileDate(['scripts/generate-seo-pages.mjs']);
     const articlesLastmod = await latestFileDate(['js/articles-data.js', 'scripts/generate-seo-pages.mjs']);
+    const localLastmod = await latestFileDate(['scripts/generate-seo-pages.mjs', 'js/business-config.js']);
 
     const urls = [
         { path: '/', lastmod: homepageLastmod },
@@ -71,6 +73,7 @@ export async function generateSitemap({ outputDir = root } = {}) {
         ...categories.map((category) => ({ path: categoryRoute(category), lastmod: catalogLastmod })),
         ...catalogProducts.map((product) => ({ path: productRoute(product), lastmod: catalogLastmod })),
         ...TRUST_PAGE_ROUTES.map((route) => ({ path: route, lastmod: trustLastmod })),
+        ...LOCAL_LANDING_ROUTES.map((route) => ({ path: route, lastmod: localLastmod })),
         ...ARTICLE_ROUTES.map((route) => ({ path: route, lastmod: articlesLastmod }))
     ];
 

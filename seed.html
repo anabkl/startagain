@@ -3,54 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="robots" content="noindex, nofollow">
-    <title>إضافة منتجات تجريبية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أداة الاستيراد معطّلة</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
     <link rel="manifest" href="site.webmanifest">
-    <style>body{font-family:sans-serif;text-align:center;padding:50px;} button{padding:15px 30px;font-size:18px;background:#1a9e52;color:#fff;border:none;border-radius:8px;cursor:pointer;}</style>
+    <style>
+        body { font-family: sans-serif; max-width: 680px; margin: 0 auto; padding: 48px 20px; background: #f5f5f5; color: #263238; }
+        main { background: #fff; padding: 32px; border-radius: 16px; box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08); }
+        h1 { color: #0d7c3e; }
+        a { display: inline-block; margin-top: 12px; color: #0d7c3e; font-weight: 700; }
+    </style>
 </head>
 <body>
-    <h2>أداة إضافة المنتجات التجريبية (للتست)</h2>
-    <button id="seedBtn">إضافة 10 منتجات عبر API</button>
-    <p id="status" style="margin-top:20px; font-weight:bold; color:#0d7c3e;"></p>
-
-    <script type="module">
-        import { apiFetch } from './js/auth.js';
-
-        const dummyProducts = [
-            { name: "غسول رغوي سيرافي (CeraVe) - 236 مل", description: "غسول للوجه للبشرة العادية إلى الدهنية.", price: 120, promoPrice: 105, category: "الوجه", brand: "CeraVe", image_url: null, sku: `PROD-${Date.now()}-1`, stock: 100 },
-            { name: "واقي شمس لاروش بوزيه Anthelios - 50 مل", description: "واقي شمس سائل غير مرئي SPF50+.", price: 210, promoPrice: 189, category: "الوجه", brand: "La Roche-Posay", image_url: null, sku: `PROD-${Date.now()}-2`, stock: 100 },
-            { name: "شامبو فيشي ديركوس للقشرة - 200 مل", description: "شامبو مضاد للقشرة للشعر العادي إلى الدهني.", price: 165, promoPrice: null, category: "الشعر", brand: "Vichy", image_url: null, sku: `PROD-${Date.now()}-3`, stock: 100 },
-            { name: "كريم مرطب بيوديرما أتوديرم - 500 مل", description: "مرطب يومي غني للبشرة الجافة والحساسة.", price: 230, promoPrice: 199, category: "الوجه", brand: "Bioderma", image_url: null, sku: `PROD-${Date.now()}-4`, stock: 100 },
-            { name: "جل استحمام موستيلا للأطفال - 500 مل", description: "جل تنظيف لطيف للأطفال والرضع.", price: 115, promoPrice: 95, category: "الطفل", brand: "Mustela", image_url: null, sku: `PROD-${Date.now()}-5`, stock: 100 },
-            { name: "فيتامين سي سيروم فيشي للوجه", description: "سيروم مضاد للأكسدة ومفتح للبشرة.", price: 350, promoPrice: 299, category: "الوجه", brand: "Vichy", image_url: null, sku: `PROD-${Date.now()}-6`, stock: 100 },
-            { name: "مكمل غذائي فيتامين D3 - 60 كبسولة", description: "فيتامين دي 3 لدعم المناعة والعظام.", price: 90, promoPrice: null, category: "مكملات", brand: "Sante", image_url: null, sku: `PROD-${Date.now()}-7`, stock: 100 },
-            { name: "زيت الأرغان الطبيعي - 100 مل", description: "زيت الأرغان النقي للعناية بالشعر والبشرة.", price: 150, promoPrice: 120, category: "الشعر", brand: "Bio", image_url: null, sku: `PROD-${Date.now()}-8`, stock: 100 },
-            { name: "ماء ميسيلار سيرافي لتنظيف المكياج", description: "ماء ميسيلار مرطب ومزيل للمكياج.", price: 140, promoPrice: null, category: "الوجه", brand: "CeraVe", image_url: null, sku: `PROD-${Date.now()}-9`, stock: 100 },
-            { name: "جهاز قياس ضغط الدم Omron", description: "جهاز إلكتروني دقيق لقياس ضغط الدم.", price: 450, promoPrice: 390, category: "معدات", brand: "Omron", image_url: null, sku: `PROD-${Date.now()}-10`, stock: 100 }
-        ];
-
-        document.getElementById('seedBtn').addEventListener('click', async () => {
-            const btn = document.getElementById('seedBtn');
-            const status = document.getElementById('status');
-            btn.disabled = true;
-            status.innerText = "جاري رفع المنتجات إلى API... ⏳";
-
-            try {
-                for (const prod of dummyProducts) {
-                    await apiFetch('/products', {
-                        method: 'POST',
-                        body: JSON.stringify(prod)
-                    }, { requiresAuth: true });
-                }
-                status.innerText = "✅ تمت إضافة 10 منتجات بنجاح عبر API.";
-            } catch (error) {
-                console.error(error);
-                status.innerText = "❌ حدث خطأ: " + error.message;
-            } finally {
-                btn.disabled = false;
-            }
-        });
-    </script>
+    <main data-seed-tool-disabled="true">
+        <h1>أداة البيانات التجريبية معطّلة</h1>
+        <p>تم حذف الاستيراد التجريبي لأنه كان يستطيع إنشاء أسعار ومخزون ووصف منتجات غير موثّق.</p>
+        <p>يجب إدخال أي منتج فقط من واجهة الإدارة العادية، بعد التحقق من الكمية والسعر والمصدر وبيانات المنتج لدى المالك.</p>
+        <a href="admin.html">الانتقال إلى واجهة الإدارة</a>
+    </main>
 </body>
 </html>

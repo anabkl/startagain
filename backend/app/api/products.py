@@ -5,7 +5,7 @@ from app.middleware.authz import admin_required
 from app.services.product_service import ProductService
 from app.utils.response import success_response
 from app.validators.common import validate_json
-from app.validators.product import ProductInput
+from app.validators.product import ProductInput, ProductUpdate
 
 products_bp = Blueprint("products", __name__, url_prefix="/products")
 
@@ -50,6 +50,8 @@ def create_product():
 @products_bp.patch("/<product_id>")
 @admin_required
 def update_product(product_id: str):
-    payload = validate_json(ProductInput, request)
-    product = get_product_service().update_product(product_id, payload.model_dump())
+    payload = validate_json(ProductUpdate, request)
+    product = get_product_service().update_product(
+        product_id, payload.model_dump(exclude_unset=True)
+    )
     return success_response(data=product, message="Product updated")

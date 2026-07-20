@@ -7,6 +7,7 @@ import {
     getProductInitials,
     isProductUnavailable
 } from './catalog.js';
+import { productAvailability, productGtin } from './product-schema.js';
 import { formatCurrency, showToast } from './utils.js';
 import { getCart, saveCart } from './main.js';
 
@@ -53,7 +54,9 @@ function addProductToCart(event) {
 }
 
 function getWhatsAppUrl() {
-    const message = `Bonjour parapharmacie.me, je souhaite commander ou demander la disponibilite de: ${currentProduct?.name || ''}\nQuantite: ${quantity}\nPrix indicatif: ${formatCurrency(getEffectivePrice(currentProduct || {}))}\nLien: ${window.location.href}`;
+    const price = getEffectivePrice(currentProduct || {});
+    const priceLine = price === null ? 'Prix: a confirmer' : `Prix verifie: ${formatCurrency(price)}`;
+    const message = `Bonjour parapharmacie.me, je souhaite commander ou demander la disponibilite de: ${currentProduct?.name || ''}\nQuantite: ${quantity}\n${priceLine}\nLien: ${window.location.href}`;
     return `https://wa.me/212675698351?text=${encodeURIComponent(message)}`;
 }
 
@@ -84,13 +87,16 @@ function upsertJsonLd(id, data) {
 }
 
 function updateProductSeo(product, price) {
-    const description = `${product.name} par ${product.brand}, prix indicatif ${formatCurrency(price)} sur parapharmacie.me Khouribga avec livraison au Maroc et paiement a la livraison.`;
+    const hasVerifiedPrice = price !== null;
+    const canOrder = !isProductUnavailable(product);
+    const description = hasVerifiedPrice
+        ? `${product.name} par ${product.brand}, prix vérifié ${formatCurrency(price)} sur parapharmacie.me. Disponibilité à confirmer.`
+        : `${product.name} par ${product.brand} sur parapharmacie.me. Prix et disponibilité à confirmer.`;
     const title = `${product.name} | parapharmacie.me Maroc`;
     const productUrl = getAbsoluteUrl(`product.html?id=${encodeURIComponent(product.id)}`);
     const imageUrl = getAbsoluteUrl(getProductImage(product));
-    const availability = isProductUnavailable(product)
-        ? 'https://schema.org/OutOfStock'
-        : 'https://schema.org/InStock';
+    const availability = productAvailability(product);
+    const gtin = productGtin(product);
 
     document.title = title;
     setMeta('meta[name="description"]', 'content', description);
@@ -99,12 +105,12 @@ function updateProductSeo(product, price) {
     setMeta('meta[property="og:image"]', 'content', imageUrl);
     setMeta('meta[property="og:url"]', 'content', productUrl);
 
-    upsertJsonLd('product-jsonld', {
+    const productSchema = {
         '@context': 'https://schema.org',
         '@type': 'Product',
         name: product.name,
         description,
-        sku: product.id,
+        ...(product.sku ? { sku: product.sku } : {}),
         brand: {
             '@type': 'Brand',
             name: product.brand
@@ -112,15 +118,19 @@ function updateProductSeo(product, price) {
         category: product.category,
         image: [imageUrl],
         url: productUrl,
-        offers: {
-            '@type': 'Offer',
-            price: Number(price).toFixed(2),
-            priceCurrency: 'MAD',
-            availability,
-            itemCondition: 'https://schema.org/NewCondition',
-            url: productUrl
-        }
-    });
+        ...(canOrder ? {
+            offers: {
+                '@type': 'Offer',
+                price: Number(price).toFixed(2),
+                priceCurrency: 'MAD',
+                ...(availability ? { availability } : {}),
+                itemCondition: 'https://schema.org/NewCondition',
+                url: productUrl
+            }
+        } : {})
+    };
+    if (gtin) productSchema.gtin = gtin;
+    upsertJsonLd('product-jsonld', productSchema);
 }
 
 function renderProduct(product) {
@@ -145,25 +155,20 @@ function renderProduct(product) {
             <p class="eyebrow">Parapharmacie Maroc</p>
             <h1>${escapeHtml(product.name)}</h1>
             <p class="product-detail__brand">${escapeHtml(product.brand || 'Selection parapharmacie.me')}</p>
-            <div class="product-detail__rating">
-                <i class="fa-solid fa-star"></i>
-                <span>${product.rating || '4.7'} / 5</span>
-                <small>${product.reviews || 12} avis clients</small>
-            </div>
             <div class="product-detail__price">
                 <strong>${formatCurrency(price)}</strong>
                 ${oldPrice ? `<span>${formatCurrency(oldPrice)}</span><em>${escapeHtml(product.promoBadge || `-${discount}%`)}</em>` : ''}
             </div>
-            <p class="product-detail__stock ${unavailable ? 'out' : ''}">${escapeHtml(product.stockStatus || 'En stock')} • Prix indicatif Maroc</p>
+            <p class="product-detail__stock ${unavailable ? 'out' : ''}">${escapeHtml(product.stockStatus || 'Disponibilité à confirmer')} • ${price === null ? 'Prix à confirmer' : 'Prix vérifié'}</p>
             <div class="product-detail__purchase">
-                <div class="qty-control product-detail__qty" aria-label="Quantite">
+                ${unavailable ? '' : `<div class="qty-control product-detail__qty" aria-label="Quantite">
                     <button class="qty-control__btn" type="button" data-qty="-1" aria-label="Diminuer la quantite">-</button>
                     <span class="qty-control__value" id="qty-val">1</span>
                     <button class="qty-control__btn" type="button" data-qty="1" aria-label="Augmenter la quantite">+</button>
-                </div>
+                </div>`}
                 <button class="btn btn--primary ${unavailable ? 'is-disabled' : ''}" id="btn-add-cart" type="button" data-product-action="add-to-cart" ${unavailable ? 'aria-disabled="true" disabled' : ''}>
                     <i class="fa-solid fa-cart-plus"></i>
-                    ${unavailable ? 'Indisponible' : 'Ajouter au panier'}
+                    ${unavailable ? 'Commande en ligne indisponible' : 'Ajouter au panier'}
                 </button>
                 <a class="btn btn--whatsapp" href="${getWhatsAppUrl()}" target="_blank" rel="noreferrer" data-product-action="whatsapp">
                     <i class="fa-brands fa-whatsapp"></i>
@@ -172,12 +177,12 @@ function renderProduct(product) {
             </div>
             <p class="product-detail__description">${escapeHtml(product.shortDescription || product.description)}</p>
             <div class="product-detail__trust">
-                <span><i class="fa-solid fa-check"></i> Produit authentique</span>
+                <span><i class="fa-solid fa-list-check"></i> Référence catalogue</span>
                 <span><i class="fa-solid fa-truck-fast"></i> Livraison au Maroc</span>
                 <span><i class="fa-solid fa-hand-holding-dollar"></i> Paiement a la livraison</span>
             </div>
             <a class="product-detail__source" href="${escapeHtml(product.sourceUrl)}" target="_blank" rel="noreferrer">
-                Source catalogue publique
+                Source historique du nom, pas preuve du prix actuel
                 <i class="fa-solid fa-up-right-from-square"></i>
             </a>
             <div class="product-detail__note">

@@ -17,11 +17,17 @@ function escapeHtml(value) {
 }
 
 function getEffectivePrice(item) {
-    return Number(item.effectivePrice || item.priceMAD || item.promoPrice || item.discountPrice || item.price || 0);
+    return getCatalogEffectivePrice(item);
 }
 
 function getTotal(cart) {
-    return cart.reduce((sum, item) => sum + getEffectivePrice(item) * (item.quantity || 1), 0);
+    return cart.reduce((sum, item) => sum + (getEffectivePrice(item) * (item.quantity || 1)), 0);
+}
+
+function removeUnorderableItems(cart) {
+    const orderableCart = cart.filter((item) => !isProductUnavailable(item));
+    if (orderableCart.length !== cart.length) saveCart(orderableCart);
+    return orderableCart;
 }
 
 function updateQuantity(index, newQty) {
@@ -116,7 +122,12 @@ function updateWhatsAppLink(cart) {
 }
 
 function renderCart() {
-    const cart = getCart();
+    const storedCart = getCart();
+    const cart = removeUnorderableItems(storedCart);
+
+    if (cart.length !== storedCart.length) {
+        showToast('Les références sans prix, livraison ou disponibilité confirmés ont été retirées du panier.', 'error');
+    }
 
     if (cart.length === 0) {
         cartEmptyDiv.style.display = 'flex';
@@ -130,7 +141,7 @@ function renderCart() {
     }
 
     cartEmptyDiv.style.display = 'none';
-    cartContentDiv.style.display = 'flex';
+    cartContentDiv.style.display = '';
 
     const total = getTotal(cart);
     const totalQty = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);

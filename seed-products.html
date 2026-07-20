@@ -1,181 +1,26 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="robots" content="noindex, nofollow">
-  <title>إضافة المنتجات التجريبية</title>
+    <meta charset="UTF-8">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>استيراد المنتجات معطّل</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
     <link rel="manifest" href="site.webmanifest">
-  <style>
-    body { font-family: 'Cairo', sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; background: #f5f5f5; }
-    .card { background: #fff; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
-    h1 { color: #0d7c3e; text-align: center; }
-    button { width: 100%; padding: 15px; background: #0d7c3e; color: #fff; border: none; border-radius: 10px; font-size: 1.2rem; font-weight: bold; cursor: pointer; margin-top: 15px; }
-    button:hover { background: #1a9e52; }
-    button:disabled { background: #ccc; cursor: not-allowed; }
-    #log { margin-top: 20px; background: #f9f9f9; padding: 15px; border-radius: 10px; max-height: 400px; overflow-y: auto; font-size: 0.9rem; direction: ltr; text-align: left; }
-    .success { color: #0d7c3e; }
-    .error { color: #e74c3c; }
-    .info { color: #2196F3; }
-  </style>
+    <style>
+        body { font-family: sans-serif; max-width: 680px; margin: 0 auto; padding: 48px 20px; background: #f5f5f5; color: #263238; }
+        main { background: #fff; padding: 32px; border-radius: 16px; box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08); }
+        h1 { color: #0d7c3e; }
+        a { display: inline-block; margin-top: 12px; color: #0d7c3e; font-weight: 700; }
+    </style>
 </head>
 <body>
-  <div class="card">
-    <h1>🛒 إضافة المنتجات والعروض</h1>
-    <p style="text-align:center; color:#757575;">6 منتجات + عرض شتاء + عرض رمضان</p>
-    <button id="seedBtn" onclick="seedAll()">🚀 إضافة الكل دابا</button>
-    <div id="log"></div>
-  </div>
-
-  <script type="module">
-    import { apiFetch, getCurrentUser } from './js/auth.js';
-
-    const logEl = document.getElementById('log');
-    const btn = document.getElementById('seedBtn');
-
-    function log(msg, type = 'info') {
-      logEl.innerHTML += `<p class="${type}">→ ${msg}</p>`;
-      logEl.scrollTop = logEl.scrollHeight;
-    }
-
-    const user = getCurrentUser();
-    if (!user) {
-      log('⚠️ يجب تسجيل الدخول أولاً! روح لـ login.html', 'error');
-      btn.disabled = true;
-    } else {
-      log(`✅ مسجل كـ: ${user.email || user.name || 'user'}`, 'success');
-    }
-
-    const products = [
-      {
-        name: "كريم مرطب CeraVe للوجه",
-        brand: "CeraVe",
-        category: "الوجه",
-        price: 189.00,
-        promoPrice: null,
-        description: "كريم مرطب غني بالسيراميد وحمض الهيالورونيك. يرطب البشرة 24 ساعة ويقوي حاجز الجلد الطبيعي. مناسب لجميع أنواع البشرة.",
-        image_url: null,
-        sku: `PROD-${Date.now()}-1`,
-        stock: 100
-      },
-      {
-        name: "شامبو Ducray ضد تساقط الشعر",
-        brand: "Ducray",
-        category: "الشعر",
-        price: 145.00,
-        promoPrice: 119.00,
-        description: "شامبو Anaphase+ المقوي. يحفز نمو الشعر ويقلل التساقط بفضل تركيبة Tocopherol nicotinate. نتائج مرئية خلال 3 أشهر.",
-        image_url: null,
-        sku: `PROD-${Date.now()}-2`,
-        stock: 100
-      },
-      {
-        name: "واقي شمس Avène SPF50+",
-        brand: "Avène",
-        category: "الوجه",
-        price: 220.00,
-        promoPrice: 179.00,
-        description: "حماية عالية جداً من الأشعة فوق البنفسجية UVA/UVB. تركيبة خفيفة غير دهنية مع ماء Avène الحراري المهدئ. مناسب للبشرة الحساسة.",
-        image_url: null,
-        sku: `PROD-${Date.now()}-3`,
-        stock: 100
-      },
-      {
-        name: "حليب Gallia للرضع رقم 1",
-        brand: "Gallia",
-        category: "الطفل",
-        price: 95.00,
-        promoPrice: null,
-        description: "حليب Calisma 1 للرضع من 0 إلى 6 أشهر. غني بالحديد وDHA وARA لدعم النمو الطبيعي للطفل. 800 غرام.",
-        image_url: null,
-        sku: `PROD-${Date.now()}-4`,
-        stock: 100
-      },
-      {
-        name: "فيتامين D3 1000 UI",
-        brand: "Solgar",
-        category: "مكملات",
-        price: 130.00,
-        promoPrice: 99.00,
-        description: "فيتامين D3 طبيعي 1000 وحدة دولية. يدعم صحة العظام والمناعة وامتصاص الكالسيوم. 100 كبسولة نباتية.",
-        image_url: null,
-        sku: `PROD-${Date.now()}-5`,
-        stock: 100
-      },
-      {
-        name: "جهاز قياس ضغط الدم الإلكتروني",
-        brand: "Omron",
-        category: "معدات",
-        price: 450.00,
-        promoPrice: null,
-        description: "جهاز Omron M3 لقياس ضغط الدم من الذراع. دقة طبية عالية مع كاشف عدم انتظام ضربات القلب. ذاكرة 60 قراءة لشخصين.",
-        image_url: null,
-        sku: `PROD-${Date.now()}-6`,
-        stock: 100
-      }
-    ];
-
-    const packs = [
-      {
-        name: "🧣 باك الشتاء - العناية بالبشرة الجافة",
-        brand: "Parashop Tawfiq",
-        category: "باك",
-        price: 399.00,
-        promoPrice: 279.00,
-        description: "عرض خاص بالشتاء! يتضمن: كريم مرطب CeraVe + بلسم الشفاه La Roche-Posay + كريم اليدين Neutrogena.",
-        image_url: null,
-        sku: `PACK-${Date.now()}-1`,
-        stock: 50
-      },
-      {
-        name: "🌙 باك رمضان - الطاقة والمناعة",
-        brand: "Parashop Tawfiq",
-        category: "باك",
-        price: 350.00,
-        promoPrice: 229.00,
-        description: "عرض رمضان المبارك! يتضمن: فيتامين D3 Solgar + مغنيزيوم + أوميغا 3.",
-        image_url: null,
-        sku: `PACK-${Date.now()}-2`,
-        stock: 50
-      }
-    ];
-
-    window.seedAll = async function() {
-      btn.disabled = true;
-      btn.textContent = 'جاري الإضافة...';
-      logEl.innerHTML = '';
-
-      if (!getCurrentUser()) {
-        log('❌ ما مسجلش! روح لـ login.html أولاً', 'error');
-        btn.disabled = false;
-        btn.textContent = '🚀 إضافة الكل دابا';
-        return;
-      }
-
-      let successCount = 0;
-      const items = [...products, ...packs];
-
-      for (const product of items) {
-        try {
-          await apiFetch('/products', {
-            method: 'POST',
-            body: JSON.stringify(product)
-          }, { requiresAuth: true });
-          successCount++;
-          log(`✅ ${product.name}`, 'success');
-        } catch (err) {
-          log(`❌ فشل: ${product.name} — ${err.message}`, 'error');
-        }
-      }
-
-      log(`
-🎉 تمت الإضافة: ${successCount}/${items.length} منتجات بنجاح!`, successCount === items.length ? 'success' : 'error');
-      log('👉 روح لـ shop.html باش تشوف المنتجات!', 'info');
-
-      btn.textContent = `✅ تمت الإضافة (${successCount}/${items.length})`;
-      btn.disabled = false;
-    };
-  </script>
+    <main data-seed-tool-disabled="true">
+        <h1>استيراد المنتجات التجريبية معطّل</h1>
+        <p>هذه الصفحة لا تنشئ منتجات أو عروضاً ولا ترسل أي بيانات إلى الواجهة البرمجية.</p>
+        <p>استخدم واجهة الإدارة العادية فقط، وأدخل بيانات يثبتها جرد المالك أو نظامه الداخلي. لا تستخدم قيماً تقديرية.</p>
+        <a href="admin.html">الانتقال إلى واجهة الإدارة</a>
+    </main>
 </body>
 </html>

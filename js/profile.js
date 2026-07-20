@@ -95,7 +95,7 @@ function itemName(item) {
 function renderProfile(user) {
     profile = getDisplayProfile(user || {});
     setText('profile-welcome', `مرحبا بك ${profile.name || 'عميلنا العزيز'}`);
-    setText('profile-email', profile.email || 'Votre compte Parapharmacie Tawfiq');
+    setText('profile-email', profile.email || 'Votre compte Parapharmacie.me');
     setText('profile-name', profile.name);
     setText('profile-phone', profile.whatsapp || profile.phone);
     setText('profile-city', profile.city);
@@ -114,7 +114,7 @@ function renderOrders(orders = []) {
             <div class="empty-state">
                 <i class="fa-solid fa-box-open"></i>
                 <h3>لا توجد طلبيات بعد</h3>
-                <p>عندما تقوم بطلب منتج من Parapharmacie Tawfiq سيظهر هنا.</p>
+                <p>عندما تقوم بطلب منتج من Parapharmacie.me سيظهر هنا.</p>
                 <a class="btn btn--primary" href="/boutique/">ابدأ التسوق</a>
             </div>
         `;

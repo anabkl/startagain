@@ -1,5 +1,11 @@
 import { catalogProducts, categories, localCityKeywords, productImageFallbacks } from './catalog-data.js';
 import { apiFetch } from './auth.js';
+import {
+    hasCurrentProductPrice,
+    hasCurrentStockVerification,
+    isProductOrderable,
+    verifiedProductPrice
+} from './product-schema.js';
 
 const FALLBACK_IMAGE = 'assets/products/product-placeholder.svg';
 export const LOCAL_PRODUCT_OVERRIDES_KEY = 'parapharmacie_product_overrides';
@@ -18,34 +24,20 @@ export const mockProducts = catalogProducts;
 const categorySlugByName = Object.fromEntries(categories.map((category) => [category.name, category.slug]));
 
 export const trustBadges = [
-    { icon: 'fa-truck-fast', title: 'Livraison au Maroc', text: 'Khouribga, Oued Zem, Boujniba, Boulanouare et villes marocaines sur confirmation.' },
-    { icon: 'fa-certificate', title: 'Catalogue source', text: 'Produits, prix et disponibilites references depuis des pages publiques marocaines.' },
+    { icon: 'fa-truck-fast', title: 'Livraison au Maroc', text: 'Khouribga et autres villes marocaines desservies, sur confirmation.' },
+    { icon: 'fa-certificate', title: 'Prix à confirmer', text: 'Un montant ne s’affiche qu’avec une source propriétaire datée de moins de 30 jours.' },
     { icon: 'fa-hand-holding-dollar', title: 'Paiement a la livraison', text: 'Cash on Delivery disponible pour commander plus sereinement.' },
     { icon: 'fa-headset', title: 'Conseil WhatsApp', text: 'Support humain par Pharmacie Tawfiq pour confirmer stock, livraison et alternatives.' }
 ];
 
-export const testimonials = [
-    {
-        name: 'Salma A.',
-        location: 'Khouribga',
-        text: 'J ai retrouve des marques connues avec des prix clairs et la commande WhatsApp m a rassuree.'
-    },
-    {
-        name: 'Youssef B.',
-        location: 'Oued Zem',
-        text: 'Le panier est simple, le paiement a la livraison est visible et la selection fait tres professionnelle.'
-    },
-    {
-        name: 'Nadia R.',
-        location: 'Boujniba',
-        text: 'Bonne selection bebe et maman, avec des descriptions prudentes et faciles a comprendre.'
-    }
-];
+// No customer testimonial is published until the owner supplies a genuine,
+// consented review. The legacy mirror must not fabricate social proof.
+export const testimonials = [];
 
 export const faqs = [
     {
         question: 'Est-ce que parapharmacie.me livre a Khouribga et dans les villes proches ?',
-        answer: 'Oui. La boutique met en avant Pharmacie Tawfiq a Khouribga avec livraison a confirmer vers Oued Zem, Boujniba, Boulanouare et le reste du Maroc.'
+        answer: 'La zone locale confirmée est Khouribga. Les autres villes desservies et les frais applicables sont confirmés avant expédition.'
     },
     {
         question: 'Puis-je payer a la livraison ?',
@@ -53,7 +45,7 @@ export const faqs = [
     },
     {
         question: 'Les prix sont-ils definitifs ?',
-        answer: 'Les prix du catalogue sont sources depuis des pages publiques marocaines. La disponibilite et le prix final doivent etre confirmes avant expedition.'
+        answer: 'Un montant n’est affiché qu’avec une source propriétaire vérifiée depuis moins de 30 jours. Sinon, le prix doit être confirmé.'
     },
     {
         question: 'Pourquoi certains visuels sont-ils des placeholders ?',
@@ -99,23 +91,43 @@ function coerceOptionalNumber(value, fallback = null) {
 function applyProductOverride(product, override = {}) {
     const next = { ...product, ...override };
     const categorySlug = categorySlugByName[next.category] || next.categorySlug;
-    const priceMAD = coerceOptionalNumber(next.priceMAD ?? next.promoPrice ?? next.price, product.priceMAD);
-    const oldPriceMAD = coerceOptionalNumber(next.oldPriceMAD, null);
-    const hasPromo = oldPriceMAD && priceMAD && oldPriceMAD > priceMAD;
+    const candidatePrice = coerceOptionalNumber(next.priceMAD ?? next.promoPrice ?? next.price, null);
+    const priceSource = next.priceSource || next.price_source || null;
+    const priceVerifiedAt = next.priceVerifiedAt || next.price_verified_at || null;
+    const priceMAD = verifiedProductPrice({ ...next, priceMAD: candidatePrice, priceSource, priceVerifiedAt });
+    const candidateOldPrice = coerceOptionalNumber(next.oldPriceMAD, null);
+    const hasPromo = priceMAD !== null && candidateOldPrice !== null && candidateOldPrice > priceMAD;
+    const oldPriceMAD = hasPromo ? candidateOldPrice : null;
     const image = next.image || next.image_url || next.imageUrl || productImageFallbacks[categorySlug] || FALLBACK_IMAGE;
+    const stockVerified = hasCurrentStockVerification({
+        ...next,
+        stockVerified: next.stockVerified === true
+            || next.inventoryVerified === true
+            || next.stock_status_verified === true,
+        stockVerifiedAt: next.stockVerifiedAt || next.stock_verified_at || next.inventoryVerifiedAt || null
+    });
+    const stock = stockVerified ? Number(next.stock) : null;
 
     return {
         ...next,
         categorySlug,
         priceMAD,
-        oldPriceMAD: hasPromo ? oldPriceMAD : null,
+        oldPriceMAD,
         price: hasPromo ? oldPriceMAD : priceMAD,
         promoPrice: hasPromo ? priceMAD : null,
+        promoBadge: hasPromo ? (next.promoBadge || 'Promo') : null,
+        priceSource: priceMAD !== null ? priceSource : null,
+        priceVerifiedAt: priceMAD !== null ? priceVerifiedAt : null,
         image,
         imageUrl: image,
         active: next.active !== false,
-        stockStatus: next.stockStatus || product.stockStatus || 'En stock',
-        stock: next.stockStatus === 'Rupture de stock' ? 0 : (next.stock ?? product.stock ?? 24)
+        stockStatus: stockVerified
+            ? (next.stockStatus || (stock === 0 ? 'Rupture de stock' : 'En stock'))
+            : 'Disponibilité à confirmer',
+        stock,
+        stockVerified,
+        stockVerifiedAt: stockVerified ? (next.stockVerifiedAt || next.stock_verified_at || next.inventoryVerifiedAt) : null,
+        deliveryEligible: typeof next.deliveryEligible === 'boolean' ? next.deliveryEligible : null
     };
 }
 
@@ -144,26 +156,24 @@ export function getProductImageReviewLabel(product) {
 }
 
 export function getBasePrice(product) {
-    return Number(product?.oldPriceMAD || product?.price || product?.priceMAD || 0);
+    const price = verifiedProductPrice(product);
+    if (price === null) return null;
+    const oldPrice = Number(product?.oldPriceMAD);
+    return Number.isFinite(oldPrice) && oldPrice > price ? oldPrice : price;
 }
 
 export function getEffectivePrice(product) {
-    const priceMAD = Number(product?.priceMAD || 0);
-    if (priceMAD > 0) return priceMAD;
-
-    const promo = Number(product?.promoPrice || product?.discountPrice || 0);
-    const price = Number(product?.price || 0);
-    return promo > 0 && (!price || promo < price) ? promo : price;
+    return verifiedProductPrice(product);
 }
 
 export function getOldPrice(product) {
-    const oldPrice = Number(product?.oldPriceMAD || 0);
+    const oldPrice = Number(product?.oldPriceMAD);
     const price = getEffectivePrice(product);
-    return oldPrice > price ? oldPrice : null;
+    return price !== null && Number.isFinite(oldPrice) && oldPrice > price ? oldPrice : null;
 }
 
 export function isProductUnavailable(product) {
-    return product?.stock === 0 || normalizeSearchText(product?.stockStatus).includes('rupture');
+    return !isProductOrderable(product);
 }
 
 export function normalizeSearchText(text) {
@@ -207,9 +217,20 @@ export function matchesCategory(product, categorySlug) {
 
 function normalizeApiProduct(product) {
     const categorySlug = categorySlugByName[product.category] || String(product.category || 'all').toLowerCase();
-    const priceMAD = Number(product.priceMAD || product.price || 0);
-    const oldPriceMAD = Number(product.oldPriceMAD || 0);
+    const candidatePrice = Number(product.priceMAD || product.price || 0);
+    const priceSource = product.priceSource || product.price_source || null;
+    const priceVerifiedAt = product.priceVerifiedAt || product.price_verified_at || null;
+    const priceMAD = verifiedProductPrice({ priceMAD: candidatePrice, priceSource, priceVerifiedAt });
+    const candidateOldPrice = Number(product.oldPriceMAD || 0);
+    const oldPriceMAD = priceMAD !== null && candidateOldPrice > priceMAD ? candidateOldPrice : null;
     const image = product.image || product.image_url || product.imageUrl || productImageFallbacks[categorySlug] || FALLBACK_IMAGE;
+    const stockVerifiedAt = product.stockVerifiedAt || product.stock_verified_at || product.inventoryVerifiedAt || null;
+    const stockVerified = hasCurrentStockVerification({
+        ...product,
+        stockVerified: product.stockVerified === true || product.inventoryVerified === true || product.stock_status_verified === true,
+        stockVerifiedAt
+    });
+    const stock = stockVerified ? Number(product.stock) : null;
 
     return {
         ...product,
@@ -217,7 +238,11 @@ function normalizeApiProduct(product) {
         slug: product.slug || String(product.id),
         categorySlug,
         priceMAD,
-        oldPriceMAD: oldPriceMAD > priceMAD ? oldPriceMAD : null,
+        oldPriceMAD,
+        price: oldPriceMAD || priceMAD,
+        promoPrice: oldPriceMAD ? priceMAD : null,
+        priceSource: priceMAD !== null ? priceSource : null,
+        priceVerifiedAt: priceMAD !== null ? priceVerifiedAt : null,
         shortDescription: product.shortDescription || product.description || 'Produit de parapharmacie a confirmer avant expedition.',
         image,
         imageUrl: image,
@@ -226,7 +251,13 @@ function normalizeApiProduct(product) {
         imageRightsStatus: product.imageRightsStatus || 'owned-or-approved',
         imageReplacementNote: product.imageReplacementNote || '',
         active: product.active !== false,
-        stockStatus: product.stockStatus || (Number(product.stock || 0) > 0 ? 'En stock' : 'Rupture de stock')
+        stockStatus: stockVerified
+            ? (product.stockStatus || (stock === 0 ? 'Rupture de stock' : 'En stock'))
+            : 'Disponibilité à confirmer',
+        stock,
+        stockVerified,
+        stockVerifiedAt: stockVerified ? stockVerifiedAt : null,
+        deliveryEligible: typeof product.deliveryEligible === 'boolean' ? product.deliveryEligible : null
     };
 }
 

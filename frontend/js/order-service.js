@@ -1,4 +1,5 @@
 import { apiFetch } from './auth.js';
+import { hasCurrentProductPrice, hasCurrentStockVerification, isProductOrderable, verifiedProductPrice } from './product-schema.js';
 
 export const DEFAULT_ORDER_STATUS = 'في الانتظار';
 export const ORDER_STATUSES = [
@@ -58,6 +59,37 @@ function pickArray(payload) {
     return [];
 }
 
+function orderItemPriceEvidence(item = {}) {
+    return {
+        priceMAD: item.priceMAD ?? item.effectivePrice ?? item.unit_price,
+        priceSource: item.priceSource ?? item.price_source,
+        priceVerifiedAt: item.priceVerifiedAt ?? item.price_verified_at
+    };
+}
+
+export function assertOrderPricesVerified(orderData) {
+    const items = Array.isArray(orderData?.items) ? orderData.items : [];
+    if (!items.length) throw new Error('La commande ne contient aucune référence.');
+    for (const item of items) {
+        const orderableItem = { ...item, ...orderItemPriceEvidence(item) };
+        if (!hasCurrentProductPrice(orderableItem)) {
+            throw new Error(`Prix non vérifié pour ${item.name || item.id || 'une référence'}.`);
+        }
+        if (item.deliveryEligible !== true) {
+            throw new Error(`Livraison non confirmée pour ${item.name || item.id || 'une référence'}.`);
+        }
+        if (!hasCurrentStockVerification(item)) {
+            throw new Error(`Stock non vérifié ou périmé pour ${item.name || item.id || 'une référence'}.`);
+        }
+        if (Number(item.stock) <= 0) {
+            throw new Error(`Stock indisponible pour ${item.name || item.id || 'une référence'}.`);
+        }
+        if (!isProductOrderable(orderableItem)) {
+            throw new Error(`Commande en ligne non autorisée pour ${item.name || item.id || 'une référence'}.`);
+        }
+    }
+}
+
 function normalizeOrder(apiOrder = {}) {
     const shipping = apiOrder.shipping_address || apiOrder.shippingAddress || {};
     const fullName = String(apiOrder.customer_name || apiOrder.customerName || '').trim();
@@ -106,6 +138,7 @@ function normalizeOrder(apiOrder = {}) {
 }
 
 export async function saveOrder(orderData) {
+    assertOrderPricesVerified(orderData);
     const payload = await apiFetch('/orders', {
         method: 'POST',
         body: JSON.stringify(orderData)
@@ -163,9 +196,10 @@ export async function deleteOrder(orderId) {
 }
 
 export function buildWhatsAppOrderMessage(order, orderId, formatCurrency) {
+    assertOrderPricesVerified(order);
     const itemsList = (order.items || []).map((item, index) => {
         const quantity = item.quantity || 1;
-        const price = item.effectivePrice || item.priceMAD || item.promoPrice || item.price || 0;
+        const price = verifiedProductPrice(orderItemPriceEvidence(item));
         return `${index + 1}. ${item.name} x ${quantity} = ${formatCurrency(price * quantity)}`;
     }).join('\n');
 

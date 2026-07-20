@@ -5,6 +5,7 @@ from typing import Any
 
 from bson import ObjectId
 from bson.errors import InvalidId
+from pymongo.errors import DuplicateKeyError
 
 from app.config.db import get_db
 
@@ -19,6 +20,27 @@ class OrdersRepository:
         payload["updated_at"] = now
         result = self.col.insert_one(payload)
         return self.get_by_id(str(result.inserted_id))
+
+    def create_idempotent(self, payload: dict[str, Any]) -> tuple[dict[str, Any], bool]:
+        """Insert once per request_id, returning an existing race winner safely."""
+        now = datetime.now(timezone.utc)
+        document = {**payload, "created_at": now, "updated_at": now}
+        try:
+            result = self.col.insert_one(document)
+            created = self.get_by_id(str(result.inserted_id))
+            if created is None:  # pragma: no cover - defensive database invariant
+                raise RuntimeError("Inserted order could not be reloaded")
+            return created, True
+        except DuplicateKeyError:
+            existing = self.get_by_request_id(str(payload.get("request_id", "")))
+            if existing is None:  # pragma: no cover - defensive race invariant
+                raise
+            return existing, False
+
+    def get_by_request_id(self, request_id: str) -> dict[str, Any] | None:
+        if not request_id:
+            return None
+        return self.col.find_one({"request_id": request_id})
 
     def get_by_id(self, order_id: str) -> dict[str, Any] | None:
         try:

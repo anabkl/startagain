@@ -1,6 +1,12 @@
 import { catalogProducts, categories, localCityKeywords, productImageFallbacks } from './catalog-data.js';
 import { catalogApiIdBySlug } from './catalog-api-id-map.js';
 import { apiFetch } from './auth.js';
+import {
+    hasCurrentProductPrice,
+    hasCurrentStockVerification,
+    isProductOrderable,
+    verifiedProductPrice
+} from './product-schema.js';
 
 const FALLBACK_IMAGE = 'assets/products/product-placeholder.svg';
 const UNVERIFIED_AVAILABILITY = 'Disponibilité à confirmer';
@@ -93,9 +99,16 @@ function isCategoryFallbackImage(image) {
 }
 
 function hasVerifiedInventory(product) {
-    return product?.stockVerified === true
-        || product?.inventoryVerified === true
-        || product?.stock_status_verified === true;
+    return hasCurrentStockVerification({
+        ...product,
+        stockVerified: product?.stockVerified === true
+            || product?.inventoryVerified === true
+            || product?.stock_status_verified === true,
+        stockVerifiedAt: product?.stockVerifiedAt
+            || product?.stock_verified_at
+            || product?.inventoryVerifiedAt
+            || null
+    });
 }
 
 function getPositiveNumber(...values) {
@@ -113,15 +126,15 @@ function getLocalCatalogMatch(product) {
 
 export const trustBadges = [
     { icon: 'fa-list-check', title: '93 références', text: 'Le catalogue affiche le nom, la marque et la catégorie de chaque référence.' },
-    { icon: 'fa-tag', title: 'Prix en MAD', text: 'Les prix catalogue sont indicatifs et confirmés avant la finalisation.' },
+    { icon: 'fa-tag', title: 'Prix à confirmer', text: 'Un montant ne s’affiche que lorsqu’une source datée de moins de 30 jours le confirme.' },
     { icon: 'fa-image', title: 'Visuels transparents', text: 'Les illustrations génériques sont clairement signalées comme telles.' },
     { icon: 'fa-circle-check', title: 'Confirmation préalable', text: 'Disponibilité, prix final et modalités sont vérifiés avant expédition.' }
 ];
 
 export const faqs = [
     {
-        question: 'Les prix affichés sont-ils définitifs ?',
-        answer: 'Non. Ils servent de repère catalogue en MAD. Le prix final est confirmé avec la disponibilité avant la finalisation de la commande.'
+        question: 'Comment les prix sont-ils publiés ?',
+        answer: 'Un montant n’est affiché que lorsqu’il a une source traçable vérifiée depuis moins de 30 jours. Sinon, la fiche indique « Prix à confirmer ».'
     },
     {
         question: 'Comment connaître la disponibilité réelle ?',
@@ -152,11 +165,12 @@ export function getProductImageAlt(product) {
 }
 
 export function getProductAvailabilityLabel(product) {
-    if (product?.stock === 0 || normalizeSearchText(product?.stockStatus).includes('rupture')) {
+    if (!hasVerifiedInventory(product)) return UNVERIFIED_AVAILABILITY;
+
+    if (Number(product?.stock) === 0 || normalizeSearchText(product?.stockStatus).includes('rupture')) {
         return 'Rupture de stock';
     }
 
-    if (!hasVerifiedInventory(product)) return UNVERIFIED_AVAILABILITY;
     return String(product?.stockStatus || 'En stock').trim() || 'En stock';
 }
 
@@ -195,14 +209,21 @@ function applyProductOverride(product, override = {}) {
     const next = { ...product, ...override };
     const publicSlug = next.slug || next.id;
     const categorySlug = getCategorySlug(next.categorySlug || next.category);
-    const priceMAD = coerceOptionalNumber(next.priceMAD ?? next.promoPrice ?? next.price, product.priceMAD);
-    const oldPriceMAD = coerceOptionalNumber(next.oldPriceMAD, null);
-    const hasPromo = oldPriceMAD && priceMAD && oldPriceMAD > priceMAD;
+    const candidatePrice = coerceOptionalNumber(next.priceMAD ?? next.promoPrice ?? next.price, null);
+    const priceSource = next.priceSource || next.price_source || null;
+    const priceVerifiedAt = next.priceVerifiedAt || next.price_verified_at || null;
+    const priceMAD = verifiedProductPrice({ ...next, priceMAD: candidatePrice, priceSource, priceVerifiedAt });
+    const candidateOldPrice = coerceOptionalNumber(next.oldPriceMAD, null);
+    const hasPromo = priceMAD !== null && candidateOldPrice !== null && candidateOldPrice > priceMAD;
+    const oldPriceMAD = hasPromo ? candidateOldPrice : null;
     const image = next.image || next.image_url || next.imageUrl || productImageFallbacks[categorySlug] || FALLBACK_IMAGE;
     const usesCategoryFallback = isCategoryFallbackImage(image);
     const stockVerified = hasVerifiedInventory(next);
     const candidateStock = coerceOptionalNumber(next.stock, null);
     const stock = stockVerified && candidateStock !== null && candidateStock >= 0 ? candidateStock : null;
+    const stockVerifiedAt = stockVerified
+        ? (next.stockVerifiedAt || next.stock_verified_at || next.inventoryVerifiedAt)
+        : null;
     const stockStatus = stockVerified
         ? (next.stockStatus && next.stockStatus !== UNVERIFIED_AVAILABILITY
             ? next.stockStatus
@@ -214,9 +235,12 @@ function applyProductOverride(product, override = {}) {
         apiId: next.apiId || catalogApiIdBySlug[publicSlug] || null,
         categorySlug,
         priceMAD,
-        oldPriceMAD: hasPromo ? oldPriceMAD : null,
+        oldPriceMAD,
         price: hasPromo ? oldPriceMAD : priceMAD,
         promoPrice: hasPromo ? priceMAD : null,
+        promoBadge: hasPromo ? (next.promoBadge || 'Promo') : null,
+        priceSource: priceMAD !== null ? priceSource : null,
+        priceVerifiedAt: priceMAD !== null ? priceVerifiedAt : null,
         image,
         imageUrl: image,
         imageNeedsReview: usesCategoryFallback ? true : next.imageNeedsReview !== false,
@@ -226,7 +250,11 @@ function applyProductOverride(product, override = {}) {
         active: next.active !== false,
         stockStatus,
         stock,
-        stockVerified
+        stockVerified,
+        stockVerifiedAt,
+        deliveryEligible: typeof next.deliveryEligible === 'boolean'
+            ? next.deliveryEligible
+            : null
     };
 }
 
@@ -258,26 +286,24 @@ export function getProductImageReviewLabel(product) {
 }
 
 export function getBasePrice(product) {
-    return Number(product?.oldPriceMAD || product?.price || product?.priceMAD || 0);
+    const price = verifiedProductPrice(product);
+    if (price === null) return null;
+    const oldPrice = Number(product?.oldPriceMAD);
+    return Number.isFinite(oldPrice) && oldPrice > price ? oldPrice : price;
 }
 
 export function getEffectivePrice(product) {
-    const priceMAD = Number(product?.priceMAD || 0);
-    if (priceMAD > 0) return priceMAD;
-
-    const promo = Number(product?.promoPrice || product?.discountPrice || 0);
-    const price = Number(product?.price || 0);
-    return promo > 0 && (!price || promo < price) ? promo : price;
+    return verifiedProductPrice(product);
 }
 
 export function getOldPrice(product) {
-    const oldPrice = Number(product?.oldPriceMAD || 0);
+    const oldPrice = Number(product?.oldPriceMAD);
     const price = getEffectivePrice(product);
-    return oldPrice > price ? oldPrice : null;
+    return price !== null && Number.isFinite(oldPrice) && oldPrice > price ? oldPrice : null;
 }
 
 export function isProductUnavailable(product) {
-    return product?.stock === 0 || normalizeSearchText(product?.stockStatus).includes('rupture');
+    return !isProductOrderable(product);
 }
 
 export function normalizeSearchText(text) {
@@ -331,7 +357,7 @@ function normalizeApiProduct(product) {
     const apiBasePrice = getPositiveNumber(product.priceMAD, product.price);
     const apiPromoPrice = getPositiveNumber(product.promoPrice, product.promo_price);
     const apiOldPrice = getPositiveNumber(product.oldPriceMAD, product.old_price_mad);
-    let priceMAD = getPositiveNumber(localProduct?.priceMAD) || 0;
+    let priceMAD = getPositiveNumber(localProduct?.priceMAD);
     let oldPriceMAD = getPositiveNumber(localProduct?.oldPriceMAD);
 
     if (apiBasePrice) {
@@ -344,7 +370,19 @@ function normalizeApiProduct(product) {
         }
     }
 
-    const hasPromo = Boolean(oldPriceMAD && oldPriceMAD > priceMAD);
+    const priceEvidenceSource = apiBasePrice
+        ? (product.priceSource || product.price_source || null)
+        : (localProduct?.priceSource || null);
+    const priceEvidenceDate = apiBasePrice
+        ? (product.priceVerifiedAt || product.price_verified_at || null)
+        : (localProduct?.priceVerifiedAt || null);
+    priceMAD = verifiedProductPrice({
+        priceMAD,
+        priceSource: priceEvidenceSource,
+        priceVerifiedAt: priceEvidenceDate
+    });
+    const hasPromo = priceMAD !== null && Boolean(oldPriceMAD && oldPriceMAD > priceMAD);
+    if (!hasPromo) oldPriceMAD = null;
     const apiImage = product.image || product.image_url || product.imageUrl || '';
     const image = apiImage || localProduct?.image || productImageFallbacks[categorySlug] || FALLBACK_IMAGE;
     const usesCategoryFallback = isCategoryFallbackImage(image);
@@ -363,6 +401,9 @@ function normalizeApiProduct(product) {
     const inventoryValue = inventorySource ? Number(inventorySource.stock) : null;
     const stock = Number.isFinite(inventoryValue) && inventoryValue >= 0 ? inventoryValue : null;
     const stockVerified = Boolean(inventorySource && stock !== null);
+    const stockVerifiedAt = stockVerified
+        ? (inventorySource.stockVerifiedAt || inventorySource.stock_verified_at || inventorySource.inventoryVerifiedAt)
+        : null;
     const stockStatus = stockVerified
         ? (inventorySource.stockStatus || (stock === 0 ? 'Rupture de stock' : 'En stock'))
         : UNVERIFIED_AVAILABILITY;
@@ -382,6 +423,8 @@ function normalizeApiProduct(product) {
         oldPriceMAD: hasPromo ? oldPriceMAD : null,
         price: hasPromo ? oldPriceMAD : priceMAD,
         promoPrice: hasPromo ? priceMAD : null,
+        priceSource: priceMAD !== null ? priceEvidenceSource : null,
+        priceVerifiedAt: priceMAD !== null ? priceEvidenceDate : null,
         promoBadge: hasPromo ? (product.promoBadge || localProduct?.promoBadge || 'Promo') : null,
         badge: hasPromo
             ? (product.promoBadge || localProduct?.promoBadge || 'Promo')
@@ -405,7 +448,16 @@ function normalizeApiProduct(product) {
         active: product.active !== false && product.isPublished !== false,
         stockStatus,
         stock,
-        stockVerified
+        stockVerified,
+        stockVerifiedAt,
+        deliveryEligible: typeof product.deliveryEligible === 'boolean'
+            ? product.deliveryEligible
+            : (typeof localProduct?.deliveryEligible === 'boolean' ? localProduct.deliveryEligible : null),
+        // Explicit owner/API identifiers are authoritative. Local null
+        // placeholders must never erase completed merchant data.
+        sku: product.sku ?? localProduct?.sku ?? null,
+        ean: product.ean ?? localProduct?.ean ?? null,
+        size: product.size ?? localProduct?.size ?? null
     };
 }
 

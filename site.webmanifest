@@ -1,7 +1,7 @@
 {
   "name": "parapharmacie.me",
   "short_name": "Para.me",
-  "description": "Catalogue Parapharmacie.me au Maroc avec prix indicatifs en MAD.",
+  "description": "Catalogue Parapharmacie.me au Maroc avec prix à confirmer sans preuve courante.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#fbfdfc",

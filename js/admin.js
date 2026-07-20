@@ -7,6 +7,16 @@ export async function uploadProduct(productData, imageFile) {
         // ملاحظة: رفع الصور متوقف مؤقتاً حتى نزيدو API خاصة بالصور.
         // غنصيفطو غير البيانات دابا لـ MongoDB.
 
+        const stock = Number(productData.stock);
+        if (
+            productData.stock === ''
+            || productData.stock == null
+            || !Number.isInteger(stock)
+            || stock < 0
+        ) {
+            throw new Error('أدخل كمية المخزون الفعلية كعدد صحيح يساوي صفراً أو أكثر.');
+        }
+
         const newProduct = {
             name: productData.name,
             brand: productData.brand,
@@ -14,7 +24,7 @@ export async function uploadProduct(productData, imageFile) {
             price: Number(productData.price),
             promoPrice: productData.promoPrice ? Number(productData.promoPrice) : null,
             description: productData.description,
-            stock: 100, // مخزون افتراضي
+            stock,
             image_url: null, // مسار الصورة خاوي حالياً
             sku: "PROD-" + Date.now()
         };

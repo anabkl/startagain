@@ -4,20 +4,18 @@ import sentry_sdk
 from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
-from flask_limiter import Limiter
-from flask_limiter.util import get_remote_address
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from app.api import create_api_blueprint
 from app.config.logging import configure_logging
 from app.config.settings import Settings
+from app.extensions import limiter
 from app.middleware.request_context import register_request_context
 from app.middleware.security import apply_security_headers, suspicious_request_logger
 from app.utils.errors import AppError
 from app.utils.response import error_response
 
 jwt = JWTManager()
-limiter = Limiter(key_func=get_remote_address)
 
 
 def create_app() -> Flask:
@@ -38,6 +36,9 @@ def create_app() -> Flask:
         JWT_COOKIE_SAMESITE="Lax",
         JWT_COOKIE_CSRF_PROTECT=True,
         MAX_CONTENT_LENGTH=settings.MAX_CONTENT_LENGTH,
+        RATELIMIT_STORAGE_URI=settings.RATE_LIMIT_STORAGE_URI,
+        RATELIMIT_STRATEGY="fixed-window",
+        RATELIMIT_HEADERS_ENABLED=True,
     )
 
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)

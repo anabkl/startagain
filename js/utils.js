@@ -9,7 +9,13 @@ export function showToast(message, type = 'success') {
 
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
-    toast.innerHTML = `<span style="margin-right:8px;">${type === 'success' ? '✓' : '!'}</span> ${message}`;
+    const icon = document.createElement('span');
+    icon.style.marginRight = '8px';
+    icon.textContent = type === 'success' ? '✓' : '!';
+    const text = document.createElement('span');
+    text.textContent = String(message || '');
+    toast.appendChild(icon);
+    toast.appendChild(text);
 
     container.appendChild(toast);
 
@@ -27,7 +33,11 @@ export function showToast(message, type = 'success') {
 
 // دالة لتنسيق الثمن بالدرهم المغربي
 export function formatCurrency(amount) {
-    return `${Number(amount || 0).toFixed(2)} DH`;
+    if (amount === null || amount === undefined || amount === '') return 'Prix à confirmer';
+    const numericAmount = Number(amount);
+    return Number.isFinite(numericAmount)
+        ? `${numericAmount.toFixed(2)} DH`
+        : 'Prix à confirmer';
 }
 
 // Small text status line (form feedback: success/error), e.g. #login-status, #profile-status
@@ -54,16 +64,23 @@ export function renderStatusBanner(container, { state = 'idle', message = '', on
     container.hidden = false;
     container.dataset.type = state;
 
-    const icon = state === 'pending'
-        ? '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i>'
-        : '<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>';
-    const retryButton = onRetry
-        ? '<button type="button" class="status-banner__retry">Réessayer</button>'
-        : '';
-
-    container.innerHTML = `${icon}<span>${message}</span>${retryButton}`;
+    container.replaceChildren();
+    const icon = document.createElement('i');
+    icon.className = state === 'pending'
+        ? 'fa-solid fa-spinner fa-spin'
+        : 'fa-solid fa-triangle-exclamation';
+    icon.setAttribute('aria-hidden', 'true');
+    const text = document.createElement('span');
+    text.textContent = String(message);
+    container.appendChild(icon);
+    container.appendChild(text);
 
     if (onRetry) {
-        container.querySelector('.status-banner__retry')?.addEventListener('click', onRetry);
+        const retryButton = document.createElement('button');
+        retryButton.type = 'button';
+        retryButton.className = 'status-banner__retry';
+        retryButton.textContent = 'Réessayer';
+        retryButton.addEventListener('click', onRetry);
+        container.appendChild(retryButton);
     }
 }

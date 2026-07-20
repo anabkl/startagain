@@ -1,4 +1,4 @@
-import { articles } from './articles-data.js';
+import { publishedArticles } from './articles-data.js';
 
 export const SITE_ORIGIN = 'https://parapharmacie.me';
 
@@ -25,6 +25,13 @@ export const TRUST_PAGE_ROUTES = Object.freeze([
     '/conditions-utilisation/'
 ]);
 
+// City/local landing pages. Kept separate from TRUST_PAGE_ROUTES because
+// these use their own dedicated builder (map, local FAQ, local JSON-LD)
+// instead of the generic prose trust-page template — see
+// scripts/generate-seo-pages.mjs's buildKhouribgaPage().
+export const KHOURIBGA_ROUTE = '/parapharmacie-khouribga/';
+export const LOCAL_LANDING_ROUTES = Object.freeze([KHOURIBGA_ROUTE]);
+
 export const CONSEILS_INDEX_ROUTE = '/conseils/';
 
 // Computed from js/articles-data.js so this list can never drift from what
@@ -32,7 +39,7 @@ export const CONSEILS_INDEX_ROUTE = '/conseils/';
 // is hand-maintained alongside a separate `trustPages` array.
 export const ARTICLE_ROUTES = Object.freeze([
     CONSEILS_INDEX_ROUTE,
-    ...articles.map((article) => `/conseils/${article.slug}/`)
+    ...publishedArticles.map((article) => `/conseils/${article.slug}/`)
 ]);
 
 // Deliberately NOT part of TRUST_PAGE_ROUTES or ARTICLE_ROUTES: no approved

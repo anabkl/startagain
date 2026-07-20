@@ -1,6 +1,6 @@
 import { getCart, saveCart } from './main.js';
 import { showToast, formatCurrency } from './utils.js';
-import { getProductImage } from './catalog.js';
+import { getEffectivePrice as getCatalogEffectivePrice, getProductImage, isProductUnavailable } from './catalog.js';
 import { apiFetch, getCurrentUser } from './auth.js';
 
 const checkoutForm = document.getElementById('checkout-form');
@@ -15,15 +15,21 @@ function sanitizeHtml(value) {
 }
 
 function getEffectivePrice(item) {
-    return Number(item.effectivePrice || item.priceMAD || item.promoPrice || item.discountPrice || item.price || 0);
+    return getCatalogEffectivePrice(item);
 }
 
 function getCartTotal(cart) {
+    if (cart.some((item) => getEffectivePrice(item) === null)) return null;
     return cart.reduce((sum, item) => sum + getEffectivePrice(item) * (item.quantity || 1), 0);
 }
 
 function renderOrderSummary() {
-    const cart = getCart();
+    const storedCart = getCart();
+    const cart = storedCart.filter((item) => !isProductUnavailable(item));
+    if (cart.length !== storedCart.length) {
+        saveCart(cart);
+        showToast('Les références sans prix, livraison ou disponibilité confirmés ont été retirées avant le paiement.', 'error');
+    }
 
     if (cart.length === 0) {
         showToast('Votre panier est vide. Redirection vers la boutique.', 'error');
@@ -154,6 +160,12 @@ async function processOrder(event) {
         btn.innerHTML = originalText;
         return;
     }
+    if (cart.some((item) => isProductUnavailable(item))) {
+        showToast('Impossible de commander une référence dont le prix, la livraison ou la disponibilité ne sont pas confirmés.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        return;
+    }
 
     const firstName = getFormValue('firstName');
     const lastName = getFormValue('lastName');
@@ -180,6 +192,14 @@ async function processOrder(event) {
         product_id: String(item.id),
         quantity: Number(item.quantity || 1),
         unit_price: getEffectivePrice(item),
+        priceMAD: getEffectivePrice(item),
+        effectivePrice: getEffectivePrice(item),
+        priceSource: item.priceSource,
+        priceVerifiedAt: item.priceVerifiedAt,
+        stock: item.stock,
+        stockVerified: item.stockVerified,
+        stockVerifiedAt: item.stockVerifiedAt,
+        deliveryEligible: item.deliveryEligible,
         name: item.name
     }));
 

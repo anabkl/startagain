@@ -4,8 +4,24 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { catalogProducts, categories } from '../js/catalog-data.js';
 import { catalogApiIdBySlug } from '../js/catalog-api-id-map.js';
-import { articles, DEFAULT_AUTHOR, DISCLAIMER_TEXT } from '../js/articles-data.js';
+import { publishedArticles as articles, DEFAULT_AUTHOR, DISCLAIMER_TEXT } from '../js/articles-data.js';
 import { returnsPolicy } from '../js/returns-policy-data.js';
+import { isProductOrderable, productAvailability, productGtin, verifiedProductPrice } from '../js/product-schema.js';
+import {
+    ADDRESS,
+    CONTACT,
+    DELIVERY,
+    MAPS_EMBED_URL,
+    MAPS_URL,
+    OPENING_HOURS_DISPLAY,
+    OPERATOR,
+    PAYMENT,
+    SERVICE_AREA,
+    SOCIAL,
+    STOREFRONT_PHOTO,
+    organizationSchema,
+    pharmacySchema
+} from '../js/business-config.js';
 import {
     absoluteSiteUrl,
     ARTICLE_ROUTES,
@@ -13,6 +29,8 @@ import {
     CATEGORY_ROUTE_MAP,
     categoryRoute,
     CONSEILS_INDEX_ROUTE,
+    KHOURIBGA_ROUTE,
+    LOCAL_LANDING_ROUTES,
     productRoute,
     RETURNS_ROUTE,
     SITE_ORIGIN,
@@ -26,32 +44,32 @@ const categorySeo = {
     visage: {
         h1: 'Soins visage au Maroc',
         title: 'Soins visage au Maroc | Parapharmacie.me',
-        description: 'Découvrez les références visage du catalogue Parapharmacie.me, avec marques, formats et prix indicatifs en MAD.'
+        description: 'Découvrez les références visage du catalogue Parapharmacie.me, avec marques, formats et prix à confirmer sans preuve courante.'
     },
     corps: {
         h1: 'Soins corps au Maroc',
         title: 'Soins corps au Maroc | Parapharmacie.me',
-        description: 'Parcourez les soins corps référencés sur Parapharmacie.me, avec prix indicatifs en MAD et disponibilité à confirmer.'
+        description: 'Parcourez les soins corps référencés sur Parapharmacie.me. Prix et disponibilité restent à confirmer sans preuve courante.'
     },
     cheveux: {
         h1: 'Soins cheveux au Maroc',
         title: 'Soins cheveux au Maroc | Parapharmacie.me',
-        description: 'Retrouvez les références du catalogue liées aux cheveux, avec leur catégorie principale, leur marque et leur prix indicatif.'
+        description: 'Retrouvez les références du catalogue liées aux cheveux, avec leur catégorie principale, leur marque et un prix à confirmer si non vérifié.'
     },
     'bebe-maman': {
         h1: 'Bébé et maman au Maroc',
         title: 'Bébé et maman au Maroc | Parapharmacie.me',
-        description: 'Explorez les références bébé et maman du catalogue, avec marques, formats et prix indicatifs affichés en MAD.'
+        description: 'Explorez les références bébé et maman du catalogue, avec marques, formats et prix à confirmer sans preuve courante.'
     },
     solaire: {
         h1: 'Protection solaire au Maroc',
         title: 'Protection solaire au Maroc | Parapharmacie.me',
-        description: 'Comparez les références solaires du catalogue Parapharmacie.me, leurs formats et leurs prix indicatifs en MAD.'
+        description: 'Comparez les références solaires et leurs formats. Aucun montant n’est affiché sans preuve de prix courante.'
     },
     hygiene: {
         h1: 'Hygiène et soins quotidiens',
         title: 'Hygiène au Maroc | Parapharmacie.me',
-        description: 'Consultez les produits d’hygiène référencés sur Parapharmacie.me avec marques, formats et prix indicatifs en MAD.'
+        description: 'Consultez les produits d’hygiène référencés avec marques et formats. Les prix non vérifiés restent à confirmer.'
     },
     sante: {
         h1: 'Santé et bien-être : références catalogue',
@@ -61,12 +79,12 @@ const categorySeo = {
     'complements-alimentaires': {
         h1: 'Compléments alimentaires au Maroc',
         title: 'Compléments alimentaires au Maroc | Parapharmacie.me',
-        description: 'Découvrez les compléments alimentaires référencés, leurs marques, formats et prix indicatifs en MAD.'
+        description: 'Découvrez les compléments alimentaires référencés, leurs marques et formats. Les prix non vérifiés restent à confirmer.'
     },
     homme: {
         h1: 'Soins homme au Maroc',
         title: 'Soins homme au Maroc | Parapharmacie.me',
-        description: 'Parcourez les références homme du catalogue Parapharmacie.me avec marque, format et prix indicatif en MAD.'
+        description: 'Parcourez les références homme du catalogue avec marque et format. Aucun montant n’est affiché sans preuve courante.'
     },
     bio: {
         h1: 'Produits classés Bio dans le catalogue',
@@ -85,6 +103,14 @@ const categorySeo = {
     }
 };
 
+function contactCardsHtml(headingTag = 'h2') {
+    return `<div class="seo-contact-grid">
+                <a class="trust-card" href="${CONTACT.phone.href}"><i class="fa-solid fa-phone"></i><${headingTag}>Téléphone</${headingTag}><p>${escapeHtml(CONTACT.phone.display)}</p></a>
+                <a class="trust-card" href="${CONTACT.whatsapp.href}" rel="noreferrer"><i class="fa-brands fa-whatsapp"></i><${headingTag}>WhatsApp</${headingTag}><p>${escapeHtml(CONTACT.whatsapp.display)}</p></a>
+                <a class="trust-card" href="${MAPS_URL}" rel="noreferrer" target="_blank"><i class="fa-solid fa-location-dot"></i><${headingTag}>Adresse</${headingTag}><p>${escapeHtml(ADDRESS.full)}</p></a>
+            </div>`;
+}
+
 const trustPages = [
     {
         route: '/a-propos/',
@@ -93,12 +119,12 @@ const trustPages = [
         eyebrow: 'Transparence',
         h1: 'À propos de Parapharmacie.me',
         content: `
-            <p>Parapharmacie.me présente un catalogue de références disponibles sur le marché marocain, avec des prix affichés en dirhams. Le site permet de parcourir les produits, de préparer un panier et de transmettre une demande de commande.</p>
+            <p>Parapharmacie.me présente un catalogue de références identifiées sur le marché marocain. Un montant ne s’affiche que lorsqu’une source propriétaire datée de moins de 30 jours le confirme. Le site permet de parcourir les produits et de contacter l’équipe.</p>
             <h2>Ce que le catalogue permet de vérifier</h2>
             <ul>
                 <li>le nom commercial de la référence, sa marque et sa catégorie ;</li>
                 <li>le format lorsqu’il figure dans le nom du produit ;</li>
-                <li>un prix catalogue indicatif en MAD.</li>
+                <li>un prix vérifié et daté, ou la mention « Prix à confirmer ».</li>
             </ul>
             <h2>Une présentation volontairement prudente</h2>
             <p>La disponibilité, le prix final et les modalités de remise ou de livraison sont confirmés avant la finalisation. Les visuels génériques sont signalés comme tels. Aucune note, aucun avis client ni aucune promesse médicale ne sont inventés.</p>
@@ -107,29 +133,37 @@ const trustPages = [
     {
         route: '/contact/',
         title: 'Contact | Parapharmacie.me',
-        description: 'Contactez Parapharmacie.me par téléphone, WhatsApp ou e-mail pour confirmer une référence, un prix ou une commande.',
+        description: 'Contactez Pharmacie Tawfiq à Khouribga par téléphone ou WhatsApp pour confirmer une référence, un prix ou une commande.',
         eyebrow: 'Nous contacter',
         h1: 'Contact Parapharmacie.me',
         content: `
-            <p>Utilisez les coordonnées actuellement affichées par le site pour demander la confirmation d’une référence, d’un prix ou d’une commande.</p>
-            <div class="seo-contact-grid">
-                <a class="trust-card" href="tel:+212520828417"><i class="fa-solid fa-phone"></i><h2>Téléphone</h2><p>0520 828 417</p></a>
-                <a class="trust-card" href="https://wa.me/212675698351" rel="noreferrer"><i class="fa-brands fa-whatsapp"></i><h2>WhatsApp</h2><p>+212 675 698 351</p></a>
-                <a class="trust-card" href="mailto:Hamidkaram554@gmail.com"><i class="fa-regular fa-envelope"></i><h2>E-mail</h2><p>Hamidkaram554@gmail.com</p></a>
-            </div>
-            <p>Le site ne publie pas de délai de réponse garanti. N’envoyez pas d’informations médicales sensibles par WhatsApp ou e-mail. Pour une urgence ou un avis médical, contactez un professionnel de santé adapté.</p>`
+            <p>Parapharmacie.me est le site du catalogue en ligne de ${escapeHtml(OPERATOR.displayName)}, à Khouribga. Utilisez les coordonnées ci-dessous pour demander la confirmation d’une référence, d’un prix ou d’une commande.</p>
+            ${contactCardsHtml('h2')}
+            <h2>Adresse et horaires</h2>
+            <p>${escapeHtml(ADDRESS.full)}</p>
+            <ul>
+                ${OPENING_HOURS_DISPLAY.map((line) => `<li>${escapeHtml(line)}</li>`).join('')}
+            </ul>
+            <p>Zone de service : ${escapeHtml(SERVICE_AREA)}. Retrouvez-nous aussi sur <a href="${SOCIAL.instagram}" rel="noreferrer" target="_blank">Instagram</a> et <a href="${SOCIAL.facebook}" rel="noreferrer" target="_blank">Facebook</a>.</p>
+            <p>Le site ne publie pas de délai de réponse garanti. N’envoyez pas d’informations médicales sensibles par WhatsApp. Pour une urgence ou un avis médical, contactez un professionnel de santé adapté.</p>`
     },
     {
         route: '/livraison/',
         title: 'Commande et livraison | Parapharmacie.me',
-        description: 'Comprenez comment Parapharmacie.me collecte la ville et l’adresse, puis confirme les frais et modalités avant expédition.',
+        description: 'Frais de livraison Parapharmacie.me : 15 MAD à Khouribga; toute zone proche doit être confirmée explicitement. Le tarif est de 35 MAD vers les autres villes du Maroc desservies.',
         eyebrow: 'Avant de commander',
         h1: 'Commande et modalités de livraison',
         content: `
-            <p>Le formulaire de commande demande une ville et une adresse afin de préparer la demande. Le panier indique les frais de livraison comme « à confirmer » : aucun tarif, délai ou zone de couverture non vérifié n’est promis sur cette page.</p>
+            <p>Le formulaire de commande demande une ville et une adresse afin de préparer la demande.</p>
+            <h2>Frais de livraison</h2>
+            <ul>
+                <li>${escapeHtml(DELIVERY.local.area)} : ${DELIVERY.local.feeMAD} MAD</li>
+                <li>${escapeHtml(DELIVERY.other.area)} : ${DELIVERY.other.feeMAD} MAD</li>
+            </ul>
+            <p>Le délai de livraison précis et la couverture exacte hors de ces zones restent à confirmer au moment de la commande. Le paiement s’effectue actuellement à la livraison ; le paiement en ligne CMI et Apple Pay sont prévus mais pas encore actifs.</p>
             <h2>Étapes affichées par le site</h2>
             <ol>
-                <li>Ajoutez les références souhaitées au panier.</li>
+                <li>Notez les références souhaitées ou transmettez leurs liens par téléphone ou WhatsApp.</li>
                 <li>Renseignez les coordonnées nécessaires à la demande.</li>
                 <li>Le prix final, la disponibilité et les modalités applicables sont confirmés avant expédition.</li>
             </ol>
@@ -148,17 +182,17 @@ const trustPages = [
             <h2>Services sollicités</h2>
             <p>Le site communique avec son API pour le catalogue, le compte et les commandes. Si vous choisissez le bouton WhatsApp, vous quittez Parapharmacie.me et les règles de confidentialité de WhatsApp s’appliquent.</p>
             <h2>Vos choix et vos demandes</h2>
-            <p>Vous pouvez vider votre panier et les données locales depuis votre navigateur. Pour une question, une demande d’accès, de rectification ou de suppression concernant les données transmises, écrivez à <a href="mailto:Hamidkaram554@gmail.com">Hamidkaram554@gmail.com</a>. N’envoyez pas d’informations médicales sensibles par ce canal.</p>`
+            <p>Vous pouvez vider votre panier et les données locales depuis votre navigateur. Pour une question, une demande d’accès, de rectification ou de suppression concernant les données transmises, contactez-nous par <a href="${CONTACT.whatsapp.href}" rel="noreferrer">WhatsApp</a> ou par <a href="${CONTACT.phone.href}">téléphone</a>. N’envoyez pas d’informations médicales sensibles par ce canal.</p>`
     },
     {
         route: '/conditions-utilisation/',
         title: 'Conditions d’utilisation | Parapharmacie.me',
-        description: 'Règles d’utilisation factuelles du catalogue, des prix indicatifs, du panier et des informations de santé.',
+        description: 'Règles d’utilisation factuelles du catalogue, de la vérification des prix, du panier et des informations de santé.',
         eyebrow: 'Utilisation du site',
         h1: 'Conditions d’utilisation',
         content: `
             <h2>Catalogue et prix</h2>
-            <p>Les noms, marques, catégories, formats et prix servent à identifier les références du catalogue. Les prix sont indicatifs et doivent être confirmés avec la disponibilité avant la finalisation d’une commande.</p>
+            <p>Les noms, marques, catégories et formats servent à identifier les références. Un montant ne peut être affiché qu’avec une source propriétaire datée de moins de 30 jours ; sinon, le prix reste à confirmer avec la disponibilité.</p>
             <h2>Commande</h2>
             <p>Le panier et le formulaire transmettent une demande. Les modalités applicables, dont les éventuels frais, sont confirmées avant expédition. Le paiement à la livraison apparaît comme option dans l’interface, sous réserve de confirmation pour la commande concernée.</p>
             <h2>Visuels et informations produit</h2>
@@ -190,6 +224,11 @@ function formatPrice(value) {
     }).format(Number(value || 0));
 }
 
+function productPriceLabel(product) {
+    const price = verifiedProductPrice(product);
+    return price === null ? 'Prix à confirmer' : formatPrice(price);
+}
+
 function productImage(product) {
     return `/${String(product.image || 'assets/products/product-placeholder.svg').replace(/^\/+/, '')}`;
 }
@@ -201,18 +240,24 @@ function productImageAlt(product) {
 }
 
 function extractFormat(product) {
-    const matches = String(product.name).match(/\b\d+(?:[,.]\d+)?\s?(?:ml|l|g|mg|comprimés?|gélules?|ampoules?|tests?|bandelettes?)\b/gi);
-    return matches?.join(' · ') || null;
+    return product.size || null;
 }
 
 function productDescription(product) {
     const format = extractFormat(product);
     const formatText = format ? ` Le format indiqué est ${format}.` : '';
-    return `${product.name} est une référence ${product.category} de la marque ${product.brand}.${formatText} Son prix catalogue est ${formatPrice(product.priceMAD)} ; le prix final et la disponibilité sont à confirmer avant commande.`;
+    const price = verifiedProductPrice(product);
+    const priceText = price === null
+        ? ' Son prix et sa disponibilité sont à confirmer avant commande.'
+        : ` Son prix vérifié est ${formatPrice(price)} ; la disponibilité reste à confirmer avant commande.`;
+    return `${product.name} est une référence ${product.category} de la marque ${product.brand}.${formatText}${priceText}`;
 }
 
 function productMetaDescription(product) {
-    return `${product.name} par ${product.brand} : ${formatPrice(product.priceMAD)} à titre indicatif sur Parapharmacie.me. Disponibilité et prix final à confirmer.`;
+    const price = verifiedProductPrice(product);
+    return price === null
+        ? `${product.name} par ${product.brand} sur Parapharmacie.me. Prix et disponibilité à confirmer avant commande.`
+        : `${product.name} par ${product.brand} : ${formatPrice(price)} vérifié sur Parapharmacie.me. Disponibilité à confirmer.`;
 }
 
 function productsForCategory(category) {
@@ -234,7 +279,7 @@ function header() {
         <header class="site-header">
             <div class="header__top-bar">
                 <div class="container">
-                    <span><i class="fa-solid fa-tag"></i> Prix affichés en MAD</span>
+                    <span><i class="fa-solid fa-tag"></i> Prix datés ou à confirmer</span>
                     <span><i class="fa-solid fa-circle-check"></i> Disponibilité confirmée avant commande</span>
                     <span><i class="fa-solid fa-notes-medical"></i> Information non médicale</span>
                 </div>
@@ -252,7 +297,7 @@ function header() {
                     <nav class="header__actions" aria-label="Actions rapides">
                         <a href="/login.html" class="header__action-btn"><i class="fa-regular fa-user"></i><span>Compte</span></a>
                         <a href="/cart.html" class="header__action-btn header__cart"><i class="fa-solid fa-bag-shopping"></i><span class="header__cart-count" id="cart-count">0</span><span>Panier</span></a>
-                        <button class="header__mobile-toggle" id="menuToggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false"><span></span><span></span><span></span></button>
+                        <button class="header__mobile-toggle" id="menuToggle" type="button" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="mainNav"><span></span><span></span><span></span></button>
                     </nav>
                 </div>
             </div>
@@ -277,7 +322,7 @@ function footer() {
             <div class="container footer__grid">
                 <div>
                     <a href="/" class="footer__brand"><img src="/assets/images/logo-head.png" alt="Parapharmacie.me" width="56" height="57"><span>parapharmacie.me</span></a>
-                    <p>Catalogue de parapharmacie au Maroc. Prix en MAD et disponibilité à confirmer avant commande.</p>
+                    <p>Catalogue de parapharmacie au Maroc. Prix et disponibilité à confirmer avant commande lorsqu’ils ne sont pas vérifiés.</p>
                 </div>
                 <div><h2>Boutique</h2>
                     <a href="${CATEGORY_ROUTE_MAP.visage}">Soins visage</a>
@@ -292,8 +337,23 @@ function footer() {
                     <a href="${CONSEILS_INDEX_ROUTE}">Conseils</a>
                     <a href="/livraison/">Commande et livraison</a>
                     <a href="${RETURNS_ROUTE}">Retours et remboursements</a>
+                    <a href="${KHOURIBGA_ROUTE}">Parapharmacie à Khouribga</a>
                     <a href="/confidentialite/">Confidentialité</a>
                     <a href="/conditions-utilisation/">Conditions d’utilisation</a>
+                </div>
+                <div><h2>${escapeHtml(OPERATOR.displayName)}</h2>
+                    <address class="footer__address">${escapeHtml(ADDRESS.streetAddress)}<br>${escapeHtml(ADDRESS.addressLocality)} ${escapeHtml(ADDRESS.postalCode)}, ${escapeHtml(ADDRESS.countryName)}</address>
+                    <a href="${CONTACT.phone.href}">${escapeHtml(CONTACT.phone.display)}</a>
+                    <a href="${CONTACT.whatsapp.href}" rel="noreferrer">WhatsApp : ${escapeHtml(CONTACT.whatsapp.display)}</a>
+                    <a href="${MAPS_URL}" rel="noreferrer">Voir sur Google Maps</a>
+                    <p class="footer__hours">${OPENING_HOURS_DISPLAY.map(escapeHtml).join('<br>')}</p>
+                    <div class="footer__social">
+                        <a href="${SOCIAL.instagram}" rel="noreferrer" aria-label="Instagram ${escapeHtml(OPERATOR.displayName)}"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="${SOCIAL.facebook}" rel="noreferrer" aria-label="Facebook ${escapeHtml(OPERATOR.displayName)}"><i class="fa-brands fa-facebook"></i></a>
+                    </div>
+                    <div class="footer__map">
+                        <iframe src="${MAPS_EMBED_URL}" title="Carte Google Maps — ${escapeHtml(OPERATOR.legalName)}, ${escapeHtml(ADDRESS.addressLocality)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" aria-label="Localisation de ${escapeHtml(OPERATOR.legalName)} sur Google Maps"></iframe>
+                    </div>
                 </div>
             </div>
             <div class="footer__bottom"><div class="container">© 2026 Parapharmacie.me — information produit sans conseil médical.</div></div>
@@ -339,7 +399,7 @@ function documentHtml({ title, description, canonicalPath, content, schemas = []
     ${header()}
     ${content}
     ${footer()}
-    <a href="https://wa.me/212675698351" class="whatsapp-float" rel="noreferrer" aria-label="Contacter Parapharmacie.me sur WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+    <a href="${CONTACT.whatsapp.href}" class="whatsapp-float" rel="noreferrer" aria-label="Contacter Parapharmacie.me sur WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
     <script type="module" src="/js/main.js"></script>
     <script type="module" src="/js/static-storefront.js"></script>
 </body>
@@ -368,6 +428,13 @@ function visibleBreadcrumb(items) {
 }
 
 function productCard(product) {
+    const price = verifiedProductPrice(product);
+    const canOrder = isProductOrderable(product);
+    const availabilityLabel = productAvailability(product) === 'https://schema.org/InStock'
+        ? 'En stock vérifié'
+        : productAvailability(product) === 'https://schema.org/OutOfStock'
+            ? 'Rupture vérifiée'
+            : 'À confirmer';
     return `
         <article class="product-card" data-product-card data-category="${escapeHtml(product.categorySlug)}" data-search="${escapeHtml([product.name, product.brand, product.category].join(' ').toLowerCase())}">
             <a href="${productRoute(product)}" class="product-card__media product-image-frame" data-image-review="${product.imageNeedsReview ? 'true' : 'false'}" aria-label="Voir la fiche de ${escapeHtml(product.name)}">
@@ -376,13 +443,13 @@ function productCard(product) {
                 ${product.imageNeedsReview ? '<span class="product-image-frame__notice">Visuel générique</span>' : ''}
             </a>
             <div class="product-card__body">
-                <div class="product-card__meta"><span>${escapeHtml(product.category)}</span><span class="product-card__stock">À confirmer</span></div>
+                <div class="product-card__meta"><span>${escapeHtml(product.category)}</span><span class="product-card__stock">${availabilityLabel}</span></div>
                 <a href="${productRoute(product)}" class="product-card__title">${escapeHtml(product.name)}</a>
                 <p class="product-card__brand">${escapeHtml(product.brand)}</p>
-                <p class="product-card__description">Prix catalogue indicatif ; disponibilité à confirmer avant commande.</p>
+                <p class="product-card__description">${canOrder ? 'Prix, stock et éligibilité livraison vérifiés récemment.' : price !== null ? 'Prix vérifié ; stock ou livraison à confirmer.' : 'Prix à confirmer avant commande.'}</p>
                 <div class="product-card__footer">
-                    <div class="product-card__price"><strong>${formatPrice(product.priceMAD)}</strong><small>prix indicatif</small></div>
-                    <button class="icon-btn" type="button" data-seo-add-product="${escapeHtml(product.id)}" aria-label="Ajouter ${escapeHtml(product.name)} au panier"><i class="fa-solid fa-cart-plus"></i></button>
+                    <div class="product-card__price"><strong>${productPriceLabel(product)}</strong><small>${price !== null ? 'prix vérifié' : 'confirmation requise'}</small></div>
+                    <button class="icon-btn" type="button" data-seo-add-product="${escapeHtml(product.id)}" aria-label="${canOrder ? 'Ajouter au panier' : 'Commande en ligne indisponible; prix, stock ou livraison à confirmer pour'} ${escapeHtml(product.name)}" ${canOrder ? '' : 'aria-disabled="true" disabled'}><i class="fa-solid fa-cart-plus"></i></button>
                 </div>
             </div>
         </article>`;
@@ -398,14 +465,14 @@ function categoryLinks(activeSlug = null) {
 function buildBoutiquePage() {
     const pathName = '/boutique/';
     const title = `Boutique parapharmacie au Maroc | ${catalogProducts.length} références`;
-    const description = `Explorez ${catalogProducts.length} références de parapharmacie au Maroc avec marques, catégories et prix indicatifs en MAD.`;
+    const description = `Explorez ${catalogProducts.length} références de parapharmacie au Maroc avec marques, catégories et prix à confirmer sans preuve courante.`;
     const breadcrumbs = [{ name: 'Accueil', path: '/' }, { name: 'Boutique', path: pathName }];
     const content = `
         <main>
             <section class="page-hero"><div class="container page-hero__grid"><div>
                 <p class="eyebrow">Catalogue au Maroc</p>
                 <h1>Boutique parapharmacie en ligne au Maroc</h1>
-                <p>${catalogProducts.length} références sont présentées avec leur marque, leur catégorie et un prix catalogue indicatif en MAD. La disponibilité et le prix final sont confirmés avant commande.</p>
+                <p>${catalogProducts.length} références sont présentées avec leur marque et leur catégorie. Un montant ne s’affiche qu’avec une preuve propriétaire datée de moins de 30 jours ; sinon, prix et disponibilité restent à confirmer.</p>
             </div><div class="page-hero__badge"><i class="fa-solid fa-list-check"></i> Catalogue pré-rendu et consultable</div></div></section>
             <section class="section"><div class="container">
                 ${visibleBreadcrumb(breadcrumbs)}
@@ -432,6 +499,7 @@ function buildCategoryPage(category) {
     const seo = categorySeo[category.slug];
     const route = categoryRoute(category);
     const brands = [...new Set(products.map((product) => product.brand).filter(Boolean))].slice(0, 5);
+    const usefulArticles = articles.filter((article) => article.categorySlug === category.slug).slice(0, 4);
     const breadcrumbs = [{ name: 'Accueil', path: '/' }, { name: 'Boutique', path: '/boutique/' }, { name: seo.h1, path: route }];
     const specialNote = category.slug === 'cheveux'
         ? 'Cette sélection transversale rassemble les références dont le nom ou les repères du catalogue mentionnent les cheveux ; leur catégorie principale reste affichée sur chaque carte.'
@@ -450,6 +518,7 @@ function buildCategoryPage(category) {
                 ${categoryLinks(category.slug)}
                 <div class="section-header"><div><p class="eyebrow">Sélection ${escapeHtml(category.name)}</p><h2>${products.length} référence${products.length > 1 ? 's' : ''} à comparer</h2></div><a class="section-header__link" href="/boutique/">Voir tout le catalogue <i class="fa-solid fa-arrow-right"></i></a></div>
                 <div class="products__grid">${products.map(productCard).join('')}</div>
+                ${usefulArticles.length ? `<section class="related-section"><div class="section-header"><div><p class="eyebrow">Bien choisir</p><h2>Conseils utiles pour cette catégorie</h2></div><a class="section-header__link" href="${CONSEILS_INDEX_ROUTE}">Tous les conseils <i class="fa-solid fa-arrow-right"></i></a></div><div class="related-grid">${usefulArticles.map((article) => `<a href="${articleRoute(article)}" class="related-card"><img src="${escapeHtml(article.heroImage)}" alt="${escapeHtml(article.title)}" loading="lazy" width="320" height="180"><span>${escapeHtml(article.category)}</span><strong>${escapeHtml(article.title)}</strong></a>`).join('')}</div></section>` : ''}
                 <aside class="seo-medical-note"><strong>Information responsable</strong><p>Les noms et formats servent à identifier les références. Consultez l’étiquette et la notice ; pour une question de santé, demandez un avis professionnel.</p></aside>
             </div></section>
         </main>`;
@@ -476,23 +545,39 @@ function buildProductPage(product) {
     const related = catalogProducts
         .filter((candidate) => candidate.id !== product.id && candidate.categorySlug === product.categorySlug)
         .slice(0, 4);
+    const usefulArticles = articles
+        .filter((article) => (article.relatedProductSlugs || []).includes(product.id))
+        .slice(0, 3);
+    const availability = productAvailability(product);
+    const gtin = productGtin(product);
+    const price = verifiedProductPrice(product);
+    const canOrder = isProductOrderable(product);
+    const availabilityLabel = availability === 'https://schema.org/InStock'
+        ? 'En stock — vérifié depuis moins de 24 heures'
+        : availability === 'https://schema.org/OutOfStock'
+            ? 'Rupture de stock — vérifiée depuis moins de 24 heures'
+            : 'À confirmer avant commande';
     const productSchema = {
         '@context': 'https://schema.org',
         '@type': 'Product',
         name: product.name,
         description,
-        sku: product.id,
+        ...(product.sku ? { sku: product.sku } : {}),
         brand: { '@type': 'Brand', name: product.brand },
         category: product.category,
         url: absoluteSiteUrl(route),
-        offers: {
-            '@type': 'Offer',
-            url: absoluteSiteUrl(route),
-            price: Number(product.priceMAD).toFixed(2),
-            priceCurrency: 'MAD',
-            seller: { '@type': 'Organization', name: 'Parapharmacie.me', url: `${SITE_ORIGIN}/` }
-        }
+        ...(canOrder ? {
+            offers: {
+                '@type': 'Offer',
+                url: absoluteSiteUrl(route),
+                price: price.toFixed(2),
+                priceCurrency: 'MAD',
+                seller: { '@type': 'Organization', name: 'Parapharmacie.me', url: `${SITE_ORIGIN}/` },
+                ...(availability ? { availability } : {})
+            }
+        } : {})
     };
+    if (gtin) productSchema.gtin = gtin;
     if (!product.imageNeedsReview) productSchema.image = [absoluteSiteUrl(productImage(product))];
 
     const content = `
@@ -504,24 +589,24 @@ function buildProductPage(product) {
                         <p class="eyebrow">${escapeHtml(product.category)}</p>
                         <h1>${escapeHtml(product.name)}</h1>
                         <p class="product-detail__brand">Marque : <a href="/boutique/?q=${encodeURIComponent(product.brand)}">${escapeHtml(product.brand)}</a></p>
-                        <div class="product-detail__price"><strong>${formatPrice(product.priceMAD)}</strong></div>
-                        <p class="product-detail__stock">Prix catalogue indicatif · Disponibilité à confirmer</p>
+                        <div class="product-detail__price"><strong>${productPriceLabel(product)}</strong></div>
+                        <p class="product-detail__stock">${price !== null ? 'Prix vérifié depuis moins de 30 jours' : 'Prix non vérifié'} · ${availabilityLabel}${canOrder ? ' · Livraison éligible' : ' · Livraison à confirmer'}</p>
                         <div class="product-detail__purchase">
-                            <div class="qty-control product-detail__qty" aria-label="Quantité">
+                            ${canOrder ? `<div class="qty-control product-detail__qty" aria-label="Quantité">
                                 <button class="qty-control__btn" type="button" data-static-qty="-1" aria-label="Diminuer la quantité">−</button>
                                 <span class="qty-control__value" data-static-qty-value>1</span>
                                 <button class="qty-control__btn" type="button" data-static-qty="1" aria-label="Augmenter la quantité">+</button>
-                            </div>
-                            <button class="btn btn--primary" type="button" data-seo-add-product="${escapeHtml(product.id)}"><i class="fa-solid fa-cart-plus"></i> Ajouter au panier</button>
-                            <a class="btn btn--whatsapp" href="https://wa.me/212675698351?text=${encodeURIComponent(`Bonjour, je souhaite confirmer la disponibilité de ${product.name} (${route})`)}" rel="noreferrer"><i class="fa-brands fa-whatsapp"></i> Confirmer par WhatsApp</a>
+                            </div>` : ''}
+                            <button class="btn btn--primary${canOrder ? '' : ' is-disabled'}" type="button" data-seo-add-product="${escapeHtml(product.id)}" ${canOrder ? '' : 'aria-disabled="true" disabled'}><i class="fa-solid fa-cart-plus"></i> ${canOrder ? 'Ajouter au panier' : 'Commande en ligne indisponible — prix, stock ou livraison à confirmer'}</button>
+                            <a class="btn btn--whatsapp" href="${CONTACT.whatsapp.href}?text=${encodeURIComponent(`Bonjour, je souhaite confirmer la disponibilité de ${product.name} (${route})`)}" rel="noreferrer"><i class="fa-brands fa-whatsapp"></i> Confirmer par WhatsApp</a>
                         </div>
                         <p class="product-detail__description">${escapeHtml(description)}</p>
                         <dl class="seo-product-facts">
                             <div><dt>Marque</dt><dd><a href="/boutique/?q=${encodeURIComponent(product.brand)}">${escapeHtml(product.brand)}</a></dd></div>
                             <div><dt>Catégorie</dt><dd><a href="${categoryPath}">${escapeHtml(product.category)}</a></dd></div>
                             ${format ? `<div><dt>Format indiqué</dt><dd>${escapeHtml(format)}</dd></div>` : ''}
-                            <div><dt>Prix</dt><dd>${formatPrice(product.priceMAD)} — indicatif</dd></div>
-                            <div><dt>Disponibilité</dt><dd>À confirmer avant commande</dd></div>
+                            <div><dt>Prix</dt><dd>${productPriceLabel(product)}${price !== null ? ' — vérifié depuis moins de 30 jours' : ''}</dd></div>
+                            <div><dt>Disponibilité</dt><dd>${availabilityLabel}</dd></div>
                         </dl>
                         <div class="product-detail__note"><strong>Information produit :</strong> aucune composition, indication, contre-indication ou promesse médicale n’est ajoutée sans donnée fabricant vérifiée. Consultez l’emballage et la notice.</div>
                     </div>
@@ -531,7 +616,8 @@ function buildProductPage(product) {
                         ${product.imageNeedsReview ? '<span class="product-image-frame__notice product-image-frame__notice--large">Visuel générique de catégorie</span>' : ''}
                     </div>
                 </article>
-                ${related.length ? `<section class="related-section"><div class="section-header"><div><p class="eyebrow">Même catégorie</p><h2>Références liées</h2></div></div><div class="related-grid">${related.map((item) => `<a href="${productRoute(item)}" class="related-card"><img src="${productImage(item)}" alt="${escapeHtml(productImageAlt(item))}" loading="lazy" width="320" height="320"><span>${escapeHtml(item.category)}</span><strong>${escapeHtml(item.name)}</strong><em>${formatPrice(item.priceMAD)}</em></a>`).join('')}</div></section>` : ''}
+                ${related.length ? `<section class="related-section"><div class="section-header"><div><p class="eyebrow">Même catégorie</p><h2>Références liées</h2></div></div><div class="related-grid">${related.map((item) => `<a href="${productRoute(item)}" class="related-card"><img src="${productImage(item)}" alt="${escapeHtml(productImageAlt(item))}" loading="lazy" width="320" height="320"><span>${escapeHtml(item.category)}</span><strong>${escapeHtml(item.name)}</strong><em>${productPriceLabel(item)}</em></a>`).join('')}</div></section>` : ''}
+                ${usefulArticles.length ? `<section class="related-section"><div class="section-header"><div><p class="eyebrow">Conseils associés</p><h2>Repères pour bien choisir</h2></div></div><div class="related-grid">${usefulArticles.map((article) => `<a href="${articleRoute(article)}" class="related-card"><img src="${escapeHtml(article.heroImage)}" alt="${escapeHtml(article.title)}" loading="lazy" width="320" height="180"><span>${escapeHtml(article.category)}</span><strong>${escapeHtml(article.title)}</strong></a>`).join('')}</div></section>` : ''}
             </div>
         </main>`;
     return documentHtml({
@@ -553,6 +639,151 @@ function buildTrustPage(page) {
         canonicalPath: page.route,
         content,
         schemas: [breadcrumbSchema(breadcrumbs)]
+    });
+}
+
+const khouribgaFaq = [
+    {
+        q: 'Livrez-vous en dehors de Khouribga ?',
+        a: `Oui. La livraison est proposée à ${DELIVERY.local.area} pour ${DELIVERY.local.feeMAD} MAD, et vers les ${DELIVERY.other.area.toLowerCase()} pour ${DELIVERY.other.feeMAD} MAD. Le délai exact est confirmé au moment de la commande.`
+    },
+    {
+        q: 'Quels moyens de paiement sont disponibles ?',
+        a: 'Le paiement à la livraison (espèces) est actuellement le seul mode actif. Le paiement en ligne par CMI et Apple Pay est prévu mais pas encore disponible.'
+    },
+    {
+        q: 'Le site correspond-il à un magasin physique à Khouribga ?',
+        a: `Oui. Parapharmacie.me est le catalogue en ligne de ${OPERATOR.legalName}, situé au ${ADDRESS.full}. Vous pouvez consulter les références en ligne puis confirmer votre commande par téléphone ou WhatsApp.`
+    },
+    {
+        q: 'Quels sont vos horaires d’ouverture ?',
+        a: `${OPENING_HOURS_DISPLAY.join(' ')}`
+    },
+    {
+        q: 'Comment confirmer la disponibilité d’un produit avant de commander ?',
+        a: 'Contactez-nous par téléphone ou WhatsApp en indiquant la référence souhaitée : nous confirmons la disponibilité et le prix final avant expédition.'
+    }
+];
+
+function buildKhouribgaPage() {
+    const route = KHOURIBGA_ROUTE;
+    const title = 'Parapharmacie à Khouribga | Parapharmacie.me';
+    const description = `Parapharmacie à Khouribga : ${OPERATOR.legalName} propose son catalogue en ligne, la livraison locale et le paiement à la livraison, avec adresse, horaires et WhatsApp pour confirmer votre commande.`;
+    const breadcrumbs = [{ name: 'Accueil', path: '/' }, { name: 'Parapharmacie à Khouribga', path: route }];
+
+    const popularCategorySlugs = ['visage', 'solaire', 'bebe-maman', 'complements-alimentaires', 'hygiene', 'sante'];
+    const popularCategories = categories.filter((category) => popularCategorySlugs.includes(category.slug));
+    const selectedProducts = catalogProducts.filter((product) => popularCategorySlugs.includes(product.categorySlug)).slice(0, 8);
+    const relatedArticles = ['parapharmacie-en-ligne-livraison-maroc', 'commander-parapharmacie-khouribga', 'comment-choisir-creme-solaire-maroc', 'hygiene-bebe-conseils']
+        .map((slug) => articles.find((article) => article.slug === slug))
+        .filter(Boolean);
+
+    const mapTitle = `Carte Google Maps — ${OPERATOR.legalName}, ${ADDRESS.addressLocality}`;
+
+    const content = `
+        <main>
+            <section class="page-hero"><div class="container page-hero__grid"><div>
+                <p class="eyebrow">Parapharmacie à Khouribga</p>
+                <h1>Votre parapharmacie à Khouribga</h1>
+                <p>Parapharmacie.me est le catalogue en ligne de ${escapeHtml(OPERATOR.legalName)}, votre parapharmacie à Khouribga. Comparez les références, préparez votre commande en ligne puis confirmez-la par téléphone ou WhatsApp, avec paiement à la livraison.</p>
+            </div><div class="page-hero__badge"><i class="fa-solid fa-location-dot"></i> ${escapeHtml(ADDRESS.addressLocality)}, ${escapeHtml(ADDRESS.countryName)}</div></div></section>
+            <section class="section"><div class="container seo-prose">
+                ${visibleBreadcrumb(breadcrumbs)}
+
+                <div class="local-intro">
+                    <div>
+                        <h2>Une parapharmacie près de chez vous à Khouribga</h2>
+                        <p>${escapeHtml(OPERATOR.legalName)} est le magasin physique qui gère Parapharmacie.me, situé au ${escapeHtml(ADDRESS.full)}. Que vous cherchiez une parapharmacie près de chez vous ou une parapharmacie en ligne à Khouribga, vous pouvez consulter le catalogue ici puis commander via le site, par téléphone ou par WhatsApp.</p>
+                        <ul>
+                            <li><strong>Adresse :</strong> ${escapeHtml(ADDRESS.full)}</li>
+                            <li><strong>Téléphone :</strong> <a href="${CONTACT.phone.href}">${escapeHtml(CONTACT.phone.display)}</a></li>
+                            <li><strong>WhatsApp :</strong> <a href="${CONTACT.whatsapp.href}" rel="noreferrer">${escapeHtml(CONTACT.whatsapp.display)}</a></li>
+                        </ul>
+                        <div class="local-map__actions">
+                            <a class="btn btn--whatsapp" href="${CONTACT.whatsapp.href}" rel="noreferrer"><i class="fa-brands fa-whatsapp"></i> Commander sur WhatsApp</a>
+                            <a class="btn btn--secondary" href="${MAPS_URL}" target="_blank" rel="noreferrer"><i class="fa-solid fa-diamond-turn-right"></i> Voir l’itinéraire</a>
+                        </div>
+                    </div>
+                    <div class="local-intro__photo">
+                        <img src="${STOREFRONT_PHOTO.path}" alt="${escapeHtml(STOREFRONT_PHOTO.alt)}" width="${STOREFRONT_PHOTO.width}" height="${STOREFRONT_PHOTO.height}" loading="lazy" decoding="async">
+                    </div>
+                </div>
+
+                <h2>Horaires d’ouverture</h2>
+                <ul>
+                    ${OPENING_HOURS_DISPLAY.map((line) => `<li>${escapeHtml(line)}</li>`).join('')}
+                </ul>
+
+                <h2>Nous trouver sur la carte</h2>
+                <div class="local-map">
+                    <div class="local-map__frame">
+                        <iframe src="${MAPS_EMBED_URL}" title="${escapeHtml(mapTitle)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" aria-label="Localisation de ${escapeHtml(OPERATOR.legalName)} sur Google Maps"></iframe>
+                    </div>
+                    <div class="local-map__actions">
+                        <a class="btn btn--secondary" href="${MAPS_URL}" target="_blank" rel="noreferrer"><i class="fa-solid fa-diamond-turn-right"></i> Voir l’itinéraire</a>
+                    </div>
+                </div>
+
+                <h2>Comment commander</h2>
+                <div class="trust-strip__grid">
+                    <article class="trust-card"><i class="fa-solid fa-magnifying-glass"></i><h3>1. Choisissez vos références</h3><p>Parcourez les catégories populaires ou recherchez une marque dans le catalogue.</p></article>
+                    <article class="trust-card"><i class="fa-solid fa-bag-shopping"></i><h3>2. Confirmez votre demande</h3><p>Transmettez les liens ou noms des références par téléphone ou WhatsApp afin de faire confirmer prix et disponibilité.</p></article>
+                    <article class="trust-card"><i class="fa-solid fa-truck-fast"></i><h3>3. Livraison ou retrait</h3><p>Prix, disponibilité et modalités de livraison sont confirmés avant expédition.</p></article>
+                </div>
+
+                <h2>Paiement et livraison</h2>
+                <div class="payment-methods">
+                    <span class="payment-badge payment-badge--active"><i class="fa-solid fa-money-bill-wave"></i> Paiement à la livraison — actif</span>
+                    <span class="payment-badge payment-badge--soon"><i class="fa-regular fa-credit-card"></i> CMI <span class="payment-badge__tag">Bientôt</span></span>
+                    <span class="payment-badge payment-badge--soon"><i class="fa-brands fa-apple-pay"></i> Apple Pay <span class="payment-badge__tag">Bientôt</span></span>
+                </div>
+                <ul>
+                    <li>${escapeHtml(DELIVERY.local.area)} : ${DELIVERY.local.feeMAD} MAD</li>
+                    <li>${escapeHtml(DELIVERY.other.area)} : ${DELIVERY.other.feeMAD} MAD</li>
+                </ul>
+                <p>Le délai de livraison précis est confirmé au moment de la commande. Nous n’affichons pas de promesse de livraison le jour même.</p>
+
+                <div class="section-header"><div><p class="eyebrow">Catégories populaires à Khouribga</p><h2>Ce que recherchent nos clients</h2></div><a class="section-header__link" href="/boutique/">Voir tout le catalogue <i class="fa-solid fa-arrow-right"></i></a></div>
+                <nav class="category-pills" aria-label="Catégories populaires à Khouribga">
+                    ${popularCategories.map((category) => `<a class="category-pill" href="${categoryRoute(category)}">${escapeHtml(category.name)}</a>`).join('')}
+                </nav>
+                <div class="products__grid">${selectedProducts.map(productCard).join('')}</div>
+
+                <h2>Aller plus loin</h2>
+                <div class="local-map__actions">
+                    <a class="btn btn--secondary" href="/">Accueil</a>
+                    <a class="btn btn--secondary" href="/boutique/">Boutique</a>
+                    <a class="btn btn--secondary" href="/contact/">Contact</a>
+                    <a class="btn btn--secondary" href="/livraison/">Livraison</a>
+                    <a class="btn btn--secondary" href="${RETURNS_ROUTE}">Retours et remboursements</a>
+                    ${relatedArticles.map((article) => `<a class="btn btn--secondary" href="${articleRoute(article)}">${escapeHtml(article.title)}</a>`).join('')}
+                </div>
+
+                ${articleFaqSection(khouribgaFaq)}
+            </div></section>
+        </main>`;
+
+    const graph = {
+        '@context': 'https://schema.org',
+        '@graph': [
+            {
+                '@type': 'WebSite',
+                '@id': `${SITE_ORIGIN}/#website`,
+                name: 'Parapharmacie.me',
+                url: `${SITE_ORIGIN}/`,
+                inLanguage: 'fr-MA'
+            },
+            organizationSchema(),
+            pharmacySchema()
+        ]
+    };
+
+    return documentHtml({
+        title,
+        description,
+        canonicalPath: route,
+        content,
+        schemas: [graph, breadcrumbSchema(breadcrumbs), faqSchema(khouribgaFaq)]
     });
 }
 
@@ -609,7 +840,10 @@ function articleSourcesSection(sources) {
     if (!sources.length) return '';
     return `<section class="article-sources">
         <h2>Sources et références</h2>
-        <ul>${sources.map((source) => `<li><a href="${escapeHtml(source.url)}" rel="noopener noreferrer" target="_blank">${escapeHtml(source.label)}</a></li>`).join('')}</ul>
+        <ul>${sources.map((source) => {
+            const externalAttributes = source.url.startsWith('http') ? ' rel="noopener noreferrer" target="_blank"' : '';
+            return `<li><a href="${escapeHtml(source.url)}"${externalAttributes}>${escapeHtml(source.label)}</a></li>`;
+        }).join('')}</ul>
     </section>`;
 }
 
@@ -631,12 +865,27 @@ function relatedArticlesSection(article) {
 }
 
 function relatedProductsSection(article) {
-    const products = catalogProducts.filter((product) => product.categorySlug === article.categorySlug).slice(0, 4);
+    const hasExplicitSelection = Array.isArray(article.relatedProductSlugs);
+    const explicitProducts = (article.relatedProductSlugs || [])
+        .map((slug) => catalogProducts.find((product) => product.id === slug))
+        .filter(Boolean);
+    const products = (hasExplicitSelection
+        ? explicitProducts
+        : catalogProducts.filter((product) => product.categorySlug === article.categorySlug)).slice(0, 4);
     if (!products.length) return '';
     return `<section class="related-section">
         <div class="section-header"><div><p class="eyebrow">Références catalogue</p><h2>Produits ${escapeHtml(article.category)}</h2></div><a class="section-header__link" href="${categoryRoute(article.categorySlug)}">Voir la catégorie <i class="fa-solid fa-arrow-right"></i></a></div>
         <div class="products__grid">${products.map(productCard).join('')}</div>
     </section>`;
+}
+
+function articleRelatedLinks(article) {
+    const links = [
+        { href: categoryRoute(article.categorySlug), label: `Voir la catégorie ${article.category}` },
+        { href: KHOURIBGA_ROUTE, label: 'Service local à Khouribga' },
+        ...(article.relatedLinks || [])
+    ].filter((link, index, all) => all.findIndex((candidate) => candidate.href === link.href) === index);
+    return `<nav class="article-related-links" aria-label="Liens pratiques"><h2>Liens pratiques</h2><div class="local-map__actions">${links.map((link) => `<a class="btn btn--secondary" href="${escapeHtml(link.href)}">${escapeHtml(link.label)}</a>`).join('')}</div></nav>`;
 }
 
 function buildArticlePage(article) {
@@ -672,6 +921,7 @@ function buildArticlePage(article) {
                         <p class="eyebrow">${escapeHtml(article.category)}</p>
                         <h1>${escapeHtml(article.title)}</h1>
                         <p class="article-detail__lede">${escapeHtml(article.description)}</p>
+                        <p class="article-direct-answer"><strong>Réponse pratique :</strong> ${escapeHtml(article.directAnswer || article.description)}</p>
                         <div class="article-meta">
                             <span><i class="fa-regular fa-user" aria-hidden="true"></i> ${escapeHtml(article.author)}</span>
                             <span><i class="fa-regular fa-calendar" aria-hidden="true"></i> Publié le ${escapeHtml(formatFrenchDate(article.publishedDate))}</span>
@@ -687,6 +937,7 @@ function buildArticlePage(article) {
                     ${articleFaqSection(article.faq || [])}
                     ${articleDisclaimer()}
                     ${articleSourcesSection(article.sources || [])}
+                    ${articleRelatedLinks(article)}
                 </article>
                 ${relatedProductsSection(article)}
                 ${relatedArticlesSection(article)}
@@ -786,11 +1037,7 @@ function buildReturnsPage() {
                 ${returnsFieldRow('Délai de remboursement', returnsPolicy.refundProcessingTime)}
             </dl>
             <h2>Comment nous contacter pour un retour</h2>
-            <div class="seo-contact-grid">
-                <a class="trust-card" href="tel:+212520828417"><i class="fa-solid fa-phone"></i><h3>Téléphone</h3><p>0520 828 417</p></a>
-                <a class="trust-card" href="https://wa.me/212675698351" rel="noreferrer"><i class="fa-brands fa-whatsapp"></i><h3>WhatsApp</h3><p>+212 675 698 351</p></a>
-                <a class="trust-card" href="mailto:Hamidkaram554@gmail.com"><i class="fa-regular fa-envelope"></i><h3>E-mail</h3><p>Hamidkaram554@gmail.com</p></a>
-            </div>
+            ${contactCardsHtml('h3')}
             <p>Pour toute demande, indiquez votre numéro de commande, la référence concernée et le motif de la demande. Nous reviendrons vers vous pour confirmer la marche à suivre.</p>
         </div></section></main>`;
 
@@ -861,9 +1108,43 @@ async function injectHomepageProducts(outputDir) {
     await writeFile(homepagePath, homepage.replace(new RegExp(`${start}[\\s\\S]*?${end}`), replacement));
 }
 
+async function injectHomepageJsonLd(outputDir) {
+    const homepagePath = path.join(outputDir, 'index.html');
+    const homepage = await readFile(homepagePath, 'utf8');
+    const start = '<!-- seo:jsonld:start -->';
+    const end = '<!-- seo:jsonld:end -->';
+    if (!homepage.includes(start) || !homepage.includes(end)) {
+        throw new Error('Homepage JSON-LD markers are missing.');
+    }
+
+    const graph = {
+        '@context': 'https://schema.org',
+        '@graph': [
+            {
+                '@type': 'WebSite',
+                '@id': 'https://parapharmacie.me/#website',
+                name: 'Parapharmacie.me',
+                url: 'https://parapharmacie.me/',
+                inLanguage: 'fr-MA',
+                publisher: { '@id': 'https://parapharmacie.me/#organization' },
+                potentialAction: {
+                    '@type': 'SearchAction',
+                    target: 'https://parapharmacie.me/boutique/?q={search_term_string}',
+                    'query-input': 'required name=search_term_string'
+                }
+            },
+            organizationSchema(),
+            pharmacySchema()
+        ]
+    };
+    const replacement = `${start}\n    ${jsonLd(graph)}\n    ${end}`;
+    await writeFile(homepagePath, homepage.replace(new RegExp(`${start}[\\s\\S]*?${end}`), replacement));
+}
+
 export async function generateSeoPages({ outputDir = defaultOutputDir } = {}) {
     await mkdir(outputDir, { recursive: true });
     await injectHomepageProducts(outputDir);
+    await injectHomepageJsonLd(outputDir);
     await writeRoute(outputDir, '/boutique/', buildBoutiquePage());
 
     for (const category of categories) {
@@ -877,6 +1158,8 @@ export async function generateSeoPages({ outputDir = defaultOutputDir } = {}) {
     for (const page of trustPages) {
         await writeRoute(outputDir, page.route, buildTrustPage(page));
     }
+
+    await writeRoute(outputDir, KHOURIBGA_ROUTE, buildKhouribgaPage());
 
     await writeRoute(outputDir, CONSEILS_INDEX_ROUTE, buildConseilsIndexPage());
     for (const article of articles) {
